@@ -1,0 +1,108 @@
+/*
+--------------------------------------------------------------------------------
+GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
+
+Copyright (C) 2009 Robert Geiman
+                   <robgeiman@gmail.com>
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place - Suite 330, Boston, MA 02111-1307, USA, or go to
+http://www.gnu.org/copyleft/lesser.txt.
+--------------------------------------------------------------------------------
+*/
+
+#ifndef GMOGRE_BILLBOARD_H
+#define GMOGRE_BILLBOARD_H
+
+#include "GMOgre3D.h"
+
+
+GMFN double CreateBillboard(double bb_set_ptr, double x, double z, double y)
+{
+   Ogre::BillboardSet *bb_set = ConvertFromGMPointer<Ogre::BillboardSet *>(bb_set_ptr);
+
+   if (bb_set == NULL)
+      return FALSE;
+   
+   Ogre::Billboard *bb = bb_set->createBillboard(x, y, z);
+
+   return ConvertToGMPointer(bb);
+}
+
+
+GMFN double RemoveBillboard(double bb_set_ptr, double bb_ptr)
+{
+   Ogre::BillboardSet *bb_set = ConvertFromGMPointer<Ogre::BillboardSet *>(bb_set_ptr);
+
+   if (bb_set == NULL)
+      return FALSE;
+   
+   Ogre::Billboard *bb = ConvertFromGMPointer<Ogre::Billboard *>(bb_ptr);
+
+   if (bb == NULL)
+      return FALSE;
+   
+   bb_set->removeBillboard(bb);
+
+   return TRUE;
+}
+
+
+GMFN double SetBillboardPosition(double bb_ptr, double x, double z, double y)
+{
+   Ogre::Billboard *bb = ConvertFromGMPointer<Ogre::Billboard *>(bb_ptr);
+
+   if (bb == NULL)
+      return FALSE;
+   
+   bb->setPosition(z, y, z);
+
+   return TRUE;
+}
+
+
+GMFN double SetBillboardDimensions(double bb_ptr, double width, double height)
+{
+   Ogre::Billboard *bb = ConvertFromGMPointer<Ogre::Billboard *>(bb_ptr);
+
+   if (bb == NULL)
+      return FALSE;
+   
+   bb->setDimensions(width, height);
+
+   return TRUE;
+}
+
+
+GMFN double GetBillboardWidth(double bb_ptr)
+{
+   Ogre::Billboard *bb = ConvertFromGMPointer<Ogre::Billboard *>(bb_ptr);
+
+   if (bb == NULL)
+      return 0;
+   
+   return bb->getOwnWidth();
+}
+
+
+GMFN double GetBillboardHeight(double bb_ptr)
+{
+   Ogre::Billboard *bb = ConvertFromGMPointer<Ogre::Billboard *>(bb_ptr);
+
+   if (bb == NULL)
+      return 0;
+   
+   return bb->getOwnHeight();
+}
+
+#endif
