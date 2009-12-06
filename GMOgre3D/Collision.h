@@ -29,7 +29,12 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 GMFN double CollidesWithObject(double fromx, double fromz, double fromy, double tox, double toz, double toy, double collision_radius, double ray_height, double mask = 0xFFFFFFFF)
 {
-   return mCollisionTools.collidesWithEntity(Ogre::Vector3(fromx, fromy, fromz), Ogre::Vector3(tox, toy, toz), collision_radius, ray_height, mask);
+   MOC::CollisionTools *ct = mSceneCollisionMap[mSceneMgr];
+
+   if (ct == NULL)
+      return FALSE;
+
+   return ct->collidesWithEntity(Ogre::Vector3(fromx, fromy, fromz), Ogre::Vector3(tox, toy, toz), collision_radius, ray_height, mask);
 }
 
 
@@ -40,7 +45,12 @@ GMFN double GetZCollisionDistance(double scene_node_ptr, double check_terrain, d
    if (scene_node == NULL)
       return 999999;
 
-   return mCollisionTools.calculateYDistance(scene_node, (check_terrain != 0), space_width, mask);
+   MOC::CollisionTools *ct = mSceneCollisionMap[mSceneMgr];
+
+   if (ct == NULL)
+      return 999999;
+
+   return ct->calculateYDistance(scene_node, (check_terrain != 0), space_width, mask);
 }
 
 
@@ -55,15 +65,31 @@ GMFN double DistanceToCollisionWithObject(double fromx, double fromz, double fro
 	Ogre::MovableObject* myObject = NULL;
 	float distToColl = 0.0f;
 
-	if (mCollisionTools.raycastFromPoint(fromPointAdj, normal, myResult, myObject, distToColl, mask))
+   MOC::CollisionTools *ct = mSceneCollisionMap[mSceneMgr];
+
+   if (ct == NULL)
+      return 999999;
+
+	if (ct->raycastFromPoint(fromPointAdj, normal, myResult, myObject, distToColl, mask))
 	{
 		distToColl -= collision_radius;
 		return (distToColl <= distToDest);
 	}
 	else
 	{
-		return false;
+		return 999999;
 	}
+}
+
+
+GMFN double GetTerrainHeight(double x, double z)
+{
+   MOC::CollisionTools *ct = mSceneCollisionMap[mSceneMgr];
+
+   if (ct == NULL)
+      return -999999;
+
+   return ct->getTSMHeightAt(x, z);
 }
 
 #endif

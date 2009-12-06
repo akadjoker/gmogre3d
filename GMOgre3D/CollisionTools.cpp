@@ -126,13 +126,16 @@ bool CollisionTools::collidesWithEntity(const Ogre::Vector3& fromPoint, const Og
 
 float CollisionTools::getTSMHeightAt(const float x, const float z) {
 	float y=0.0f;
-
     static Ogre::Ray updateRay;
+
+    if (mTSMRaySceneQuery == NULL)
+       return y;
 
     updateRay.setOrigin(Ogre::Vector3(x,9999,z));
     updateRay.setDirection(Ogre::Vector3::NEGATIVE_UNIT_Y);
 
     mTSMRaySceneQuery->setRay(updateRay);
+
     Ogre::RaySceneQueryResult& qryResult = mTSMRaySceneQuery->execute();
 
     Ogre::RaySceneQueryResult::iterator i = qryResult.begin();
@@ -140,6 +143,7 @@ float CollisionTools::getTSMHeightAt(const float x, const float z) {
     {
         y=i->worldFragment->singleIntersection.y;
     }
+ 
 	return y;
 }
 

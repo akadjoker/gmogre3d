@@ -43,6 +43,11 @@
 #include "CompositionTechnique.h"
 #include "CompositionPass.h"
 #include "TargetPass.h"
+#include "PagedGeometry.h"
+#include "TreeLoader3D.h"
+#include "TreeLoader2D.h"
+#include "GrassLoader.h"
+#include "GrassLayer.h"
 #include "Vector.h"
 #include "Euler.h"
 #include "Plane.h"
@@ -164,11 +169,11 @@ GMFN double StartEngine(double render_engine, double hwnd, double window_width, 
       opts["top"] = "0";
 
       mRenderWindow = mRoot->createRenderWindow("GMOGRE 3D Window", mWindowWidth, mWindowHeight, mFullscreen, &opts);
-
+/*
       if (mFrameListener == NULL)
          mFrameListener = new GMFrameListener;
       mRoot->addFrameListener(mFrameListener);
-
+*/
       // Setup the links to our GM vector/quaternion/euler result variables
       mVectorX = mGMAPI->GetGlobalVariablePtr(mGMAPI->GetSymbolID("vector_resx"));
       mVectorY = mGMAPI->GetGlobalVariablePtr(mGMAPI->GetSymbolID("vector_resy"));
@@ -202,11 +207,11 @@ GMFN double ShutdownEngine()
    {
       delete mRoot;
 
-      if (mFrameListener != NULL)
-         delete mFrameListener;
+      //if (mFrameListener != NULL)
+         //delete mFrameListener;
 
       mRoot = NULL;
-      mFrameListener = NULL;
+      //mFrameListener = NULL;
       mSceneMgr = NULL;
       mRenderWindow = NULL;
    }    
@@ -289,10 +294,13 @@ GMFN double EnableWaitForVSync(double enable)
 
 GMFN double EnableDisplayFPS(double enable)
 {
-   if (mFrameListener == NULL)
+   // Delete frame listener
+   GMFrameListener *fl = mSceneListener[mSceneMgr];
+
+   if (fl == NULL)
       return FALSE;
 
-   mFrameListener->DisplayFPS((enable != 0));
+   fl->DisplayFPS((enable != 0));
 
    return TRUE;
 }

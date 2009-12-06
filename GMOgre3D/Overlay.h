@@ -89,7 +89,7 @@ GMFN double RotateOverlay(double overlay_ptr, double degrees)
    if (overlay == NULL)
       return FALSE;
 
-   overlay->rotate(Ogre::Radian(Ogre::Degree(degrees)));
+   overlay->rotate(Ogre::Degree(degrees));
 
    return TRUE;
 }

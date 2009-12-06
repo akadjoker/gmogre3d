@@ -54,7 +54,7 @@ GMFN double CreateRootChildSceneNode(double x, double z, double y, double yaw, d
    if (mSceneMgr == NULL)
       return FALSE;
 
-   Ogre::SceneNode *node = mSceneMgr->getRootSceneNode()->createChildSceneNode(Ogre::Vector3(x, y, z), Euler(Ogre::Radian(Ogre::Degree(yaw)), Ogre::Radian(Ogre::Degree(pitch)), Ogre::Radian(Ogre::Degree(roll))));
+   Ogre::SceneNode *node = mSceneMgr->getRootSceneNode()->createChildSceneNode(Ogre::Vector3(x, y, z), Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)));
    
    return ConvertToGMPointer(node);
 }
@@ -67,7 +67,7 @@ GMFN double CreateChildSceneNode(double scene_node_ptr, double x, double z, doub
    if (scene_node == NULL)
       return FALSE;
 
-   Ogre::SceneNode *child_node = scene_node->createChildSceneNode(Ogre::Vector3(x, y, z), Euler(Ogre::Radian(Ogre::Degree(yaw)), Ogre::Radian(Ogre::Degree(pitch)), Ogre::Radian(Ogre::Degree(roll))));
+   Ogre::SceneNode *child_node = scene_node->createChildSceneNode(Ogre::Vector3(x, y, z), Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)));
 
    return ConvertToGMPointer(child_node);
 }
@@ -373,7 +373,7 @@ GMFN double RotateSceneNode(double scene_node_ptr, double x, double z, double y,
    if (scene_node == NULL)
       return FALSE;
 
-   scene_node->rotate(Ogre::Vector3(x, y, z), Ogre::Radian(Ogre::Degree(degrees)), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
+   scene_node->rotate(Ogre::Vector3(x, y, z), Ogre::Degree(degrees), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
 
    return TRUE;
 }
@@ -615,7 +615,7 @@ GMFN double AttachSceneNodeToGMInstance(double scene_node_ptr, double gm_instanc
 
    // Snap to current position, orientation, and scale
    scene_node->setPosition(gminst.mLastX, gminst.mLastZ, gminst.mLastY);
-   scene_node->setOrientation(Ogre::Quaternion(Ogre::Radian(Ogre::Degree(ogre_yaw)), Ogre::Vector3::UNIT_Y) * Ogre::Quaternion(Ogre::Radian(Ogre::Degree(gminst.mLastPitch)), Ogre::Vector3::UNIT_X) * Ogre::Quaternion(Ogre::Radian(Ogre::Degree(gminst.mLastRoll)), Ogre::Vector3::UNIT_Z));
+   scene_node->setOrientation(Ogre::Quaternion(Ogre::Degree(ogre_yaw), Ogre::Vector3::UNIT_Y) * Ogre::Quaternion(Ogre::Degree(gminst.mLastPitch), Ogre::Vector3::UNIT_X) * Ogre::Quaternion(Ogre::Degree(gminst.mLastRoll), Ogre::Vector3::UNIT_Z));
    scene_node->setScale(gminst.mLastScaleX, gminst.mLastScaleZ, gminst.mLastScaleY);
 
    return TRUE;

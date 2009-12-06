@@ -78,7 +78,7 @@
 				RandomizedBaseAddress="1"
 				FixedBaseAddress="0"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(TargetDir)$(TargetName).lib"
+				ImportLibrary="../lib/$(TargetName).lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -234,7 +234,7 @@
 				RandomizedBaseAddress="1"
 				FixedBaseAddress="0"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(TargetDir)$(TargetName).lib"
+				ImportLibrary="../lib/$(TargetName).lib"
 				TargetMachine="1"
 			/>
 			<Tool

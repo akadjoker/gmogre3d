@@ -78,7 +78,7 @@
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/RenderSystem_GL_d.lib"
+				ImportLibrary="../../lib/RenderSystem_GL_d.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -174,7 +174,7 @@
 				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/RenderSystem_GL.lib"
+				ImportLibrary="../../lib/RenderSystem_GL.lib"
 				TargetMachine="1"
 			/>
 			<Tool

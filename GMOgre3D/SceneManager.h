@@ -33,20 +33,71 @@ static double scene_mgr_enable;
 
 GMFN double CreateSceneManager(double type)
 {
+   if (mRoot == NULL)
+      return 0;
+
    Ogre::SceneManager *scene_mgr = mRoot->createSceneManager(static_cast<Ogre::SceneType>((int)type), GenerateUniqueName());
-   
+
    // Set our current to the only one that exists
    if (mSceneMgr == NULL)
    {
       mSceneMgr = scene_mgr;
 
-      if (mFrameListener != NULL)
-         mFrameListener->Create2DManager(mSceneMgr);
+      //if (mFrameListener != NULL)
+      //   mFrameListener->Create2DManager(mSceneMgr);
 
-      mCollisionTools.setSceneManager(mSceneMgr);
+      //mCollisionTools.setSceneManager(mSceneMgr);
    }
 
+   GMFrameListener *fl = new GMFrameListener;
+   mRoot->addFrameListener(fl);
+   fl->Create2DManager(mSceneMgr);
+   mSceneListener[scene_mgr] = fl;
+
+   MOC::CollisionTools *ct = new MOC::CollisionTools(scene_mgr);
+   mSceneCollisionMap[scene_mgr] = ct;
+
    return ConvertToGMPointer(scene_mgr);
+}
+
+
+GMFN double DestroySceneManager(double scene_mgr_ptr)
+{
+   Ogre::SceneManager *scene_mgr = ConvertFromGMPointer<Ogre::SceneManager*>(scene_mgr_ptr);
+
+   if (scene_mgr == NULL)
+      return FALSE;
+
+   if (mRoot == NULL)
+      return FALSE;
+
+   // Delete frame listener
+   GMFrameListener *fl = mSceneListener[scene_mgr];
+   mRoot->removeFrameListener(fl);
+   delete fl;
+   mSceneListener.erase(scene_mgr);
+
+   // Delete collision tools
+   MOC::CollisionTools *ct = mSceneCollisionMap[scene_mgr];
+   delete ct;
+   mSceneCollisionMap.erase(scene_mgr);
+
+   mRoot->destroySceneManager(scene_mgr);
+
+   return TRUE;
+}
+
+
+GMFN double SetCurrentSceneManager(double scene_mgr_ptr)
+{
+   Ogre::SceneManager *scene_mgr = ConvertFromGMPointer<Ogre::SceneManager*>(scene_mgr_ptr);
+
+   if (scene_mgr == NULL)
+      return FALSE;
+
+   mSceneMgr = scene_mgr;
+
+   return TRUE;
 }
 
 

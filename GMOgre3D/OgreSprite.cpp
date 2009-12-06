@@ -67,7 +67,7 @@ void OgreSprite::SetPosition(double x, double y)
 
 void OgreSprite::Rotate(double degrees)
 {
-   m_overlay->rotate(Ogre::Radian(Ogre::Degree(degrees)));
+   m_overlay->rotate(Ogre::Degree(degrees));
 }
 
 

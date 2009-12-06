@@ -79,7 +79,7 @@
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/RenderSystem_Direct3D9_d.lib"
+				ImportLibrary="../../lib/RenderSystem_Direct3D9_d.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -175,7 +175,7 @@
 				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/RenderSystem_Direct3D9.lib"
+				ImportLibrary="../../lib/RenderSystem_Direct3D9.lib"
 				TargetMachine="1"
 			/>
 			<Tool

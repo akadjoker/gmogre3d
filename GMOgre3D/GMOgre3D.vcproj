@@ -61,11 +61,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="OgreMain_d.lib Plugin_OctreeSceneManager_d.lib RenderSystem_Direct3D9_d.lib RenderSystem_GL_d.lib Plugin_ParticleFX_d.lib Plugin_CgProgramManager_d.lib gmapi_d.lib"
+				AdditionalDependencies="OgreMain_d.lib Plugin_OctreeSceneManager_d.lib RenderSystem_Direct3D9_d.lib RenderSystem_GL_d.lib Plugin_ParticleFX_d.lib Plugin_CgProgramManager_d.lib PagedGeometryLib_d.lib gmapi_d.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				ImportLibrary="../lib/$(TargetDir)$(TargetName).lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -138,7 +139,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="OgreMainStatic_d.lib Plugin_OctreeSceneManagerStatic_d.lib RenderSystem_Direct3D9Static_d.lib RenderSystem_GLStatic_d.lib Plugin_ParticleFXStatic_d.lib Plugin_CgProgramManagerStatic_d.lib SkyXStatic_d.lib gmapi_d.lib"
+				AdditionalDependencies="OgreMainStatic_d.lib Plugin_OctreeSceneManagerStatic_d.lib RenderSystem_Direct3D9Static_d.lib RenderSystem_GLStatic_d.lib Plugin_ParticleFXStatic_d.lib Plugin_CgProgramManagerStatic_d.lib PagedGeometryLib_d.lib SkyXStatic_d.lib gmapi_d.lib"
 				OutputFile="$(OutDir)\$(ProjectName)Static.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\lib"
@@ -219,13 +220,14 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="OgreMain.lib Plugin_OctreeSceneManager.lib RenderSystem_Direct3D9.lib RenderSystem_GL.lib Plugin_ParticleFX.lib Plugin_CgProgramManager.lib gmapi.lib SkyX.lib"
+				AdditionalDependencies="OgreMain.lib Plugin_OctreeSceneManager.lib RenderSystem_Direct3D9.lib RenderSystem_GL.lib Plugin_ParticleFX.lib Plugin_CgProgramManager.lib PagedGeometryLib.lib gmapi.lib SkyX.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\lib"
 				GenerateDebugInformation="false"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				ImportLibrary="../lib/$(TargetName).lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -306,7 +308,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/LTCG"
-				AdditionalDependencies="OgreMainStatic.lib RenderSystem_GL.lib RenderSystem_Direct3D9.lib Plugin_OctreeSceneManagerStatic.lib Plugin_ParticleFXStatic.lib Plugin_CgProgramManagerStatic.lib SkyXStatic.lib gmapi.lib"
+				AdditionalDependencies="OgreMainStatic.lib PagedGeometryLib.lib RenderSystem_GLStatic.lib RenderSystem_Direct3D9Static.lib Plugin_OctreeSceneManagerStatic.lib Plugin_ParticleFXStatic.lib Plugin_CgProgramManagerStatic.lib SkyXStatic.lib gmapi.lib"
 				OutputFile="$(OutDir)\$(ProjectName)Static.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\lib"
@@ -501,6 +503,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\GrassLayer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\GrassLoader.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Light.h"
 				>
 			</File>
@@ -534,6 +544,10 @@
 			</File>
 			<File
 				RelativePath=".\OverlayElement.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PagedGeometry.h"
 				>
 			</File>
 			<File
@@ -626,6 +640,14 @@
 			</File>
 			<File
 				RelativePath=".\TransformKeyFrame.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TreeLoader2D.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TreeLoader3D.h"
 				>
 			</File>
 			<File

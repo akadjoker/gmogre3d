@@ -60,7 +60,7 @@ GMFN double SetParticleEmitterAngle(double part_emit_ptr, double degrees)
    if (part_emit == NULL)
       return FALSE;
 
-   part_emit->setAngle(Ogre::Radian(Ogre::Degree(degrees)));
+   part_emit->setAngle(Ogre::Degree(degrees));
 
    return TRUE;
 }

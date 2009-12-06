@@ -43,7 +43,8 @@ GMFN double CreateCamera(double aspect, double znear, double zfar, double fov)
    cam->setNearClipDistance(znear);
    cam->setFarClipDistance(zfar);
    cam->setAspectRatio(Ogre::Real(aspect));
-   cam->setFOVy(Ogre::Radian(Ogre::Degree(fov)));
+   cam->setFOVy(Ogre::Degree(fov));
+   cam->setOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(0)), Ogre::Degree(0), Ogre::Degree(0)));
 
    return ConvertToGMPointer(cam);
 }
@@ -76,6 +77,19 @@ GMFN double SetCameraProjection(double camera_ptr, double xfrom, double zfrom, d
    cam->setDirection(xto, yto, zto);
    cam->lookAt(xup, yup, zup);
 
+   return TRUE;
+}
+
+
+GMFN double SetCameraAspect(double camera_ptr, double aspect)
+{
+   Ogre::Camera *cam = ConvertFromGMPointer<Ogre::Camera*>(camera_ptr);
+
+   if (cam == NULL)
+      return FALSE;
+
+   cam->setAspectRatio(Ogre::Real(aspect));
+   
    return TRUE;
 }
 
@@ -257,7 +271,7 @@ GMFN double SetCameraRoll(double camera_ptr, double degrees)
    if (cam == NULL)
       return FALSE;
 
-   cam->roll(Ogre::Radian(Ogre::Degree(degrees)));
+   cam->roll(Ogre::Degree(degrees));
 
    return TRUE;
 }
@@ -283,7 +297,7 @@ GMFN double SetCameraYaw(double camera_ptr, double degrees)
    if (cam == NULL)
       return FALSE;
 
-   cam->yaw(Ogre::Radian(Ogre::Degree(degrees)));
+   cam->yaw(Ogre::Degree(degrees));
 
    return TRUE;
 }
@@ -309,7 +323,7 @@ GMFN double SetCameraPitch(double camera_ptr, double degrees)
    if (cam == NULL)
       return FALSE;
 
-   cam->pitch(Ogre::Radian(Ogre::Degree(degrees)));
+   cam->pitch(Ogre::Degree(degrees));
 
    return TRUE;
 }
@@ -342,7 +356,7 @@ GMFN double SetCameraFOV(double camera_ptr, double angle)
    if (cam == NULL)
       return FALSE;
 
-   cam->setFOVy(Ogre::Radian(Ogre::Degree(angle)));
+   cam->setFOVy(Ogre::Degree(angle));
 
    return TRUE;
 }

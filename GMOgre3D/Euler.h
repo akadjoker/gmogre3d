@@ -29,15 +29,41 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 GMFN double SetEulerDirection(double x, double z, double y)
 {
-   Ogre::Vector3 d(x, y, z);
-   d.normalise();
+   Ogre::Quaternion orientation;
+   Ogre::Vector3 direction(x, y, z);
+   direction.normalise();
 
-   if (mEulerYaw != NULL)
-   {
-      *mEulerYaw = Ogre::Radian(atan2(d.z, d.x) + Ogre::Math::PI / 2.0).valueDegrees();
-      *mEulerPitch = Ogre::Radian(asin(d.y)).valueDegrees();
-   }        
-   
+   // Test for opposite vectors
+   Ogre::Real d = 1.0f + Ogre::Vector3::UNIT_X.dotProduct(direction);
+   if (fabs(d) < 0.00001)
+      orientation.FromAxes(Ogre::Vector3::NEGATIVE_UNIT_X, Ogre::Vector3::UNIT_Y, Ogre::Vector3::NEGATIVE_UNIT_Z);
+   else
+      orientation = Ogre::Vector3::UNIT_X.getRotationTo(direction);
+
+   *mEulerYaw = ConvertToGMYaw(orientation.getYaw().valueDegrees());
+   *mEulerPitch = orientation.getPitch().valueDegrees();
+   //*mEulerRoll = 0.0;
+/*
+
+            // Work out the direction
+            Vector3 direction = fishLastPosition[fish] - newPos;
+            direction.normalise();
+			// Test for opposite vectors
+			Real d = 1.0f + Vector3::UNIT_X.dotProduct(direction);
+			if (fabs(d) < 0.00001)
+			{
+				// Diametrically opposed vectors
+				Quaternion orientation;
+				orientation.FromAxes(Vector3::NEGATIVE_UNIT_X, Vector3::UNIT_Y, Vector3::NEGATIVE_UNIT_Z);
+				fishNodes[fish]->setOrientation(orientation);
+			}
+			else
+			{
+				fishNodes[fish]->setOrientation(
+					Vector3::UNIT_X.getRotationTo(direction));
+			}
+            fishLastPosition[fish] = newPos;
+*/
    return TRUE;
 }
 

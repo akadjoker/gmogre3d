@@ -79,7 +79,7 @@
 				OptimizeForWindows98="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/Plugin_ParticleFX_d.lib"
+				ImportLibrary="../../lib/Plugin_ParticleFX_d.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -177,7 +177,7 @@
 				OptimizeForWindows98="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary=""
+				ImportLibrary="../../lib/Plugin_ParticleFX.lib"
 				TargetMachine="1"
 			/>
 			<Tool

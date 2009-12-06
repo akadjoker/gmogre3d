@@ -32,6 +32,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include <OgreOctreePlugin.h>
 #include <OgreD3D9Plugin.h>
 #include <OgreGLPlugin.h>
+#include <OgreAny.h>
 #include "OgreText.h"
 #include "OgreSprite.h"
 #include "OgreEuler.h"
@@ -93,7 +94,7 @@ Ogre::Camera *mCamera = NULL;
 Ogre::Viewport* mViewPort = NULL;
 Ogre::RenderWindow* mRenderWindow = NULL;
 SkyX::SkyX* mSkyX = NULL;
-GMFrameListener* mFrameListener = NULL;
+//GMFrameListener* mFrameListener = NULL;
 
 gm::CGMAPI *mGMAPI = NULL;
 gm::GMVARIABLE *mVectorX = NULL;
@@ -105,10 +106,16 @@ gm::GMVARIABLE *mEulerRoll = NULL;
 
 Ogre::Material::LodDistanceList mLODLevels;
 Ogre::String mCubeTextureNames[6];
-MOC::CollisionTools mCollisionTools;
+//MOC::CollisionTools mCollisionTools;
 
 typedef std::map<Ogre::SceneNode *, GMInstance> SceneNodeMap;
 SceneNodeMap mSceneNodeGMInstances;
+
+typedef std::map<Ogre::SceneManager *, GMFrameListener*> SceneFrameListenerMap;
+SceneFrameListenerMap mSceneListener;
+
+typedef std::map<Ogre::SceneManager *, MOC::CollisionTools*> SceneCollisionToolsMap;
+SceneCollisionToolsMap mSceneCollisionMap;
 
 
 // Helper functions
@@ -140,6 +147,22 @@ float GetBlueFromGMColor(double color)
    return (float)((((int)color >> 16) & 0xFF)) / 255;
 }
 
+/*
+SetEulerInstance(node, Euler(Ogre::Degree(ConvertFromGMYaw(0)), Ogre::Degree(0), Ogre::Degree(0)));
+node->setOrientation(GetEulerInstance(node));
+
+template<typename T>
+void SetEulerInstance(T ptr, Euler &euler)
+{
+   ptr->setUserAny(Ogre::Any(euler));
+}
+
+template<typename T>
+Euler GetEulerInstance(T ptr)
+{
+   return (Ogre::any_cast<Euler>(ptr->getUserAny()));
+}
+*/
 template<typename T>
 T ConvertFromGMPointer(double ptr)
 {
@@ -175,6 +198,13 @@ Ogre::Real ConvertFromGMYaw(double yaw)
 {
    Ogre::Real ogre_yaw = yaw;
 
+   // We may have passed in values that are greater or less than
+   // the yaw constraints, so wrap these around.
+   if (ogre_yaw >= 360)
+      ogre_yaw -= 360;
+   else if (ogre_yaw < 0)
+      ogre_yaw += 360;
+
    if (ogre_yaw <= 90.0)
       ogre_yaw = abs(ogre_yaw - 90);
    else if (ogre_yaw <= 180.0)
@@ -185,6 +215,20 @@ Ogre::Real ConvertFromGMYaw(double yaw)
       ogre_yaw = 90 + abs(ogre_yaw - 360);
 
    return ogre_yaw;
+}
+
+
+Ogre::Real CalcTerrainHeight(Ogre::Real x, Ogre::Real z, void*)
+{
+   if (mSceneMgr == NULL)
+      return -999999;
+
+   MOC::CollisionTools *ct = mSceneCollisionMap[mSceneMgr];
+
+   if (ct == NULL)
+      return -999999;
+
+   return (Ogre::Real)ct->getTSMHeightAt(x, z);
 }
 
 void DisplayError(Ogre::String error_msg)

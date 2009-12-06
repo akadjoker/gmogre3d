@@ -186,7 +186,7 @@
 				OptimizeForWindows98="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/OgreMain.lib"
+				ImportLibrary="../../lib/OgreMain.lib"
 				TargetMachine="1"
 			/>
 			<Tool

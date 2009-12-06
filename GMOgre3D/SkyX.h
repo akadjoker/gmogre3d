@@ -43,7 +43,10 @@ GMFN double CreateSkyX(double camera_ptr)
          mSkyX = skyx;
 
       // Add our ground atmospheric scattering pass to terrain material
-	   //mSkyX->getGPUManager()->addGroundPass(static_cast<Ogre::MaterialPtr>(Ogre::MaterialManager::getSingleton().getByName("Terrain"))->getTechnique(0)->createPass(), 5000, Ogre::SBT_TRANSPARENT_COLOUR);
+      Ogre::MaterialPtr mat = static_cast<Ogre::MaterialPtr>(Ogre::MaterialManager::getSingleton().getByName("Terrain"));
+
+      if (!mat.isNull())
+	      mSkyX->getGPUManager()->addGroundPass(mat->getTechnique(0)->createPass(), 5000, Ogre::SBT_TRANSPARENT_COLOUR);
    }
    catch(Ogre::Exception& e)
    {

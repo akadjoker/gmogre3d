@@ -176,7 +176,7 @@ GMFN double SetBoneRoll(double bone_ptr, double degrees, double relative_type = 
    if (bone == NULL)
       return FALSE;
 
-   bone->roll(Ogre::Radian(Ogre::Degree(degrees)), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
+   bone->roll(Ogre::Degree(degrees), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
 
    return TRUE;
 }
@@ -202,7 +202,7 @@ GMFN double SetBoneYaw(double bone_ptr, double degrees, double relative_type = 0
    if (bone == NULL)
       return FALSE;
 
-   bone->yaw(Ogre::Radian(Ogre::Degree(degrees)), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
+   bone->yaw(Ogre::Degree(degrees), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
 
    return TRUE;
 }
@@ -228,7 +228,7 @@ GMFN double SetBonePitch(double bone_ptr, double degrees, double relative_type =
    if (bone == NULL)
       return FALSE;
 
-   bone->pitch(Ogre::Radian(Ogre::Degree(degrees)), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
+   bone->pitch(Ogre::Degree(degrees), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
 
    return TRUE;
 }

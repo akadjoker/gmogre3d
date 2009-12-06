@@ -63,6 +63,14 @@ GMFN double DestroyViewport(double viewport_ptr)
 }
 
 
+GMFN double DestroyAllViewports()
+{
+   mRenderWindow->removeAllViewports();
+
+   return TRUE;
+}
+
+
 GMFN double SetViewportBackgroundColor(double viewport_ptr, double color)
 {
    Ogre::Viewport *view = ConvertFromGMPointer<Ogre::Viewport*>(viewport_ptr);
