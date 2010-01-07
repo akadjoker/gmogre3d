@@ -72,6 +72,15 @@ void TreeLoader2D::addTree(Entity *entity, const Vector3 &position, Degree yaw, 
 	Vector3 pos = position;
 	#endif
 
+	//Check that the tree is within bounds (DEBUG)
+	#ifdef _DEBUG
+	const Real smallVal = 0.01f;
+	if (pos.x < actualBounds.left-smallVal || pos.x > actualBounds.right+smallVal || pos.z < actualBounds.top-smallVal || pos.z > actualBounds.bottom+smallVal)
+		OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Tree position is out of bounds", "TreeLoader::addTree()");
+	if (scale < minimumScale || scale > maximumScale)
+		OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Tree scale out of range", "TreeLoader::addTree()");
+	#endif
+
 	//If the tree is slightly out of bounds (due to imprecise coordinate conversion), fix it
 	if (pos.x < actualBounds.left)
 		pos.x = actualBounds.left;
@@ -85,15 +94,6 @@ void TreeLoader2D::addTree(Entity *entity, const Vector3 &position, Degree yaw, 
 
 	Real x = pos.x;
 	Real z = pos.z;
-
-	//Check that the tree is within bounds (DEBUG)
-	#ifdef _DEBUG
-	const Real smallVal = 0.01f;
-	if (pos.x < actualBounds.left-smallVal || pos.x > actualBounds.right+smallVal || pos.z < actualBounds.top-smallVal || pos.z > actualBounds.bottom+smallVal)
-		OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Tree position is out of bounds", "TreeLoader::addTree()");
-	if (scale < minimumScale || scale > maximumScale)
-		OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Tree scale out of range", "TreeLoader::addTree()");
-	#endif
 
 	//Find the appropriate page grid for the entity
 	PageGridListIterator i;
@@ -143,7 +143,7 @@ std::vector<void*>
 #else
 void
 #endif
-TreeLoader2D::deleteTrees(const Ogre::Vector3 &position, Real radius, Entity *type)
+TreeLoader2D::deleteTrees(const Ogre::Vector3 &position, Ogre::Real radius, Entity *type)
 {
 	//First convert the coordinate to PagedGeometry's local system
 #ifdef PAGEDGEOMETRY_ALTERNATE_COORDSYSTEM
@@ -332,6 +332,89 @@ TreeLoader2D::deleteTrees(TBounds area, Ogre::Entity *type)
 }
 
 
+#ifdef PAGEDGEOMETRY_USER_DATA
+std::vector<void*> TreeLoader2D::findTrees(const Ogre::Vector3 &position, Real radius, Entity *type)
+{
+	//First convert the coordinate to PagedGeometry's local system
+#ifdef PAGEDGEOMETRY_ALTERNATE_COORDSYSTEM
+	Vector3 pos = geom->_convertToLocal(position);
+#else
+	Vector3 pos = position;
+#endif
+
+	//Keep a list of user-defined data associated with deleted trees
+	std::vector<void*> foundUserData;
+
+
+	//If the position is slightly out of bounds, fix it
+	if (pos.x < actualBounds.left)
+		pos.x = actualBounds.left;
+	else if (pos.x > actualBounds.right)
+		pos.x = actualBounds.right;
+
+	if (pos.z < actualBounds.top)
+		pos.z = actualBounds.top;
+	else if (pos.x > actualBounds.bottom)
+		pos.z = actualBounds.bottom;
+
+	//Determine the grid blocks which might contain the requested trees
+	int minPageX = Math::Floor(((pos.x-radius) - gridBounds.left) / pageSize);
+	int minPageZ = Math::Floor(((pos.z-radius) - gridBounds.top) / pageSize);
+	int maxPageX = Math::Floor(((pos.x+radius) - gridBounds.left) / pageSize);
+	int maxPageZ = Math::Floor(((pos.z+radius) - gridBounds.top) / pageSize);
+	Real radiusSq = radius * radius;
+
+	if (minPageX < 0) minPageX = 0; else if (minPageX >= pageGridX) minPageX = pageGridX-1;
+	if (minPageZ < 0) minPageZ = 0; else if (minPageZ >= pageGridZ) minPageZ = pageGridZ-1;
+	if (maxPageX < 0) maxPageX = 0; else if (maxPageX >= pageGridX) maxPageX = pageGridX-1;
+	if (maxPageZ < 0) maxPageZ = 0; else if (maxPageZ >= pageGridZ) maxPageZ = pageGridZ-1;
+
+	PageGridListIterator it, end;
+	if (type == NULL){
+		//Scan all entity types
+		it = pageGridList.begin();
+		end = pageGridList.end();
+	} else {
+		//Only scan entities of the given type
+		it = pageGridList.find(type);
+		assert(it != pageGridList.end());
+		end = it; ++end;
+	}
+
+	//Scan all the grid blocks
+	while (it != end){
+		std::vector<TreeDef> *pageGrid = it->second;
+
+		for (int tileZ = minPageZ; tileZ <= maxPageZ; ++tileZ){
+			for (int tileX = minPageX; tileX <= maxPageX; ++tileX){
+				bool modified = false;
+
+				//Scan all trees in grid block
+				std::vector<TreeDef> &treeList = _getGridPage(pageGrid, tileX, tileZ);
+				uint32 i = 0;
+				while (i < treeList.size()){
+					//Get tree distance
+					float distX = (gridBounds.left + (tileX * pageSize) + ((Real)treeList[i].xPos / 65535) * pageSize) - pos.x;
+					float distZ = (gridBounds.top + (tileZ * pageSize) + ((Real)treeList[i].zPos / 65535) * pageSize) - pos.z;
+					float distSq = distX * distX + distZ * distZ;
+
+					if (distSq <= radiusSq){
+						foundUserData.push_back(treeList[i].userData);
+					}
+					else
+						++i;
+				}
+			}
+		}
+
+		++it;
+	}
+
+	return foundUserData;
+}
+#endif
+
+
 void TreeLoader2D::setColorMap(const Ogre::String &mapFile, MapChannel channel)
 {
 	if (colorMap){
@@ -340,20 +423,18 @@ void TreeLoader2D::setColorMap(const Ogre::String &mapFile, MapChannel channel)
 	}
 	if (mapFile != ""){
 		colorMap = ColorMap::load(mapFile, channel);
-		colorMap->setMapBounds(actualBounds);
 		colorMap->setFilter(colorMapFilter);
 	}
 }
 
-void TreeLoader2D::setColorMap(Ogre::Texture *map, MapChannel channel)
+void TreeLoader2D::setColorMap(Ogre::TexturePtr map, MapChannel channel)
 {
 	if (colorMap){
 		colorMap->unload();
 		colorMap = NULL;
 	}
-	if (map){
+	if (map.isNull() == false){
 		colorMap = ColorMap::load(map, channel);
-		colorMap->setMapBounds(actualBounds);
 		colorMap->setFilter(colorMapFilter);
 	}
 }
@@ -403,7 +484,7 @@ void TreeLoader2D::loadPage(PageInfo &page)
 			//Get color
 			ColourValue color;
 			if (colorMap)
-				color = colorMap->getColorAt_Unpacked(pos.x, pos.z);
+				color = colorMap->getColorAt_Unpacked(pos.x, pos.z, actualBounds);
 			else
 				color = ColourValue::White;
 
@@ -422,6 +503,13 @@ TreeIterator2D TreeLoader2D::getTrees()
 TreeIterator2D::TreeIterator2D(TreeLoader2D *trees)
 {
 	TreeIterator2D::trees = trees;
+
+	//Test if the GridList has anything in it
+	if (trees->pageGridList.empty()) {
+		// If not, set hasMore to false and return.
+		hasMore = false;
+		return;
+	}
 
 	//Setup iterators
 	currentGrid = trees->pageGridList.begin();

@@ -3,9 +3,9 @@ Copyright (c) 2006 John Judnich
 
 This software is provided 'as-is', without any express or implied warranty. In no event will the authors be held liable for any damages arising from the use of this software.
 Permission is granted to anyone to use this software for any purpose, including commercial applications, and to alter it and redistribute it freely, subject to the following restrictions:
-    1. The origin of this software must not be misrepresented; you must not claim that you wrote the original software. If you use this software in a product, an acknowledgment in the product documentation would be appreciated but is not required.
-    2. Altered source versions must be plainly marked as such, and must not be misrepresented as being the original software.
-    3. This notice may not be removed or altered from any source distribution.
+	1. The origin of this software must not be misrepresented; you must not claim that you wrote the original software. If you use this software in a product, an acknowledgment in the product documentation would be appreciated but is not required.
+	2. Altered source versions must be plainly marked as such, and must not be misrepresented as being the original software.
+	3. This notice may not be removed or altered from any source distribution.
 -------------------------------------------------------------------------------------*/
 
 #include "GrassLoader.h"
@@ -54,6 +54,7 @@ GrassLoader::GrassLoader(PagedGeometry *geom)
 
 	windTimer.reset();
 	lastTime = 0;
+	autoEdgeBuildEnabled=true;
 }
 
 GrassLoader::~GrassLoader()
@@ -120,10 +121,6 @@ void GrassLoader::loadPage(PageInfo &page)
 	uint32 seed = (xSeed << 16) | zSeed;
 	srand(seed);
 
-	//Keep a list of a generated meshes
-	std::vector<Mesh*> *meshList = new std::vector<Mesh*>();
-	page.userData = (void*)meshList;
-
 	//Generate meshes
 	std::list<GrassLayer*>::iterator it;
 	for (it = layerList.begin(); it != layerList.end(); ++it){
@@ -172,7 +169,7 @@ void GrassLoader::loadPage(PageInfo &page)
 			geom->getSceneManager()->destroyEntity(entity);
 
 			//Store the mesh pointer
-			meshList->push_back(mesh);
+			page.meshList.push_back(mesh);
 		}
 
 		//Delete the position list
@@ -180,17 +177,17 @@ void GrassLoader::loadPage(PageInfo &page)
 	}
 }
 
-void GrassLoader::unloadPage(const PageInfo &page)
+void GrassLoader::unloadPage(PageInfo &page)
 {
 	//Unload meshes
-	std::vector<Mesh*> *meshList = (std::vector<Mesh*>*)page.userData;
-	std::vector<Mesh*>::iterator i;
-	for (i = meshList->begin(); i != meshList->end(); ++i) {
+	std::vector<Mesh*>::const_iterator i;
+	std::vector<Mesh*>::const_iterator iter_end = page.meshList.end();
+	for (i = page.meshList.begin(); i != iter_end; ++i)
+	{
 		Mesh *mesh = *i;
 		MeshManager::getSingleton().remove(mesh->getName());
 	}
-	meshList->clear();
-	delete meshList;
+	page.meshList.clear();
 }
 
 Mesh *GrassLoader::generateGrass_QUAD(PageInfo &page, GrassLayer *layer, float *grassPositions, unsigned int grassCount)
@@ -238,7 +235,7 @@ Mesh *GrassLoader::generateGrass_QUAD(PageInfo &page, GrassLayer *layer, float *
 		//Get the color at the grass position
 		uint32 color;
 		if (layer->colorMap)
-			color = layer->colorMap->getColorAt(x, z);
+			color = layer->colorMap->getColorAt(x, z, layer->mapBounds);
 		else
 			color = 0xFFFFFFFF;
 
@@ -260,6 +257,13 @@ Mesh *GrassLoader::generateGrass_QUAD(PageInfo &page, GrassLayer *layer, float *
 		if (heightFunction){
 			y1 = heightFunction(x1, z1, heightFunctionUserData);
 			y2 = heightFunction(x2, z2, heightFunctionUserData);
+			
+			if (layer->getMaxSlope() < (Math::Abs(y1 - y2) / (halfScaleX * 2))) {
+				//Degenerate the face
+				x2 = x1;
+				y2 = y1;
+				z2 = z1;
+			}
 		} else {
 			y1 = 0;
 			y2 = 0;
@@ -312,6 +316,7 @@ Mesh *GrassLoader::generateGrass_QUAD(PageInfo &page, GrassLayer *layer, float *
 	}
 
 	subMesh->indexData->indexBuffer->unlock();
+	//subMesh->setBuildEdgesEnabled(autoEdgeBuildEnabled);
 
 	//Finish up mesh
 	AxisAlignedBox bounds(page.bounds.left - page.centerPoint.x, minY, page.bounds.top - page.centerPoint.z,
@@ -321,6 +326,7 @@ Mesh *GrassLoader::generateGrass_QUAD(PageInfo &page, GrassLayer *layer, float *
 	mesh->_setBoundingSphereRadius(temp.length() * 0.5f);
 
 	LogManager::getSingleton().setLogDetail(static_cast<LoggingLevel>(0));
+	mesh->setAutoBuildEdgeLists(autoEdgeBuildEnabled);
 	mesh->load();
 	LogManager::getSingleton().setLogDetail(LL_NORMAL);
 
@@ -376,7 +382,7 @@ Mesh *GrassLoader::generateGrass_CROSSQUADS(PageInfo &page, GrassLayer *layer, f
 		//Get the color at the grass position
 		uint32 color;
 		if (layer->colorMap)
-			color = layer->colorMap->getColorAt(x, z);
+			color = layer->colorMap->getColorAt(x, z, layer->mapBounds);
 		else
 			color = 0xFFFFFFFF;
 
@@ -398,6 +404,13 @@ Mesh *GrassLoader::generateGrass_CROSSQUADS(PageInfo &page, GrassLayer *layer, f
 		if (heightFunction){
 			y1 = heightFunction(x1, z1, heightFunctionUserData);
 			y2 = heightFunction(x2, z2, heightFunctionUserData);
+
+			if (layer->getMaxSlope() < (Math::Abs(y1 - y2) / (halfScaleX * 2))) {
+				//Degenerate the face
+				x2 = x1;
+				y2 = y1;
+				z2 = z1;
+			}
 		} else {
 			y1 = 0;
 			y2 = 0;
@@ -432,6 +445,13 @@ Mesh *GrassLoader::generateGrass_CROSSQUADS(PageInfo &page, GrassLayer *layer, f
 
 		float y3, y4;
 		if (heightFunction){
+			if (layer->getMaxSlope() < (Math::Abs(y1 - y2) / (halfScaleX * 2))) {
+				//Degenerate the face
+				x2 = x1;
+				y2 = y1;
+				z2 = z1;
+			}
+
 			y3 = heightFunction(x3, z3, heightFunctionUserData);
 			y4 = heightFunction(x4, z4, heightFunctionUserData);
 		} else {
@@ -486,6 +506,8 @@ Mesh *GrassLoader::generateGrass_CROSSQUADS(PageInfo &page, GrassLayer *layer, f
 	}
 
 	subMesh->indexData->indexBuffer->unlock();
+	//subMesh->setBuildEdgesEnabled(autoEdgeBuildEnabled);
+
 
 	//Finish up mesh
 	AxisAlignedBox bounds(page.bounds.left - page.centerPoint.x, minY, page.bounds.top - page.centerPoint.z,
@@ -495,6 +517,7 @@ Mesh *GrassLoader::generateGrass_CROSSQUADS(PageInfo &page, GrassLayer *layer, f
 	mesh->_setBoundingSphereRadius(temp.length() * 0.5f);
 
 	LogManager::getSingleton().setLogDetail(static_cast<LoggingLevel>(0));
+	mesh->setAutoBuildEdgeLists(autoEdgeBuildEnabled);
 	mesh->load();
 	LogManager::getSingleton().setLogDetail(LL_NORMAL);
 
@@ -563,7 +586,7 @@ Mesh *GrassLoader::generateGrass_SPRITE(PageInfo &page, GrassLayer *layer, float
 		//Get the color at the grass position
 		uint32 color;
 		if (layer->colorMap)
-			color = layer->colorMap->getColorAt(x, z);
+			color = layer->colorMap->getColorAt(x, z, layer->mapBounds);
 		else
 			color = 0xFFFFFFFF;
 
@@ -631,6 +654,8 @@ Mesh *GrassLoader::generateGrass_SPRITE(PageInfo &page, GrassLayer *layer, float
 	}
 
 	subMesh->indexData->indexBuffer->unlock();
+	//subMesh->setBuildEdgesEnabled(autoEdgeBuildEnabled);
+
 
 	//Finish up mesh
 	AxisAlignedBox bounds(page.bounds.left - page.centerPoint.x, minY, page.bounds.top - page.centerPoint.z,
@@ -640,6 +665,7 @@ Mesh *GrassLoader::generateGrass_SPRITE(PageInfo &page, GrassLayer *layer, float
 	mesh->_setBoundingSphereRadius(temp.length() * 0.5f);
 
 	LogManager::getSingleton().setLogDetail(static_cast<LoggingLevel>(0));
+	mesh->setAutoBuildEdgeLists(autoEdgeBuildEnabled);
 	mesh->load();
 	LogManager::getSingleton().setLogDetail(LL_NORMAL);
 
@@ -659,6 +685,7 @@ GrassLayer::GrassLayer(PagedGeometry *geom, GrassLoader *ldr)
 	minWidth = 1.0f; maxWidth = 1.0f;
 	minHeight = 1.0f; maxHeight = 1.0f;
 	minY = 0; maxY = 0;
+	maxSlope = 1000;
 	renderTechnique = GRASSTECH_QUAD;
 	fadeTechnique = FADETECH_ALPHA;
 	animMag = 1.0f;
@@ -667,6 +694,7 @@ GrassLayer::GrassLayer(PagedGeometry *geom, GrassLoader *ldr)
 	waveCount = 0.0f;
 	animate = false;
 	blend = false;
+	lighting = false;
 	shaderNeedsUpdate = true;
 
 	densityMap = NULL;
@@ -733,6 +761,11 @@ void GrassLayer::setAnimationEnabled(bool enabled)
 	}
 }
 
+void GrassLayer::setLightingEnabled(bool enabled)
+{
+	lighting = enabled;
+}
+
 void GrassLayer::setDensityMap(const String &mapFile, MapChannel channel)
 {
 	if (densityMap){
@@ -741,19 +774,17 @@ void GrassLayer::setDensityMap(const String &mapFile, MapChannel channel)
 	}
 	if (mapFile != ""){
 		densityMap = DensityMap::load(mapFile, channel);
-		densityMap->setMapBounds(mapBounds);
 		densityMap->setFilter(densityMapFilter);
 	}
 }
-void GrassLayer::setDensityMap(Texture *map, MapChannel channel)
+void GrassLayer::setDensityMap(TexturePtr map, MapChannel channel)
 {
 	if (densityMap){
 		densityMap->unload();
 		densityMap = NULL;
 	}
-	if (map){
+	if (map.isNull() == false){
 		densityMap = DensityMap::load(map, channel);
-		densityMap->setMapBounds(mapBounds);
 		densityMap->setFilter(densityMapFilter);
 	}
 }
@@ -832,7 +863,7 @@ unsigned int GrassLayer::_populateGrassList_UnfilteredDM(PageInfo page, float *p
 
 			//Determine whether this grass will be added based on the local density.
 			//For example, if localDensity is .32, grasses will be added 32% of the time.
-			if (Math::UnitRandom() < densityMap->_getDensityAt_Unfiltered(x, z)){
+			if (Math::UnitRandom() < densityMap->_getDensityAt_Unfiltered(x, z, mapBounds)){
 				//Add to list
 				*posPtr++ = x;
 				*posPtr++ = z;
@@ -851,7 +882,7 @@ unsigned int GrassLayer::_populateGrassList_UnfilteredDM(PageInfo page, float *p
 
 			//Determine whether this grass will be added based on the local density.
 			//For example, if localDensity is .32, grasses will be added 32% of the time.
-			if (Math::UnitRandom() < densityMap->_getDensityAt_Unfiltered(x, z)){
+			if (Math::UnitRandom() < densityMap->_getDensityAt_Unfiltered(x, z, mapBounds)){
 				//Calculate height
 				float y = parent->heightFunction(x, z, parent->heightFunctionUserData);
 
@@ -882,7 +913,7 @@ unsigned int GrassLayer::_populateGrassList_BilinearDM(PageInfo page, float *pos
 
 			//Determine whether this grass will be added based on the local density.
 			//For example, if localDensity is .32, grasses will be added 32% of the time.
-			if (Math::UnitRandom() < densityMap->_getDensityAt_Bilinear(x, z)){
+			if (Math::UnitRandom() < densityMap->_getDensityAt_Bilinear(x, z, mapBounds)){
 				//Add to list
 				*posPtr++ = x;
 				*posPtr++ = z;
@@ -901,7 +932,7 @@ unsigned int GrassLayer::_populateGrassList_BilinearDM(PageInfo page, float *pos
 
 			//Determine whether this grass will be added based on the local density.
 			//For example, if localDensity is .32, grasses will be added 32% of the time.
-			if (Math::UnitRandom() < densityMap->_getDensityAt_Bilinear(x, z)){
+			if (Math::UnitRandom() < densityMap->_getDensityAt_Bilinear(x, z, mapBounds)){
 				//Calculate height
 				float y = parent->heightFunction(x, z, parent->heightFunctionUserData);
 
@@ -927,20 +958,18 @@ void GrassLayer::setColorMap(const String &mapFile, MapChannel channel)
 	}
 	if (mapFile != ""){
 		colorMap = ColorMap::load(mapFile, channel);
-		colorMap->setMapBounds(mapBounds);
 		colorMap->setFilter(colorMapFilter);
 	}
 }
 
-void GrassLayer::setColorMap(Texture *map, MapChannel channel)
+void GrassLayer::setColorMap(TexturePtr map, MapChannel channel)
 {
 	if (colorMap){
 		colorMap->unload();
 		colorMap = NULL;
 	}
-	if (map){
+	if (map.isNull() == false){
 		colorMap = ColorMap::load(map, channel);
-		colorMap->setMapBounds(mapBounds);
 		colorMap->setFilter(colorMapFilter);
 	}
 }
@@ -959,7 +988,15 @@ void GrassLayer::_updateShaders()
 
 		//Proceed only if there is no custom vertex shader and the user's computer supports vertex shaders
 		const RenderSystemCapabilities *caps = Root::getSingleton().getRenderSystem()->getCapabilities();
-		if (caps->hasCapability(RSC_VERTEX_PROGRAM)){
+		if (caps->hasCapability(RSC_VERTEX_PROGRAM) && geom->getShadersEnabled())
+		{
+			//Calculate fade range
+			float farViewDist = geom->getDetailLevels().front()->getFarRange();
+			float fadeRange = farViewDist / 1.2247449f;
+			//Note: 1.2247449 ~= sqrt(1.5), which is necessary since the far view distance is measured from the centers
+			//of pages, while the vertex shader needs to fade grass completely out (including the closest corner)
+			//before the page center is out of range.
+
 			//Generate a string ID that identifies the current set of vertex shader options
 			StringUtil::StrStreamType tmpName;
 			tmpName << "GrassVS_";
@@ -967,10 +1004,13 @@ void GrassLayer::_updateShaders()
 				tmpName << "anim_";
 			if (blend)
 				tmpName << "blend_";
+			if (lighting)
+				tmpName << "lighting_";
 			tmpName << renderTechnique << "_";
 			tmpName << fadeTechnique << "_";
 			if (fadeTechnique == FADETECH_GROW || fadeTechnique == FADETECH_ALPHAGROW)
 				tmpName << maxHeight << "_";
+			tmpName << farViewDist << "_";
 			tmpName << "vp";
 			const String vsName = tmpName.str();
 			
@@ -979,7 +1019,8 @@ void GrassLayer::_updateShaders()
 
 			//Check if the desired material already exists (if not, create it)
 			MaterialPtr tmpMat = MaterialManager::getSingleton().getByName(matName);
-			if (tmpMat.isNull()){
+			if (tmpMat.isNull())
+			{
 				//Clone the original material
 				tmpMat = material->clone(matName);
 
@@ -988,91 +1029,246 @@ void GrassLayer::_updateShaders()
 				//tmpMat->setReceiveShadows(false);
 
 				//Check if the desired shader already exists (if not, compile it)
+				String shaderLanguage;
 				HighLevelGpuProgramPtr vertexShader = HighLevelGpuProgramManager::getSingleton().getByName(vsName);
-				if (vertexShader.isNull()){
+				if (vertexShader.isNull())
+				{
+					if (Root::getSingleton().getRenderSystem()->getName() == "Direct3D9 Rendering Subsystem")
+						shaderLanguage = "hlsl";
+					else if(Root::getSingleton().getRenderSystem()->getName() == "OpenGL Rendering Subsystem")
+						shaderLanguage = "glsl";
+					else
+						shaderLanguage = "cg";
+                    
 					//Generate the grass shader
 					String vertexProgSource;
-					vertexProgSource = 
-						"void main( \n"
-						"	float4 iPosition : POSITION, \n"
-						"	float4 iColor : COLOR, \n"
-						"	float2 iUV       : TEXCOORD0,	\n"
-						"	out float4 oPosition : POSITION, \n"
-						"	out float4 oColor : COLOR, \n"
-						"	out float2 oUV       : TEXCOORD0,	\n";
+					
+					if(!shaderLanguage.compare("hlsl") || !shaderLanguage.compare("cg"))
+					{
 
-					if (animate) vertexProgSource +=
-						"	uniform float time,	\n"
-						"	uniform float frequency,	\n"
-						"	uniform float4 direction,	\n";
+						vertexProgSource = 
+							"void main( \n"
+							"	float4 iPosition : POSITION, \n"
+							"	float4 iColor : COLOR, \n"
+							"	float2 iUV       : TEXCOORD0,	\n"
+							"	out float4 oPosition : POSITION, \n"
+							"	out float4 oColor : COLOR, \n"
+							"	out float2 oUV       : TEXCOORD0,	\n";
 
-					if (fadeTechnique == FADETECH_GROW || fadeTechnique == FADETECH_ALPHAGROW) vertexProgSource +=
-						"	uniform float grassHeight,	\n";
+						if (lighting) vertexProgSource += 
+							"   uniform float4   objSpaceLight,   \n"
+							"   uniform float4   lightDiffuse,   \n"
+							"   uniform float4   lightAmbient,   \n";
 
-					if (renderTechnique == GRASSTECH_SPRITE) vertexProgSource +=
-						"	float4 iNormal : NORMAL, \n";
+						if (animate) vertexProgSource +=
+							"	uniform float time,	\n"
+							"	uniform float frequency,	\n"
+							"	uniform float4 direction,	\n";
 
-					vertexProgSource +=
-						"	uniform float4x4 worldViewProj,	\n"
-						"	uniform float3 camPos, \n"
-						"	uniform float fadeRange ) \n"
-						"{	\n"
-						"	oColor.rgb = iColor.rgb;   \n"
-						"	float4 position = iPosition;	\n"
-						"	float dist = distance(camPos.xz, position.xz);	\n";
+						if (fadeTechnique == FADETECH_GROW || fadeTechnique == FADETECH_ALPHAGROW) vertexProgSource +=
+							"	uniform float grassHeight,	\n";
 
-					if (fadeTechnique == FADETECH_ALPHA || fadeTechnique == FADETECH_ALPHAGROW) vertexProgSource +=
-						//Fade out in the distance
-						"	oColor.a = 2.0f - (2.0f * dist / fadeRange);   \n";
-					else vertexProgSource +=
-						"	oColor.a = 1.0f;   \n";
+						if (renderTechnique == GRASSTECH_SPRITE || lighting) vertexProgSource += 
+							"   float4 iNormal : NORMAL, \n";
 
-					vertexProgSource +=
-						"	float oldposx = position.x;	\n";
+						vertexProgSource +=
+							"	uniform float4x4 worldViewProj,	\n"
+							"	uniform float3 camPos, \n"
+							"	uniform float fadeRange ) \n"
+							"{	\n"
+							"	oColor.rgb = iColor.rgb;   \n"
+							"	float4 position = iPosition;	\n"
+							"	float dist = distance(camPos.xz, position.xz);	\n";
+                        
+						if (lighting)
+						{
+							vertexProgSource +=
+							"   float3 light = normalize(objSpaceLight.xyz - (iPosition.xyz * objSpaceLight.w)); \n"
+							"   float diffuseFactor = max(dot(float4(0,1,0,0), light), 0); \n"
+							"   oColor = (lightAmbient + diffuseFactor * lightDiffuse) * iColor; \n";
+						}
+						else
+						{
+							vertexProgSource +=
+							"   oColor.rgb = iColor.rgb;               \n";
+						}
+     
+						if (fadeTechnique == FADETECH_ALPHA || fadeTechnique == FADETECH_ALPHAGROW) vertexProgSource +=
+							//Fade out in the distance
+							"	oColor.a = 2.0f - (2.0f * dist / fadeRange);   \n";
+						else vertexProgSource +=
+							"	oColor.a = 1.0f;   \n";
 
-					if (renderTechnique == GRASSTECH_SPRITE) vertexProgSource +=
-						//Face the camera
-						"	float3 dirVec = (float3)position - (float3)camPos;		\n"
-						"	float3 p = normalize(cross(float4(0,1,0,0), dirVec));	\n"
-						"	position += float4(p.x * iNormal.x, iNormal.y, p.z * iNormal.x, 0);	\n";
+						vertexProgSource +=
+							"	float oldposx = position.x;	\n";
 
-					if (animate) vertexProgSource +=
-						"	if (iUV.y == 0.0f){	\n"
-						//Wave grass in breeze
-						"		float offset = sin(time + oldposx * frequency);	\n"
-						"		position += direction * offset;	\n"
-						"	}	\n";
+						if (renderTechnique == GRASSTECH_SPRITE) vertexProgSource +=
+							//Face the camera
+							"	float3 dirVec = (float3)position - (float3)camPos;		\n"
+							"	float3 p = normalize(cross(float4(0,1,0,0), dirVec));	\n"
+							"	position += float4(p.x * iNormal.x, iNormal.y, p.z * iNormal.x, 0);	\n";
 
-					if (blend && animate) vertexProgSource +=
-						"	else {	\n";
-					else if (blend) vertexProgSource +=
-						"	if (iUV.y != 0.0f){	\n";
+						if (animate) vertexProgSource +=
+							"	if (iUV.y == 0.0f){	\n"
+							//Wave grass in breeze
+							"		float offset = sin(time + oldposx * frequency);	\n"
+							"		position += direction * offset;	\n"
+							"	}	\n";
 
-					if (blend) vertexProgSource +=
-						//Blend the base of nearby grass into the terrain
-						"		if (oColor.a >= 1.0f) \n"
-						"			oColor.a = 4.0f * ((dist / fadeRange) - 0.1f);	\n"
-						"	}	\n";
+						if (blend && animate) vertexProgSource +=
+							"	else {	\n";
+						else if (blend) vertexProgSource +=
+							"	if (iUV.y != 0.0f){	\n";
 
-					if (fadeTechnique == FADETECH_GROW || fadeTechnique == FADETECH_ALPHAGROW) vertexProgSource +=
-						"	float offset = (2.0f * dist / fadeRange) - 1.0f; \n"
-						"	position.y -= grassHeight * clamp(offset, 0, 1); ";
+						if (blend) vertexProgSource +=
+							//Blend the base of nearby grass into the terrain
+							"		oColor.a = clamp(oColor.a, 0, 1) * 4.0f * ((dist / fadeRange) - 0.1f);	\n"
+							"	}	\n";
 
-					vertexProgSource +=
-						"	oPosition = mul(worldViewProj, position);  \n";
+						if (fadeTechnique == FADETECH_GROW || fadeTechnique == FADETECH_ALPHAGROW) vertexProgSource +=
+							"	float offset = (2.0f * dist / fadeRange) - 1.0f; \n"
+							"	position.y -= grassHeight * clamp(offset, 0, 1); ";
 
-					vertexProgSource +=
-						"	oUV = iUV;\n"
-						"}"; 
+						vertexProgSource +=
+							"	oPosition = mul(worldViewProj, position);  \n";
+
+						vertexProgSource +=
+							"	oUV = iUV;\n"
+							"}";
+					}
+					else
+					{
+						//Must be glsl
+						if (lighting)
+						{
+							vertexProgSource = 
+							"uniform vec4 objSpaceLight; \n"
+							"uniform vec4 lightDiffuse; \n"
+							"uniform vec4 lightAmbient; \n";
+						}
+
+						if (animate)
+						{
+							vertexProgSource +=
+							"uniform float time; \n"
+							"uniform float frequency; \n"
+							"uniform vec4 direction; \n";
+						}
+
+						if (fadeTechnique == FADETECH_GROW || fadeTechnique == FADETECH_ALPHAGROW)
+						{
+							vertexProgSource +=
+							"uniform float grassHeight;	\n";
+						}
+
+						vertexProgSource +=
+							"uniform vec3 camPos; \n"
+							"uniform float fadeRange; \n"
+							"\n"
+							"void main()"
+							"{ \n"
+							"    vec4 color = gl_Color; \n"
+							"    vec4 position = gl_Vertex;	\n"
+							"    float dist = distance(camPos.xz, position.xz);	\n";
+
+						if (lighting)
+						{
+							vertexProgSource +=
+							"    vec3 light = normalize(objSpaceLight.xyz - (gl_Vertex.xyz * objSpaceLight.w)); \n"
+							"    float diffuseFactor = max( dot( vec3(0.0,1.0,0.0), light), 0.0); \n"
+							"    color = (lightAmbient + diffuseFactor * lightDiffuse) * gl_Color; \n";
+						}
+						else
+						{
+							vertexProgSource +=
+							"    color.xyz = gl_Color.xyz; \n";
+						}
+
+						if (fadeTechnique == FADETECH_ALPHA || fadeTechnique == FADETECH_ALPHAGROW)
+						{
+							vertexProgSource +=
+							//Fade out in the distance
+							"    color.w = 2.0 - (2.0 * dist / fadeRange); \n";
+						}
+						else
+						{
+							vertexProgSource +=
+							"    color.w = 1.0; \n";
+						}
+
+						if (renderTechnique == GRASSTECH_SPRITE)
+						{
+							vertexProgSource +=
+							//Face the camera
+							"    vec3 dirVec = position.xyz - camPos.xyz; \n"
+							"    vec3 p = normalize(cross(vec3(0.0,1.0,0.0), dirVec)); \n"
+							"    position += vec4(p.x * gl_Normal.x, gl_Normal.y, p.z * gl_Normal.x, 0.0); \n";
+						}
+
+						if (animate)
+						{
+							vertexProgSource +=
+							"    if (gl_MultiTexCoord0.y == 0.0) \n"
+							"    { \n"
+							//Wave grass in breeze
+							"        position += direction * sin(time + gl_Vertex.x * frequency); \n"
+							"    } \n";
+						}
+
+						if (blend && animate)
+						{
+							vertexProgSource +=
+							"    else \n"
+							"    { \n";
+						}
+						else if (blend)
+						{
+							vertexProgSource +=
+							"    if (gl_MultiTexCoord0.y != 0.0) \n"
+							"    { \n";
+						}
+
+						if (blend)
+						{
+							vertexProgSource +=
+							//Blend the base of nearby grass into the terrain
+							"        color.w = clamp(color.w, 0.0, 1.0) * 4.0 * ((dist / fadeRange) - 0.1); \n"
+							"    } \n";
+						}
+
+						if (fadeTechnique == FADETECH_GROW || fadeTechnique == FADETECH_ALPHAGROW)
+						{
+							vertexProgSource +=
+							"    position.y -= grassHeight * clamp((2.0 * dist / fadeRange) - 1.0, 0.0, 1.0); \n";
+						}
+
+						vertexProgSource +=
+						"    gl_Position = gl_ModelViewProjectionMatrix * position; \n"
+						"    gl_FrontColor = color; \n"
+						"    gl_TexCoord[0] = gl_MultiTexCoord0; \n"
+						"    gl_FogFragCoord = gl_Position.z; \n"
+						"}";
+					}
 
 					vertexShader = HighLevelGpuProgramManager::getSingleton().createProgram(
 						vsName,
 						ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-						"cg", GPT_VERTEX_PROGRAM);
+						shaderLanguage, GPT_VERTEX_PROGRAM);
 
 					vertexShader->setSource(vertexProgSource);
-					vertexShader->setParameter("profiles", "vs_1_1 arbvp1");
-					vertexShader->setParameter("entry_point", "main");
+
+					if (shaderLanguage == "hlsl")
+					{
+						vertexShader->setParameter("target", "vs_1_1");
+						vertexShader->setParameter("entry_point", "main");
+					}
+					else if(shaderLanguage == "cg")
+					{
+						vertexShader->setParameter("profiles", "vs_1_1 arbvp1");
+						vertexShader->setParameter("entry_point", "main");
+					}
+					// GLSL can only have one entry point "main".
+
 					vertexShader->load();
 				}
 				//Now the vertex shader (vertexShader) has either been found or just generated
@@ -1083,7 +1279,9 @@ void GrassLayer::_updateShaders()
 				pass->setVertexProgram(vsName);
 				GpuProgramParametersSharedPtr params = pass->getVertexProgramParameters();
 
-				params->setNamedAutoConstant("worldViewProj", GpuProgramParameters::ACT_WORLDVIEWPROJ_MATRIX);
+				if(shaderLanguage.compare("glsl"))
+					//glsl can use the built in gl_ModelViewProjectionMatrix
+					params->setNamedAutoConstant("worldViewProj", GpuProgramParameters::ACT_WORLDVIEWPROJ_MATRIX);
 				params->setNamedAutoConstant("camPos", GpuProgramParameters::ACT_CAMERA_POSITION_OBJECT_SPACE);
 				params->setNamedAutoConstant("fadeRange", GpuProgramParameters::ACT_CUSTOM, 1);
 
@@ -1092,17 +1290,19 @@ void GrassLayer::_updateShaders()
 					params->setNamedAutoConstant("frequency", GpuProgramParameters::ACT_CUSTOM, 1);
 					params->setNamedAutoConstant("direction", GpuProgramParameters::ACT_CUSTOM, 4);
 				}
-
+                
+				if (lighting){
+					params->setNamedAutoConstant("objSpaceLight", GpuProgramParameters::ACT_LIGHT_POSITION_OBJECT_SPACE);
+					params->setNamedAutoConstant("lightDiffuse", GpuProgramParameters::ACT_DERIVED_LIGHT_DIFFUSE_COLOUR);
+					params->setNamedAutoConstant("lightAmbient", GpuProgramParameters::ACT_DERIVED_AMBIENT_LIGHT_COLOUR);
+				}
+  
 				if (fadeTechnique == FADETECH_GROW || fadeTechnique == FADETECH_ALPHAGROW){
 					params->setNamedAutoConstant("grassHeight", GpuProgramParameters::ACT_CUSTOM, 1);
 					params->setNamedConstant("grassHeight", maxHeight * 1.05f);
 				}
 
-				float farViewDist = geom->getDetailLevels().front()->getFarRange();
-				pass->getVertexProgramParameters()->setNamedConstant("fadeRange", farViewDist / 1.225f);
-				//Note: 1.225 ~= sqrt(1.5), which is necessary since the far view distance is measured from the centers
-				//of pages, while the vertex shader needs to fade grass completely out (including the closest corner)
-				//before the page center is out of range.
+				pass->getVertexProgramParameters()->setNamedConstant("fadeRange", fadeRange);
 			}
 			//Now the material (tmpMat) has either been found or just created (depending on whether or not it was already
 			//created). The appropriate vertex shader should be applied and the material is ready for use.
@@ -1116,7 +1316,7 @@ void GrassLayer::_updateShaders()
 
 unsigned long GrassPage::GUID = 0;
 
-void GrassPage::init(PagedGeometry *geom)
+void GrassPage::init(PagedGeometry *geom, const Ogre::Any &data)
 {
 	sceneMgr = geom->getSceneManager();
 	rootNode = geom->getSceneNode();
@@ -1135,6 +1335,8 @@ void GrassPage::addEntity(Entity *entity, const Vector3 &position, const Quatern
 
 	Entity *ent = entity->clone(getUniqueID());
 	ent->setCastShadows(false);
+	if(hasQueryFlag())
+		ent->setQueryFlags(getQueryFlag());
 	ent->setRenderQueueGroup(entity->getRenderQueueGroup());
 	node->attachObject(ent);
 }

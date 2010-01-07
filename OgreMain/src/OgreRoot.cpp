@@ -981,7 +981,6 @@ namespace Ogre {
             "Cannot create window - no render "
             "system has been selected.", "Root::createRenderWindow");
         }
-
         RenderWindow* ret;
         ret = mActiveRenderer->_createRenderWindow(name, width, height, fullScreen, miscParams);
 

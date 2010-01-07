@@ -32,7 +32,11 @@ GMFN double CreateStaticGeometry()
    if (mSceneMgr == NULL)
       return FALSE;
 
-   Ogre::StaticGeometry *static_geo = mSceneMgr->createStaticGeometry(GenerateUniqueName());
+   Ogre::StaticGeometry *static_geo = NULL;
+   
+   TRY
+      static_geo = mSceneMgr->createStaticGeometry(GenerateUniqueName());
+   CATCH("CreateStaticGeometry")
 
    return ConvertToGMPointer(static_geo);
 }
@@ -106,6 +110,24 @@ GMFN double AddStaticGeometryEntity(double static_geo_ptr, double entity_ptr, do
       return FALSE;
 
    static_geo->addEntity(ent, Ogre::Vector3(posx, posy, posz), Ogre::Quaternion(orientx, orienty, orientz), Ogre::Vector3(scalex, scaley, scalez));
+
+   return TRUE;
+}
+
+
+GMFN double AddStaticGeometrySceneNode(double static_geo_ptr, double scene_node_ptr)
+{
+   Ogre::StaticGeometry *static_geo = ConvertFromGMPointer<Ogre::StaticGeometry*>(static_geo_ptr);
+
+   if (static_geo == NULL)
+      return FALSE;
+
+   Ogre::SceneNode *node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
+
+   if (node == NULL)
+      return FALSE;
+
+   static_geo->addSceneNode(node);
 
    return TRUE;
 }

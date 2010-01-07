@@ -29,11 +29,15 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 GMFN double CreateSprite(char *mat_name, double width, double height, double metrics)
 {
-   OgreSprite *sprite = new OgreSprite;
+   OgreSprite *sprite = NULL;
+   
+   TRY
+      sprite = new OgreSprite;
 
-   sprite->SetMaterial(mat_name);
-   sprite->SetMetrics(metrics);
-   sprite->SetDimensions(width, height);
+      sprite->SetMaterial(mat_name);
+      sprite->SetMetrics(metrics);
+      sprite->SetDimensions(width, height);
+   CATCH("CreateSprite")
 
    return ConvertToGMPointer(sprite);
 }

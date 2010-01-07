@@ -32,7 +32,11 @@ GMFN double CreateLight()
    if (mSceneMgr == NULL)
       return FALSE;
 
-   Ogre::Light *light = mSceneMgr->createLight(GenerateUniqueName());
+   Ogre::Light *light = NULL;
+   
+   TRY
+      light = mSceneMgr->createLight(GenerateUniqueName());
+   CATCH("CreateLight")
 
    return ConvertToGMPointer(light);
 }
@@ -189,6 +193,19 @@ GMFN double SetLightQueryFlags(double light_ptr, double flags)
       return FALSE;
 
    light->setQueryFlags((Ogre::uint)flags);
+
+   return TRUE;
+}
+
+
+GMFN double SetLightRenderQueueGroup(double light_ptr, double type)
+{
+   Ogre::Light *light = ConvertFromGMPointer<Ogre::Light*>(light_ptr);
+
+   if (light == NULL)
+      return FALSE;
+
+   light->setRenderQueueGroup(static_cast<Ogre::RenderQueueGroupID>((int)type));
 
    return TRUE;
 }

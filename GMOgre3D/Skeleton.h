@@ -71,9 +71,26 @@ GMFN double CreateSkeletonAnimation(double skel_ptr, char *anim_name, double len
    if (skel == NULL)
       return 0;
 
-   Ogre::Animation *anim = skel->createAnimation(anim_name, length);
+   Ogre::Animation *anim = NULL;
+   
+   TRY
+      anim = skel->createAnimation(anim_name, length);
+   CATCH("CreateSkeletonAnimation")
 
    return ConvertToGMPointer(anim);
+}
+
+
+GMFN double RemoveSkeletonAnimation(double skel_ptr, char *anim_name)
+{
+   Ogre::SkeletonInstance *skel = ConvertFromGMPointer<Ogre::SkeletonInstance*>(skel_ptr);
+
+   if (skel == NULL)
+      return FALSE;
+
+   skel->removeAnimation(anim_name);
+
+   return TRUE;
 }
 
 
@@ -139,24 +156,19 @@ GMFN double ResetSkeleton(double skel_ptr)
    return TRUE;
 }
 
-
-GMFN double SetSkeletonEntityAnimationState(double skel_ptr, double ent_ptr)
+/*
+GMFN double SetSkeletonAnimationStates(double skel_ptr, char *states, double num)
 {
    Ogre::SkeletonInstance *skel = ConvertFromGMPointer<Ogre::SkeletonInstance*>(skel_ptr);
 
    if (skel == NULL)
       return FALSE;
 
-   Ogre::Entity *ent = ConvertFromGMPointer<Ogre::Entity*>(ent_ptr);
-
-   if (ent == NULL)
-      return FALSE;
-
-   skel->setAnimationState(*ent->getAllAnimationStates());
+   // TODO: Parse teh stats into separate strings, then conver to integer values and add to a set!
 
    return TRUE;
 }
-
+*/
 
 GMFN double SetSkeletonBlendMode(double skel_ptr, double type)
 {

@@ -32,19 +32,23 @@ GMFN double CreateCamera(double aspect, double znear, double zfar, double fov)
    if (mSceneMgr == NULL)
       return FALSE;
 
-   Ogre::Camera *cam = mSceneMgr->createCamera(GenerateUniqueName());
+   Ogre::Camera *cam = NULL;
+   
+   TRY
+      cam = mSceneMgr->createCamera(GenerateUniqueName());
 
-   if (cam == NULL)
-      return FALSE;
+      if (cam == NULL)
+         return FALSE;
 
-   if (mCamera == NULL)
-      mCamera = cam;
+      if (mCamera == NULL)
+         mCamera = cam;
 
-   cam->setNearClipDistance(znear);
-   cam->setFarClipDistance(zfar);
-   cam->setAspectRatio(Ogre::Real(aspect));
-   cam->setFOVy(Ogre::Degree(fov));
-   cam->setOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(0)), Ogre::Degree(0), Ogre::Degree(0)));
+      cam->setNearClipDistance(znear);
+      cam->setFarClipDistance(zfar);
+      cam->setAspectRatio(Ogre::Real(aspect));
+      cam->setFOVy(Ogre::Degree(fov));
+      cam->setOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(0)), Ogre::Degree(0), Ogre::Degree(0)));
+   CATCH("CreateCamera")
 
    return ConvertToGMPointer(cam);
 }
@@ -115,6 +119,27 @@ GMFN double SetCameraDirection(double camera_ptr, double xto, double zto, double
       return FALSE;
 
    cam->setDirection(xto, yto, zto);
+
+   return TRUE;
+}
+
+
+GMFN double GetCameraDirection(double camera_ptr, double xto, double zto, double yto)
+{
+   Ogre::Camera *cam = ConvertFromGMPointer<Ogre::Camera*>(camera_ptr);
+
+   if (cam == NULL)
+      return FALSE;
+
+   Ogre::Vector3 vec = cam->getDirection();
+
+   AcquireGMVectorGlobals();
+   if (mVectorX != NULL)
+   {
+      *mVectorX = vec.x;
+      *mVectorY = vec.z;
+      *mVectorZ = vec.y;
+   }
 
    return TRUE;
 }
@@ -207,6 +232,7 @@ GMFN double GetCameraPosition(double camera_ptr)
 
    Ogre::Vector3 vec = cam->getPosition();
 
+   AcquireGMVectorGlobals();
    if (mVectorX != NULL)
    {
       *mVectorX = vec.x;
@@ -253,6 +279,7 @@ GMFN double GetCameraOrientation(double cam_ptr)
 
    Ogre::Quaternion quat = cam->getOrientation();
 
+   AcquireGMEulerGlobals();
    if (mEulerYaw != NULL)
    {
       *mEulerYaw = ConvertToGMYaw(quat.getYaw().valueDegrees());
@@ -336,9 +363,9 @@ GMFN double GetCameraPitch(double camera_ptr)
    if (cam == NULL)
       return FALSE;
 
-   //Ogre::Quaternion qt = cam->getOrientation();
-   //return qt.getPitch().valueDegrees();
-
+   Ogre::Quaternion qt = cam->getOrientation();
+   return qt.getPitch().valueDegrees();
+/*
    // Retrieve proper pitch by removing camera yaw
    Ogre::Quaternion old_qt = cam->getOrientation();
    cam->yaw(old_qt.getYaw() * -1);
@@ -346,6 +373,7 @@ GMFN double GetCameraPitch(double camera_ptr)
    cam->setOrientation(old_qt);
 
    return old_qt.getPitch().valueDegrees();
+*/
 }
 
 
@@ -465,6 +493,20 @@ GMFN double EnableCameraReflection(double cam_ptr, double enable, double plane_p
       cam->disableReflection();
 
    return TRUE;
+} 
+
+
+GMFN double GetCameraToViewportRay(double cam_ptr, double x, double y)
+{
+   Ogre::Camera *cam = ConvertFromGMPointer<Ogre::Camera*>(cam_ptr);
+
+   if (cam == NULL)
+      return 0;
+   
+   Ogre::Ray *ray = new Ogre::Ray;
+   cam->getCameraToViewportRay(x, y, ray);
+
+   return ConvertToGMPointer(ray);;
 } 
 
 

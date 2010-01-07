@@ -32,7 +32,11 @@ GMFN double CreateBillboardChain()
    if (mSceneMgr == NULL)
       return FALSE;
 
-   Ogre::BillboardChain *bb_chain = mSceneMgr->createBillboardChain(GenerateUniqueName());
+   Ogre::BillboardChain *bb_chain = NULL;
+   
+   TRY
+      bb_chain = mSceneMgr->createBillboardChain(GenerateUniqueName());
+   CATCH("CreateBillboardChain")
 
    return ConvertToGMPointer(bb_chain);
 }
@@ -266,6 +270,19 @@ GMFN double DetachBillboardChainFromSceneNode(double bb_chain_ptr, double scene_
       return FALSE;
    
    node->detachObject(bb_chain);
+
+   return TRUE;
+}
+
+
+GMFN double SetBillboardChainRenderQueueGroup(double bb_chain_ptr, double type)
+{
+   Ogre::BillboardChain *bb_chain = ConvertFromGMPointer<Ogre::BillboardChain*>(bb_chain_ptr);
+
+   if (bb_chain == NULL)
+      return FALSE;
+
+   bb_chain->setRenderQueueGroup(static_cast<Ogre::RenderQueueGroupID>((int)type));
 
    return TRUE;
 }

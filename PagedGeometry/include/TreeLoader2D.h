@@ -92,7 +92,7 @@ public:
 	#else
 		void
 	#endif
-	deleteTrees(const Ogre::Vector3 &position, float radius = 0.001f, Ogre::Entity *type = NULL);
+	deleteTrees(const Ogre::Vector3 &position, Ogre::Real radius = 0.001f, Ogre::Entity *type = NULL);
 
 	/** \brief Deletes trees within a certain rectangular area.
 	\param area The area where trees are to be deleted
@@ -106,6 +106,17 @@ public:
 		void
 	#endif
 	deleteTrees(TBounds area, Ogre::Entity *type = NULL);
+
+#ifdef PAGEDGEOMETRY_USER_DATA
+	/** \brief Find trees within a certain radius of the given coordinates.
+		\param position The coordinate of the tree(s) to look for
+		\param radius The radius from the given coordinate where trees will be deleted
+		\param type The type of tree to find (optional)
+
+		\note If the "type" parameter is set to an entity, only trees created with that entity
+		will be found. */
+	std::vector<void*> findTrees(const Ogre::Vector3 &position, float radius, Ogre::Entity *type = NULL);
+#endif
 
 	/** \brief Sets the height function used to calculate tree height coordinates
 	\param heightFunction A pointer to a height function
@@ -151,6 +162,8 @@ public:
 	to this TreeLoader fairly efficiently.
 
 	\see The TreeIterator class documentation for more info.
+	\warning Be sure to test TreeIterator3D::hasMoreElements() before calling other members of the
+	TreeIterator3D class.
 	*/
 	TreeIterator2D getTrees();
 
@@ -176,7 +189,7 @@ public:
 
 	\note The texture data you provide is copied into RAM, so you can delete the texture after
 	calling this function without risk of crashing. */
-	void setColorMap(Ogre::Texture *map, MapChannel channel = CHANNEL_COLOR);
+	void setColorMap(Ogre::TexturePtr map, MapChannel channel = CHANNEL_COLOR);
 
 	/** \brief Gets a pointer to the color map being used
 
@@ -352,8 +365,8 @@ public:
 	inline Ogre::Entity *getEntity() { return entity; }
 
 #ifdef PAGEDGEOMETRY_USER_DATA
-   /** Returns the user-defined data associated with this tree */
-   inline void* getUserData() { return userData; }
+	/** Returns the user-defined data associated with this tree */
+	inline void* getUserData() { return userData; }
 #endif
 
 private:

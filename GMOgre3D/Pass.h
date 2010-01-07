@@ -92,6 +92,19 @@ GMFN double SetPassShininess(double pass_ptr, double shininess)
 }
 
 
+GMFN double EnablePassPointSprites(double pass_ptr, double enable)
+{
+   Ogre::Pass *pass = ConvertFromGMPointer<Ogre::Pass *>(pass_ptr);
+
+   if (pass == NULL)
+      return FALSE;
+
+   pass->setPointSpritesEnabled((enable != 0));
+
+   return TRUE;
+}
+
+
 GMFN double EnablePassDepthWrite(double pass_ptr, double enable)
 {
    Ogre::Pass *pass = ConvertFromGMPointer<Ogre::Pass *>(pass_ptr);
@@ -113,6 +126,19 @@ GMFN double EnablePassDepthCheck(double pass_ptr, double enable)
       return FALSE;
 
    pass->setDepthCheckEnabled((enable != 0));
+
+   return TRUE;
+}
+
+
+GMFN double SetPassDepthFunc(double pass_ptr, double func)
+{
+   Ogre::Pass *pass = ConvertFromGMPointer<Ogre::Pass *>(pass_ptr);
+
+   if (pass == NULL)
+      return FALSE;
+
+   pass->setDepthFunction(static_cast<Ogre::CompareFunction>((int)func));
 
    return TRUE;
 }
@@ -142,6 +168,32 @@ GMFN double EnablePassPointSizeAttenuation(double pass_ptr, double enable, doubl
       pass->setPointAttenuation(true, constant, linear, quadratic);
    else
       pass->setPointAttenuation(false);
+
+   return TRUE;
+}
+
+
+GMFN double SetPassMinPointSize(double pass_ptr, double size)
+{
+   Ogre::Pass *pass = ConvertFromGMPointer<Ogre::Pass *>(pass_ptr);
+
+   if (pass == NULL)
+      return FALSE;
+
+   pass->setPointMinSize(size);
+
+   return TRUE;
+}
+
+
+GMFN double SetPassMaxPointSize(double pass_ptr, double size)
+{
+   Ogre::Pass *pass = ConvertFromGMPointer<Ogre::Pass *>(pass_ptr);
+
+   if (pass == NULL)
+      return FALSE;
+
+   pass->setPointMaxSize(size);
 
    return TRUE;
 }
@@ -180,7 +232,11 @@ GMFN double CreatePassTextureUnitState(double pass_ptr)
    if (pass == NULL)
       return 0;
 
-   Ogre::TextureUnitState *tex_unit = pass->createTextureUnitState();
+   Ogre::TextureUnitState *tex_unit = NULL;
+   
+   TRY
+      tex_unit = pass->createTextureUnitState();
+   CATCH("CreatePassTextureUnitState")
 
    return ConvertToGMPointer(tex_unit);
 }

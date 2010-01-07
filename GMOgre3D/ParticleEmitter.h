@@ -79,27 +79,14 @@ GMFN double SetParticleEmitterVelocity(double part_emit_ptr, double speed)
 }
 
 
-GMFN double SetParticleEmitterMinVelocity(double part_emit_ptr, double speed)
+GMFN double SetParticleEmitterVelocityRange(double part_emit_ptr, double min_speed, double max_speed)
 {
    Ogre::ParticleEmitter *part_emit = ConvertFromGMPointer<Ogre::ParticleEmitter*>(part_emit_ptr);
 
    if (part_emit == NULL)
       return FALSE;
 
-   part_emit->setMinParticleVelocity(speed);
-
-   return TRUE;
-}
-
-
-GMFN double SetParticleEmitterMaxVelocity(double part_emit_ptr, double speed)
-{
-   Ogre::ParticleEmitter *part_emit = ConvertFromGMPointer<Ogre::ParticleEmitter*>(part_emit_ptr);
-
-   if (part_emit == NULL)
-      return FALSE;
-
-   part_emit->setMaxParticleVelocity(speed);
+   part_emit->setParticleVelocity(min_speed, max_speed);
 
    return TRUE;
 }
@@ -131,27 +118,14 @@ GMFN double SetParticleEmitterTimeToLive(double part_emit_ptr, double ttl)
 }
 
 
-GMFN double SetParticleEmitterMinTimeToLive(double part_emit_ptr, double ttl)
+GMFN double SetParticleEmitterTimeToLiveRange(double part_emit_ptr, double min_ttl, double max_ttl)
 {
    Ogre::ParticleEmitter *part_emit = ConvertFromGMPointer<Ogre::ParticleEmitter*>(part_emit_ptr);
 
    if (part_emit == NULL)
       return FALSE;
 
-   part_emit->setMinTimeToLive(ttl);
-
-   return TRUE;
-}
-
-
-GMFN double SetParticleEmitterMaxTimeToLive(double part_emit_ptr, double ttl)
-{
-   Ogre::ParticleEmitter *part_emit = ConvertFromGMPointer<Ogre::ParticleEmitter*>(part_emit_ptr);
-
-   if (part_emit == NULL)
-      return FALSE;
-
-   part_emit->setMaxTimeToLive(ttl);
+   part_emit->setTimeToLive(min_ttl, max_ttl);
 
    return TRUE;
 }
@@ -170,27 +144,14 @@ GMFN double SetParticleEmitterColor(double part_emit_ptr, double color)
 }
 
 
-GMFN double SetParticleEmitterColorRangeStart(double part_emit_ptr, double color)
+GMFN double SetParticleEmitterColorRange(double part_emit_ptr, double min_color, double max_color)
 {
    Ogre::ParticleEmitter *part_emit = ConvertFromGMPointer<Ogre::ParticleEmitter*>(part_emit_ptr);
 
    if (part_emit == NULL)
       return FALSE;
 
-   part_emit->setColourRangeStart(Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color)));
-
-   return TRUE;
-}
-
-
-GMFN double SetParticleEmitterColorRangeEnd(double part_emit_ptr, double color)
-{
-   Ogre::ParticleEmitter *part_emit = ConvertFromGMPointer<Ogre::ParticleEmitter*>(part_emit_ptr);
-
-   if (part_emit == NULL)
-      return FALSE;
-
-   part_emit->setColourRangeEnd(Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color)));
+   part_emit->setColour(Ogre::ColourValue(GetRedFromGMColor(min_color), GetGreenFromGMColor(min_color), GetBlueFromGMColor(min_color)), Ogre::ColourValue(GetRedFromGMColor(max_color), GetGreenFromGMColor(max_color), GetBlueFromGMColor(max_color)));
 
    return TRUE;
 }
@@ -222,27 +183,14 @@ GMFN double SetParticleEmitterDuration(double part_emit_ptr, double duration)
 }
 
 
-GMFN double SetParticleEmitterMinDuration(double part_emit_ptr, double duration)
+GMFN double SetParticleEmitterDurationRange(double part_emit_ptr, double min_duration, double max_duration)
 {
    Ogre::ParticleEmitter *part_emit = ConvertFromGMPointer<Ogre::ParticleEmitter*>(part_emit_ptr);
 
    if (part_emit == NULL)
       return FALSE;
 
-   part_emit->setMinDuration(duration);
-
-   return TRUE;
-}
-
-
-GMFN double SetParticleEmitterMaxDuration(double part_emit_ptr, double duration)
-{
-   Ogre::ParticleEmitter *part_emit = ConvertFromGMPointer<Ogre::ParticleEmitter*>(part_emit_ptr);
-
-   if (part_emit == NULL)
-      return FALSE;
-
-   part_emit->setMaxDuration(duration);
+   part_emit->setDuration(min_duration, max_duration);
 
    return TRUE;
 }
@@ -261,27 +209,14 @@ GMFN double SetParticleEmitterRepeatDelay(double part_emit_ptr, double delay)
 }
 
 
-GMFN double SetParticleEmitterMinRepeatDelay(double part_emit_ptr, double delay)
+GMFN double SetParticleEmitterRepeatDelayRange(double part_emit_ptr, double min_delay, double max_delay)
 {
    Ogre::ParticleEmitter *part_emit = ConvertFromGMPointer<Ogre::ParticleEmitter*>(part_emit_ptr);
 
    if (part_emit == NULL)
       return FALSE;
 
-   part_emit->setMinRepeatDelay(delay);
-
-   return TRUE;
-}
-
-
-GMFN double SetParticleEmitterMaxRepeatDelay(double part_emit_ptr, double delay)
-{
-   Ogre::ParticleEmitter *part_emit = ConvertFromGMPointer<Ogre::ParticleEmitter*>(part_emit_ptr);
-
-   if (part_emit == NULL)
-      return FALSE;
-
-   part_emit->setMaxRepeatDelay(delay);
+   part_emit->setRepeatDelay(min_delay, max_delay);
 
    return TRUE;
 }
@@ -295,6 +230,19 @@ GMFN double SetParticleEmitterDimensions(double part_emit_ptr, double width, dou
       return FALSE;
 
    part_emit->setDimensions(width, height);
+
+   return TRUE;
+}
+
+
+GMFN double EnableParticleEmitter(double part_emit_ptr, double enable)
+{
+   Ogre::ParticleEmitter *part_emit = ConvertFromGMPointer<Ogre::ParticleEmitter*>(part_emit_ptr);
+
+   if (part_emit == NULL)
+      return FALSE;
+
+   part_emit->setEnabled((enable != 0));
 
    return TRUE;
 }

@@ -125,8 +125,11 @@ GMFN double CreateCompositionPass(double pass_ptr)
    if (pass == NULL)
       return 0;
 
-   Ogre::CompositionPass *p = pass->createPass();
-
+   Ogre::CompositionPass *p = NULL;
+   
+   TRY
+      p = pass->createPass();
+   CATCH("CreateCompositionPass")
    return ConvertToGMPointer(p);
 }
 

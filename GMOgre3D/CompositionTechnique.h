@@ -45,10 +45,14 @@ GMFN double CreateCompositionTechniqueTextureDefinition2(double technique_ptr, d
    if (tech == NULL)
       return 0;
 
-   Ogre::CompositionTechnique::TextureDefinition *def = tech->createTextureDefinition(comp_tech_tex_def_name);
-   def->width = width;
-   def->height = height;
-   def->formatList.push_back(static_cast<Ogre::PixelFormat>((int)pixel_format));
+   Ogre::CompositionTechnique::TextureDefinition *def = NULL;
+   
+   TRY
+      def = tech->createTextureDefinition(comp_tech_tex_def_name);
+      def->width = width;
+      def->height = height;
+      def->formatList.push_back(static_cast<Ogre::PixelFormat>((int)pixel_format));
+   CATCH("CreateCompositionTechniqueTextureDefinition")
 
    return ConvertToGMPointer(def);
 }
@@ -83,7 +87,11 @@ GMFN double CreateCompositionTechniqueTargetPass(double technique_ptr)
    if (tech == NULL)
       return 0;
 
-   Ogre::CompositionTargetPass *pass = tech->createTargetPass();
+   Ogre::CompositionTargetPass *pass = NULL;
+   
+   TRY
+      pass = tech->createTargetPass();
+   CATCH("CreateCompositionTechniqueTargetPass")
 
    return ConvertToGMPointer(pass);
 }

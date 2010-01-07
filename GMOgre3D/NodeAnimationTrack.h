@@ -34,25 +34,108 @@ GMFN double CreateAnimationNodeTrackNodeKeyFrame(double anim_node_ptr, double ti
    if (node_anim == NULL)
       return NULL;
 
-   Ogre::TransformKeyFrame *key_frm = node_anim->createNodeKeyFrame(time);
+   Ogre::TransformKeyFrame *key_frm = NULL;
+   
+   TRY
+      key_frm = node_anim->createNodeKeyFrame(time);
+   CATCH("CreateAnimationNodeTrackNodeKeyFrame")
 
    return ConvertToGMPointer(key_frm);
 }
 
 
-GMFN double RemoveAnimationNodeKeyFrame(double anim_node_ptr, double anim_node_key_frame_ptr)
+GMFN double CreateAnimationNodeTrackKeyFrame(double anim_node_ptr, double time)
+{
+   Ogre::NodeAnimationTrack *node_anim = ConvertFromGMPointer<Ogre::NodeAnimationTrack*>(anim_node_ptr);
+
+   if (node_anim == NULL)
+      return NULL;
+
+   Ogre::KeyFrame *key_frm = NULL;
+   
+   TRY
+      key_frm = node_anim->createKeyFrame(time);
+   CATCH("CreateAnimationNodeTrackKeyFrame")
+
+   return ConvertToGMPointer(key_frm);
+}
+
+
+GMFN double RemoveAnimationNodeTrackKeyFrame(double anim_node_ptr, double index)
 {
    Ogre::NodeAnimationTrack *node_anim = ConvertFromGMPointer<Ogre::NodeAnimationTrack*>(anim_node_ptr);
 
    if (node_anim == NULL)
       return FALSE;
 
-   Ogre::KeyFrame *anim_node_key_frame = ConvertFromGMPointer<Ogre::KeyFrame*>(anim_node_key_frame_ptr);
+   node_anim->removeKeyFrame(index);
 
-   if (anim_node_key_frame == NULL)
+   return TRUE;
+}
+
+
+GMFN double RemoveAllAnimationNodeTrackKeyFrames(double anim_node_ptr)
+{
+   Ogre::NodeAnimationTrack *node_anim = ConvertFromGMPointer<Ogre::NodeAnimationTrack*>(anim_node_ptr);
+
+   if (node_anim == NULL)
       return FALSE;
 
-   node_anim->removeKeyFrame(anim_node_key_frame->getTime());
+   node_anim->removeAllKeyFrames();
+
+   return TRUE;
+}
+
+
+GMFN double GetNumAnimationNodeTrackKeyFrames(double anim_node_ptr)
+{
+   Ogre::NodeAnimationTrack *node_anim = ConvertFromGMPointer<Ogre::NodeAnimationTrack*>(anim_node_ptr);
+
+   if (node_anim == NULL)
+      return 0;
+
+   return node_anim->getNumKeyFrames();
+}
+
+
+GMFN double GetAnimationNodeNodeTrackKeyFrame(double anim_node_ptr, double index)
+{
+   Ogre::NodeAnimationTrack *node_anim = ConvertFromGMPointer<Ogre::NodeAnimationTrack*>(anim_node_ptr);
+
+   if (node_anim == NULL)
+      return FALSE;
+
+   return ConvertToGMPointer(node_anim->getNodeKeyFrame(index));
+}
+
+
+GMFN double AcquireAnimationNodeTrackInterpolatedKeyFrame(double anim_node_ptr, double index)
+{
+   Ogre::NodeAnimationTrack *node_anim = ConvertFromGMPointer<Ogre::NodeAnimationTrack*>(anim_node_ptr);
+
+   if (node_anim == NULL)
+      return FALSE;
+
+   Ogre::KeyFrame *kf = new Ogre::KeyFrame(0, 0);
+   node_anim->getInterpolatedKeyFrame(index, kf);
+
+   return ConvertToGMPointer(kf);
+}
+
+
+GMFN double ReleaseAnimationNodeTrackInterpolatedKeyFrame(double anim_node_ptr, double interpolated_key_frame_ptr)
+{
+   Ogre::NodeAnimationTrack *node_anim = ConvertFromGMPointer<Ogre::NodeAnimationTrack*>(anim_node_ptr);
+
+   if (node_anim == NULL)
+      return FALSE;
+
+   Ogre::KeyFrame *kf = ConvertFromGMPointer<Ogre::KeyFrame*>(interpolated_key_frame_ptr);
+
+   if (kf == NULL)
+      return FALSE;
+
+   delete kf;
 
    return TRUE;
 }

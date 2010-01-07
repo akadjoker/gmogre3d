@@ -26,6 +26,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "GMOgre3D.h"
 #include "Material.h"
+#include "NewtonBody.h"
 
 
 static Ogre::String anim_names;
@@ -35,7 +36,12 @@ GMFN double CreateEntity(char *mesh_name)
    if (mSceneMgr == NULL)
       return FALSE;
 
-   Ogre::Entity *entity = mSceneMgr->createEntity(GenerateUniqueName(), mesh_name);
+   Ogre::Entity *entity = NULL;
+   
+   TRY
+      entity = mSceneMgr->createEntity(GenerateUniqueName(), mesh_name);
+
+   CATCH("CreateEntity")
 
    return ConvertToGMPointer(entity);
 }
@@ -46,84 +52,108 @@ GMFN double CreateCubeEntity()
    if (mSceneMgr == NULL)
       return FALSE;
 
-   Ogre::Entity *entity = mSceneMgr->createEntity(GenerateUniqueName(), Ogre::SceneManager::PT_CUBE);
+   Ogre::Entity *ent = NULL;
+   
+   TRY
+      ent = mSceneMgr->createEntity(GenerateUniqueName(), Ogre::SceneManager::PT_CUBE);
+   CATCH("CreateCubeEntity")
 
-   return ConvertToGMPointer(entity);
+   return ConvertToGMPointer(ent);
 }
 
 
 GMFN double CreateSphereEntity()
 {
-   Ogre::Entity *entity = mSceneMgr->createEntity(GenerateUniqueName(), Ogre::SceneManager::PT_SPHERE);
+   Ogre::Entity *ent = NULL;
 
-   return ConvertToGMPointer(entity);
-}
-
-
-GMFN double CreateFloorEntity(double width, double height, double xsegments, double ysegments, double hrepeat, double vrepeat)
-{
-   if (mSceneMgr == NULL)
-      return FALSE;
-
-   Ogre::Plane plane;
-   plane.d = 0;
-   plane.normal = Ogre::Vector3::UNIT_Y;
-
-   Ogre::String plane_name = GenerateUniqueName();
-   Ogre::MeshManager::getSingleton().createPlane(plane_name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane, width, height, xsegments, ysegments, true, 1, hrepeat, vrepeat, Ogre::Vector3::UNIT_Z);
-   Ogre::Entity *ent = mSceneMgr->createEntity(GenerateUniqueName(), plane_name);
+   TRY
+      ent = mSceneMgr->createEntity(GenerateUniqueName(), Ogre::SceneManager::PT_SPHERE);
+   CATCH("CreateSphereEntity")
 
    return ConvertToGMPointer(ent);
 }
 
 
-GMFN double CreateCeilingEntity(double width, double height, double xsegments, double ysegments, double hrepeat, double vrepeat)
+GMFN double CreateFloorEntity(double width, double height, double xsegments, double ysegments, double utile, double vtile)
 {
    if (mSceneMgr == NULL)
       return FALSE;
 
-   Ogre::Plane plane;
-   plane.d = 0;
-   plane.normal = Ogre::Vector3::NEGATIVE_UNIT_Y;
+   Ogre::Entity *ent = NULL;
 
-   Ogre::String plane_name = GenerateUniqueName();
-   Ogre::MeshManager::getSingleton().createPlane(plane_name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane, width, height, xsegments, ysegments, true, 1, hrepeat, vrepeat, Ogre::Vector3::UNIT_Z);
-   Ogre::Entity *ent = mSceneMgr->createEntity(GenerateUniqueName(), plane_name);
+   TRY
+      Ogre::Plane plane;
+      plane.d = 0;
+      plane.normal = Ogre::Vector3::UNIT_Y;
+
+      Ogre::String plane_name = GenerateUniqueName();
+      Ogre::MeshManager::getSingleton().createPlane(plane_name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane, width, height, xsegments, ysegments, true, 1, utile, vtile, Ogre::Vector3::UNIT_Z);
+      ent = mSceneMgr->createEntity(GenerateUniqueName(), plane_name);
+   CATCH("CreateFloorEntity")
 
    return ConvertToGMPointer(ent);
 }
 
 
-GMFN double CreateWallEntity(double width, double height, double xsegments, double ysegments, double hrepeat, double vrepeat)
+GMFN double CreateCeilingEntity(double width, double height, double xsegments, double ysegments, double utile, double vtile)
 {
    if (mSceneMgr == NULL)
       return FALSE;
 
-   Ogre::Plane plane;
-   plane.d = 0;
-   plane.normal = Ogre::Vector3::UNIT_X;
+   Ogre::Entity *ent = NULL;
 
-   Ogre::String plane_name = GenerateUniqueName();
-   Ogre::MeshManager::getSingleton().createPlane(plane_name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane, width, height, xsegments, ysegments, true, 1, hrepeat, vrepeat, Ogre::Vector3::UNIT_Z);
-   Ogre::Entity *ent = mSceneMgr->createEntity(GenerateUniqueName(), plane_name);
+   TRY
+      Ogre::Plane plane;
+      plane.d = 0;
+      plane.normal = Ogre::Vector3::NEGATIVE_UNIT_Y;
+
+      Ogre::String plane_name = GenerateUniqueName();
+      Ogre::MeshManager::getSingleton().createPlane(plane_name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane, width, height, xsegments, ysegments, true, 1, utile, vtile, Ogre::Vector3::UNIT_Z);
+      ent = mSceneMgr->createEntity(GenerateUniqueName(), plane_name);
+   CATCH("CreateCeilingEntity")
 
    return ConvertToGMPointer(ent);
 }
 
 
-GMFN double CreatePlaneEntity(double plane_ptr, double width, double height, double xsegments, double ysegments, double hrepeat, double vrepeat, double dirx, double dirz, double diry)
+GMFN double CreateWallEntity(double width, double height, double xsegments, double ysegments, double utile, double vtile)
 {
    if (mSceneMgr == NULL)
       return FALSE;
 
-   Ogre::Plane *plane = ConvertFromGMPointer<Ogre::Plane*>(plane_ptr);
+   Ogre::Entity *ent = NULL;
 
-   if (plane == NULL)
+   TRY
+      Ogre::Plane plane;
+      plane.d = 0;
+      plane.normal = Ogre::Vector3::UNIT_X;
+
+      Ogre::String plane_name = GenerateUniqueName();
+      Ogre::MeshManager::getSingleton().createPlane(plane_name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane, width, height, xsegments, ysegments, true, 1, utile, vtile, Ogre::Vector3::UNIT_Z);
+      ent = mSceneMgr->createEntity(GenerateUniqueName(), plane_name);
+   CATCH("CreateWallEntity")
+
+   return ConvertToGMPointer(ent);
+}
+
+
+GMFN double CreatePlaneEntity(double plane_ptr, double width, double height, double xsegments, double ysegments, double utile, double vtile, double dirx, double dirz, double diry)
+{
+   if (mSceneMgr == NULL)
       return FALSE;
 
-   Ogre::String plane_name = GenerateUniqueName();
-   Ogre::MeshManager::getSingleton().createPlane(plane_name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, *plane, width, height, xsegments, ysegments, true, 1, hrepeat, vrepeat, Ogre::Vector3(dirx, diry, dirz));
-   Ogre::Entity *ent = mSceneMgr->createEntity(GenerateUniqueName(), plane_name);
+   Ogre::Entity *ent = NULL;
+   
+   TRY
+      Ogre::Plane *plane = ConvertFromGMPointer<Ogre::Plane*>(plane_ptr);
+
+      if (plane == NULL)
+         return FALSE;
+
+      Ogre::String plane_name = GenerateUniqueName();
+      Ogre::MeshManager::getSingleton().createPlane(plane_name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, *plane, width, height, xsegments, ysegments, true, 1, utile, vtile, Ogre::Vector3(dirx, diry, dirz));
+      ent = mSceneMgr->createEntity(GenerateUniqueName(), plane_name);
+   CATCH("CreatePlaneEntity")
 
    return ConvertToGMPointer(ent);
 }
@@ -306,6 +336,52 @@ GMFN double GetEntityParentSceneNode(double ent_ptr)
    Ogre::SceneNode *node = ent->getParentSceneNode();
 
    return ConvertToGMPointer(node);
+}
+
+
+GMFN double GetEntitySubEntity(double ent_ptr, double sub_index)
+{
+   Ogre::Entity *ent = ConvertFromGMPointer<Ogre::Entity*>(ent_ptr);
+
+   if (ent == NULL)
+      return 0;
+
+   return ConvertToGMPointer(ent->getSubEntity(sub_index));
+}
+
+
+GMFN double GetEntitySubEntityByName(double ent_ptr, char *name)
+{
+   Ogre::Entity *ent = ConvertFromGMPointer<Ogre::Entity*>(ent_ptr);
+
+   if (ent == NULL)
+      return 0;
+
+   return ConvertToGMPointer(ent->getSubEntity(name));
+}
+
+
+GMFN double GetEntityNumSubEntities(double ent_ptr)
+{
+   Ogre::Entity *ent = ConvertFromGMPointer<Ogre::Entity*>(ent_ptr);
+
+   if (ent == NULL)
+      return 0;
+
+   return ent->getNumSubEntities();
+}
+
+
+GMFN double SetEntityRenderQueueGroup(double ent_ptr, double type)
+{
+   Ogre::Entity *ent = ConvertFromGMPointer<Ogre::Entity*>(ent_ptr);
+
+   if (ent == NULL)
+      return 0;
+
+   ent->setRenderQueueGroup(static_cast<Ogre::RenderQueueGroupID>((int)type));
+
+   return TRUE;
 }
 
 

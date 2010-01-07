@@ -32,7 +32,11 @@ GMFN double CreateBillboardSet(double size = 20.0)
    if (mSceneMgr == NULL)
       return FALSE;
 
-   Ogre::BillboardSet *bb_set = mSceneMgr->createBillboardSet(GenerateUniqueName(), size);
+   Ogre::BillboardSet *bb_set = NULL;
+   
+   TRY
+      bb_set = mSceneMgr->createBillboardSet(GenerateUniqueName(), size);
+   CATCH("CreateBillboardSet")
 
    return ConvertToGMPointer(bb_set);
 }
@@ -126,6 +130,19 @@ GMFN double GetBillboardSetDefaultHeight(double bb_set_ptr)
 }
 
 
+GMFN double SetBillboardSetBillboardOrigin(double bb_set_ptr, double type)
+{
+   Ogre::BillboardSet *bb_set = ConvertFromGMPointer<Ogre::BillboardSet *>(bb_set_ptr);
+
+   if (bb_set == NULL)
+      return FALSE;
+   
+   bb_set->setBillboardOrigin(static_cast<Ogre::BillboardOrigin>((int)type));
+
+   return TRUE;
+}
+
+
 GMFN double SetBillboardSetMaterial(double bb_set_ptr, char *mat_name)
 {
    Ogre::BillboardSet *bb_set = ConvertFromGMPointer<Ogre::BillboardSet *>(bb_set_ptr);
@@ -134,6 +151,50 @@ GMFN double SetBillboardSetMaterial(double bb_set_ptr, char *mat_name)
       return FALSE;
    
    bb_set->setMaterialName(mat_name);
+
+   return TRUE;
+}
+
+
+GMFN double CreateBillboardSetBillboard(double bb_set_ptr, double x, double z, double y, double color, double alpha)
+{
+   Ogre::BillboardSet *bb_set = ConvertFromGMPointer<Ogre::BillboardSet *>(bb_set_ptr);
+
+   if (bb_set == NULL)
+      return FALSE;
+   
+   Ogre::Billboard *bb = bb_set->createBillboard(x, y, z, Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), alpha));
+
+   return ConvertToGMPointer(bb);
+}
+
+
+GMFN double RemoveBillboardSetBillboard(double bb_set_ptr, double bb_ptr)
+{
+   Ogre::BillboardSet *bb_set = ConvertFromGMPointer<Ogre::BillboardSet *>(bb_set_ptr);
+
+   if (bb_set == NULL)
+      return FALSE;
+   
+   Ogre::Billboard *bb = ConvertFromGMPointer<Ogre::Billboard *>(bb_ptr);
+
+   if (bb == NULL)
+      return FALSE;
+   
+   bb_set->removeBillboard(bb);
+
+   return TRUE;
+}
+
+
+GMFN double GetNumBillboardSetBillboards(double bb_set_ptr)
+{
+   Ogre::BillboardSet *bb_set = ConvertFromGMPointer<Ogre::BillboardSet *>(bb_set_ptr);
+
+   if (bb_set == NULL)
+      return FALSE;
+   
+   bb_set->getNumBillboards();
 
    return TRUE;
 }
@@ -170,6 +231,19 @@ GMFN double DetachBillboardSetFromSceneNode(double bb_set_ptr, double scene_node
       return FALSE;
    
    node->detachObject(bb_set);
+
+   return TRUE;
+}
+
+
+GMFN double SetBillboardSetRenderQueueGroup(double bb_set_ptr, double type)
+{
+   Ogre::BillboardSet *bb_set = ConvertFromGMPointer<Ogre::BillboardSet*>(bb_set_ptr);
+
+   if (bb_set == NULL)
+      return FALSE;
+
+   bb_set->setRenderQueueGroup(static_cast<Ogre::RenderQueueGroupID>((int)type));
 
    return TRUE;
 }

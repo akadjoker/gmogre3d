@@ -16,3 +16,9 @@
 #include <tchar.h>
 #include <Ogre.h>
 
+// GMNewton
+#include <Newton.h>
+#include <dVector.h>
+#include <dMatrix.h>
+#include <dQuaternion.h>
+#include <dMathDefines.h>

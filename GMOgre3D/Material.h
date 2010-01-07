@@ -80,6 +80,19 @@ GMFN double UnloadMaterial(char *name)
 }
 
 
+GMFN double EnableMaterialLighting(char *name, double enabled)
+{
+   Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().getByName(name);
+   
+   if (mat.isNull())
+      return FALSE;
+
+   mat->setLightingEnabled((enabled != 0));
+
+   return TRUE;
+}
+
+
 GMFN double SetMaterialAmbientColor(char *name, double color)
 {
    Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().getByName(name);

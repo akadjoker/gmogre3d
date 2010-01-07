@@ -25,6 +25,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define GMOGRE_SCENE_NODE_H
 
 #include "GMOgre3D.h"
+#include "NewtonBody.h"
 
 
 GMFN double GetRootSceneNode()
@@ -43,7 +44,12 @@ GMFN double CreateSceneNode()
    if (mSceneMgr == NULL)
       return FALSE;
 
-   Ogre::SceneNode *node = mSceneMgr->createSceneNode();
+   Ogre::SceneNode *node = NULL;
+   
+   TRY
+      node = mSceneMgr->createSceneNode();
+      node->setOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(0)), Ogre::Degree(0), Ogre::Degree(0)));
+   CATCH("CreateSceneNode")
 
    return ConvertToGMPointer(node);
 }
@@ -54,7 +60,11 @@ GMFN double CreateRootChildSceneNode(double x, double z, double y, double yaw, d
    if (mSceneMgr == NULL)
       return FALSE;
 
-   Ogre::SceneNode *node = mSceneMgr->getRootSceneNode()->createChildSceneNode(Ogre::Vector3(x, y, z), Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)));
+   Ogre::SceneNode *node = NULL;
+   
+   TRY
+      node = mSceneMgr->getRootSceneNode()->createChildSceneNode(Ogre::Vector3(x, y, z), Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)));
+   CATCH("CreateRootChildSceneNode")
    
    return ConvertToGMPointer(node);
 }
@@ -67,7 +77,11 @@ GMFN double CreateChildSceneNode(double scene_node_ptr, double x, double z, doub
    if (scene_node == NULL)
       return FALSE;
 
-   Ogre::SceneNode *child_node = scene_node->createChildSceneNode(Ogre::Vector3(x, y, z), Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)));
+   Ogre::SceneNode *child_node = NULL;
+   
+   TRY
+      child_node = scene_node->createChildSceneNode(Ogre::Vector3(x, y, z), Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)));
+   CATCH("CreateChildSceneNode")
 
    return ConvertToGMPointer(child_node);
 }
@@ -156,6 +170,32 @@ GMFN double DetachObjectFromSceneNode(double scene_node_ptr, double obj_ptr)
 }
 
 
+GMFN double EnableSceneNodeInheritScale(double scene_node_ptr, double enable)
+{
+   Ogre::SceneNode *scene_node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
+
+   if (scene_node == NULL)
+      return FALSE;
+
+   scene_node->setInheritScale((enable != 0));
+
+   return TRUE;
+}
+
+
+GMFN double EnableSceneNodeInheritOrientation(double scene_node_ptr, double enable)
+{
+   Ogre::SceneNode *scene_node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
+
+   if (scene_node == NULL)
+      return FALSE;
+
+   scene_node->setInheritOrientation((enable != 0));
+
+   return TRUE;
+}
+
+
 GMFN double SetSceneNodeScale(double scene_node_ptr, double x, double z, double y)
 {
    Ogre::SceneNode *scene_node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
@@ -178,6 +218,7 @@ GMFN double GetSceneNodeScale(double scene_node_ptr)
 
    Ogre::Vector3 vec = scene_node->getScale();
 
+   AcquireGMVectorGlobals();
    if (mVectorX != NULL)
    {
       *mVectorX = vec.x;
@@ -211,6 +252,7 @@ GMFN double GetSceneNodePosition(double scene_node_ptr)
 
    Ogre::Vector3 vec = scene_node->getPosition();
 
+   AcquireGMVectorGlobals();
    if (mVectorX != NULL)
    {
       *mVectorX = vec.x;
@@ -248,6 +290,19 @@ GMFN double SetSceneNodeLookAt(double scene_node_ptr, double xup, double zup, do
 }
 
 
+GMFN double SetSceneNodeInitalState(double scene_node_ptr)
+{
+   Ogre::SceneNode *scene_node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
+
+   if (scene_node == NULL)
+      return FALSE;
+
+   scene_node->setInitialState();
+
+   return TRUE;
+}
+
+
 GMFN double SetSceneNodeOrientation(double scene_node_ptr, double yaw, double pitch, double roll)
 {
    Ogre::SceneNode *scene_node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
@@ -270,6 +325,7 @@ GMFN double GetSceneNodeOrientation(double scene_node_ptr)
 
    Ogre::Quaternion quat = scene_node->getOrientation();
 
+   AcquireGMEulerGlobals();
    if (mEulerYaw != NULL)
    {
       *mEulerYaw = ConvertToGMYaw(quat.getYaw().valueDegrees());
@@ -535,28 +591,22 @@ GMFN double MoveSceneNodeDown(double scene_node_ptr, double delta)
 }
 
 
-GMFN double CreateSceneNodeAnimation(char *name, double length)
+GMFN double GetSceneNodeBoundingBoxSize(double scene_node_ptr)
 {
-   if (mSceneMgr == NULL)
+   Ogre::SceneNode *scene_node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
+
+   if (scene_node == NULL)
       return FALSE;
 
-   Ogre::Animation *anim = mSceneMgr->createAnimation(name, length);
+   Ogre::Vector3 vec = scene_node->_getWorldAABB().getSize();
 
-   return ConvertToGMPointer(anim);
-}
-
-
-GMFN double DestroySceneNodeAnimation(double anim_ptr)
-{
-   if (mSceneMgr == NULL)
-      return FALSE;
-
-   Ogre::Animation *anim = ConvertFromGMPointer<Ogre::Animation*>(anim_ptr);
-
-   if (anim == NULL)
-      return FALSE;
-
-   mSceneMgr->destroyAnimation(anim->getName());
+   AcquireGMVectorGlobals();
+   if (mVectorX != NULL)
+   {
+      *mVectorX = vec.x;
+      *mVectorY = vec.z;
+      *mVectorZ = vec.y;
+   }
 
    return TRUE;
 }
@@ -572,51 +622,43 @@ GMFN double AttachSceneNodeToGMInstance(double scene_node_ptr, double gm_instanc
    if (mGMAPI == NULL)
       return FALSE;
 
-   // Grab all symbol ID's
-   static int symbolZ = mGMAPI->GetSymbolID("z");
-   static int symbolPitch = mGMAPI->GetSymbolID("pitch");
-   static int symbolRoll = mGMAPI->GetSymbolID("roll");
-   static int symbolScaleX = mGMAPI->GetSymbolID("scalex");
-   static int symbolScaleY = mGMAPI->GetSymbolID("scaley");
-   static int symbolScaleZ = mGMAPI->GetSymbolID("scalez");
+   LockMutex lm(gMutex);
 
    GMInstance gminst;
+
+   SceneNodeMap::iterator iter = mSceneNodeAttachments.find(scene_node);
+   if (iter != mSceneNodeAttachments.end())
+      gminst = iter->second;
+
+   gminst.GMInstanceAttached = true;
    gminst.mGMInstanceID = (int)gm_instance_ptr;
 
-   gminst.pZ = mGMAPI->GetLocalVariablePtr((int)gm_instance_ptr, symbolZ);
-   gminst.pPitch = mGMAPI->GetLocalVariablePtr((int)gm_instance_ptr, symbolPitch);
-   gminst.pRoll = mGMAPI->GetLocalVariablePtr((int)gm_instance_ptr, symbolRoll);
-   gminst.pScaleX = mGMAPI->GetLocalVariablePtr((int)gm_instance_ptr, symbolScaleX);
-   gminst.pScaleY = mGMAPI->GetLocalVariablePtr((int)gm_instance_ptr, symbolScaleY);
-   gminst.pScaleZ = mGMAPI->GetLocalVariablePtr((int)gm_instance_ptr, symbolScaleZ);
+   gminst.mGMInstancePtr = mGMAPI->GetInstancePtr((int)gm_instance_ptr);
+   AcquireGMLocalVariablePointers(&gminst);
 
-   gm::GMINSTANCE &instance = *mGMAPI->GetInstancePtr((int)gm_instance_ptr);
-
-   gminst.mLastX = instance.x;
-   gminst.mLastY = instance.y;
+   gminst.mLastX = gminst.mGMInstancePtr->x;
+   gminst.mLastY = gminst.mGMInstancePtr->y;
 	gminst.mLastZ = *gminst.pZ;
-   gminst.mLastYaw = instance.direction;
+   gminst.mLastYaw = gminst.mGMInstancePtr->direction;
 	gminst.mLastPitch = *gminst.pPitch;
 	gminst.mLastRoll = *gminst.pRoll;
 	gminst.mLastScaleX = *gminst.pScaleX;
 	gminst.mLastScaleY = *gminst.pScaleY;
 	gminst.mLastScaleZ = *gminst.pScaleZ;
 
-   mSceneNodeGMInstances[scene_node] = gminst;
-
-   // GM's direction is very different from OGRE's yaw (ie, 0 - 360 compared to -180 - 180 respectively),
-   // so we change to values that OGRE understands.  Note that a yaw of 0 now points towards the positive
-   // GM Y-axis instead of the normal OGRE negative X-axis.
-   double ogre_yaw = instance.direction;
-   if (ogre_yaw < -90 && ogre_yaw > -180)
-	   ogre_yaw = -180 + ogre_yaw - 270;
-   else
-	   ogre_yaw = ogre_yaw - 90;
+   mSceneNodeAttachments[scene_node] = gminst;
 
    // Snap to current position, orientation, and scale
    scene_node->setPosition(gminst.mLastX, gminst.mLastZ, gminst.mLastY);
-   scene_node->setOrientation(Ogre::Quaternion(Ogre::Degree(ogre_yaw), Ogre::Vector3::UNIT_Y) * Ogre::Quaternion(Ogre::Degree(gminst.mLastPitch), Ogre::Vector3::UNIT_X) * Ogre::Quaternion(Ogre::Degree(gminst.mLastRoll), Ogre::Vector3::UNIT_Z));
+   scene_node->setOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(gminst.mGMInstancePtr->direction)), Ogre::Degree(*gminst.pPitch), Ogre::Degree(*gminst.pRoll)));
    scene_node->setScale(gminst.mLastScaleX, gminst.mLastScaleZ, gminst.mLastScaleY);
+
+   if (gminst.BodyAttached && gminst.mBody != NULL)
+   {
+      // Snap to current position/orientation
+      SetNewtonBodyPosition(ConvertToGMPointer(gminst.mBody), gminst.mGMInstancePtr->x, gminst.mGMInstancePtr->y, *gminst.pZ);
+      SetNewtonBodyOrientation(ConvertToGMPointer(gminst.mBody), gminst.mGMInstancePtr->direction, *gminst.pPitch, *gminst.pRoll);
+   }
 
    return TRUE;
 }
@@ -629,13 +671,18 @@ GMFN double DetachSceneNodeFromGMInstance(double scene_node_ptr, double gm_insta
    if (scene_node == NULL)
       return FALSE;
 
-   SceneNodeMap::iterator iter = mSceneNodeGMInstances.find(scene_node);
+   LockMutex lm(gMutex);
 
-   if (iter == mSceneNodeGMInstances.end())
+   SceneNodeMap::iterator iter = mSceneNodeAttachments.find(scene_node);
+
+   if (iter == mSceneNodeAttachments.end())
       return FALSE;
 
-   mSceneNodeGMInstances.erase(iter);
-
+   // Remove from map if needed.
+   (&iter->second)->GMInstanceAttached = false;
+   if (iter->second.BodyAttached == false)
+      mSceneNodeAttachments.erase(iter);
+   
    return TRUE;
 }
 

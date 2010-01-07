@@ -42,16 +42,18 @@ GMFN double CreateOverlayElement(double type)
 {
    Ogre::OverlayElement *overlay_elem = NULL;
 
-   if (type == OVERLAY_BORDER_PANEL)
-      overlay_elem = Ogre::OverlayManager::getSingleton().createOverlayElement("BorderPanel", GenerateUniqueName());
-   else if (type == OVERLAY_PANEL)
-      overlay_elem = Ogre::OverlayManager::getSingleton().createOverlayElement("Panel", GenerateUniqueName());
-   else if (type == OVERLAY_TEXT_AREA)
-      overlay_elem = Ogre::OverlayManager::getSingleton().createOverlayElement("TextArea", GenerateUniqueName());
+   TRY
+      if (type == OVERLAY_BORDER_PANEL)
+         overlay_elem = Ogre::OverlayManager::getSingleton().createOverlayElement("BorderPanel", GenerateUniqueName());
+      else if (type == OVERLAY_PANEL)
+         overlay_elem = Ogre::OverlayManager::getSingleton().createOverlayElement("Panel", GenerateUniqueName());
+      else if (type == OVERLAY_TEXT_AREA)
+         overlay_elem = Ogre::OverlayManager::getSingleton().createOverlayElement("TextArea", GenerateUniqueName());
 
-   // Users can change metrics, but we default to pixels
-   if (overlay_elem != NULL)
-      overlay_elem->setMetricsMode(Ogre::GMM_PIXELS);
+      // Users can change metrics, but we default to pixels
+      if (overlay_elem != NULL)
+         overlay_elem->setMetricsMode(Ogre::GMM_PIXELS);
+   CATCH("CreateOverlayElement")
 
    return ConvertToGMPointer(overlay_elem);
 }
@@ -245,14 +247,14 @@ GMFN double SetTextOverlayElementAlignment(double ta_overlay_elem_ptr, double ty
 }
 
 
-GMFN double SetPanelOverlayElementTiling(double panel_overlay_elem_ptr, double x, double y)
+GMFN double SetPanelOverlayElementTiling(double panel_overlay_elem_ptr, double x, double y, double layer)
 {
    Ogre::PanelOverlayElement *panel_overlay_elem = ConvertFromGMPointer<Ogre::PanelOverlayElement*>(panel_overlay_elem_ptr);
 
    if (panel_overlay_elem == NULL)
       return FALSE;
 
-   panel_overlay_elem->setTiling(x, y);
+   panel_overlay_elem->setTiling(x, y, layer);
 
    return TRUE;
 }
@@ -284,7 +286,7 @@ GMFN double EnablePanelOverlayElementTransparency(double panel_overlay_elem_ptr,
 }
 
 
-GMFN double SetBorderPanelOverlayElementSize(double panel_overlay_elem_ptr, double left, double right, double top, double bottom)
+GMFN double SetBorderPanelOverlayElementSize(double panel_overlay_elem_ptr, double left, double top, double right, double bottom)
 {
    Ogre::BorderPanelOverlayElement *panel_overlay_elem = ConvertFromGMPointer<Ogre::BorderPanelOverlayElement*>(panel_overlay_elem_ptr);
 
@@ -396,6 +398,19 @@ GMFN double SetBorderPanelOverlayElementBottomRightBorderUV(double panel_overlay
       return FALSE;
 
    panel_overlay_elem->setBottomRightBorderUV(u1, v1, u2, v2);
+
+   return TRUE;
+}
+
+
+GMFN double SetOverlayElementParameter(double overlay_elem_ptr, char *name, char *value)
+{
+   Ogre::OverlayElement *overlay_elem = ConvertFromGMPointer<Ogre::OverlayElement*>(overlay_elem_ptr);
+
+   if (overlay_elem == NULL)
+      return FALSE;
+
+   overlay_elem->setParameter(name, value);
 
    return TRUE;
 }

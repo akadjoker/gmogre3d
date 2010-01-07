@@ -105,6 +105,84 @@ GMFN double SetTechniqueLODIndex(double technique_ptr, double index)
 }
 
 
+GMFN double EnableTechniqueDepthWrite(double technique_ptr, double enable)
+{
+   Ogre::Technique *tech = ConvertFromGMPointer<Ogre::Technique *>(technique_ptr);
+
+   if (tech == NULL)
+      return FALSE;
+
+   tech->setDepthWriteEnabled((enable != 0));
+
+   return TRUE;
+}
+
+
+GMFN double EnableTechniqueDepthCheck(double technique_ptr, double enable)
+{
+   Ogre::Technique *tech = ConvertFromGMPointer<Ogre::Technique *>(technique_ptr);
+
+   if (tech == NULL)
+      return FALSE;
+
+   tech->setDepthCheckEnabled((enable != 0));
+
+   return TRUE;
+}
+
+
+GMFN double SetTechniqueDepthFunc(double technique_ptr, double func)
+{
+   Ogre::Technique *tech = ConvertFromGMPointer<Ogre::Technique *>(technique_ptr);
+
+   if (tech == NULL)
+      return FALSE;
+
+   tech->setDepthFunction(static_cast<Ogre::CompareFunction>((int)func));
+
+   return TRUE;
+}
+
+
+GMFN double EnableTechniqueLighting(double technique_ptr, double enable)
+{
+   Ogre::Technique *tech = ConvertFromGMPointer<Ogre::Technique *>(technique_ptr);
+
+   if (tech == NULL)
+      return FALSE;
+
+   tech->setLightingEnabled((enable != 0));
+
+   return TRUE;
+}
+
+
+GMFN double SetTechniquePointSize(double technique_ptr, double size)
+{
+   Ogre::Technique *tech = ConvertFromGMPointer<Ogre::Technique *>(technique_ptr);
+
+   if (tech == NULL)
+      return FALSE;
+
+   tech->setPointSize(size);
+
+   return TRUE;
+}
+
+
+GMFN double SetTechniqueSceneBlendingType(double technique_ptr, double type)
+{
+   Ogre::Technique *tech = ConvertFromGMPointer<Ogre::Technique *>(technique_ptr);
+
+   if (tech == NULL)
+      return FALSE;
+
+   tech->setSceneBlending(static_cast<Ogre::SceneBlendType>((int)type));
+
+   return TRUE;
+}
+
+
 GMFN double CreateTechniquePass(double technique_ptr)
 {
    Ogre::Technique *tech = ConvertFromGMPointer<Ogre::Technique *>(technique_ptr);
@@ -112,8 +190,11 @@ GMFN double CreateTechniquePass(double technique_ptr)
    if (tech == NULL)
       return 0;
 
-   Ogre::Pass *pass = tech->createPass();
-
+   Ogre::Pass *pass = NULL;
+   
+   TRY
+      pass = tech->createPass();
+   CATCH("CreateTechniquePass")
    return ConvertToGMPointer(pass);
 }
 

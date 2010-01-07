@@ -2193,6 +2193,10 @@ namespace gm {
       ///   
       PGMVARIABLE GetGlobalVariablePtr( int aSymbolId );
 
+      PGMVARIABLELIST GetGlobalVariableListPtr() {
+        return *m_globalVarListPtr;
+      }
+
       /// Used internally
       static int ResourceFindID( const char* aName, char** aResourceNames, int aArraySize );
 
@@ -2242,10 +2246,6 @@ namespace gm {
 
       void* GetCurrentRoomPtr() {
         return *m_currentRoomPtr;
-      }
-
-      PGMVARIABLELIST GetGlobalVariableListPtr() {
-        return *m_globalVarListPtr;
       }
 
       void RetrieveFunctionPointers();

@@ -36,26 +36,30 @@ GMFN double CreateSceneManager(double type)
    if (mRoot == NULL)
       return 0;
 
-   Ogre::SceneManager *scene_mgr = mRoot->createSceneManager(static_cast<Ogre::SceneType>((int)type), GenerateUniqueName());
+   Ogre::SceneManager *scene_mgr = NULL;
+   
+   TRY
+      scene_mgr = mRoot->createSceneManager(static_cast<Ogre::SceneType>((int)type), GenerateUniqueName());
 
-   // Set our current to the only one that exists
-   if (mSceneMgr == NULL)
-   {
-      mSceneMgr = scene_mgr;
+      // Set our current to the only one that exists
+      if (mSceneMgr == NULL)
+      {
+         mSceneMgr = scene_mgr;
 
-      //if (mFrameListener != NULL)
-      //   mFrameListener->Create2DManager(mSceneMgr);
+         //if (mFrameListener != NULL)
+         //   mFrameListener->Create2DManager(mSceneMgr);
 
-      //mCollisionTools.setSceneManager(mSceneMgr);
-   }
+         //mCollisionTools.setSceneManager(mSceneMgr);
+      }
 
-   GMFrameListener *fl = new GMFrameListener;
-   mRoot->addFrameListener(fl);
-   fl->Create2DManager(mSceneMgr);
-   mSceneListener[scene_mgr] = fl;
+      GMFrameListener *fl = new GMFrameListener;
+      mRoot->addFrameListener(fl);
+      fl->Create2DManager(mSceneMgr);
+      mSceneListener[scene_mgr] = fl;
 
-   MOC::CollisionTools *ct = new MOC::CollisionTools(scene_mgr);
-   mSceneCollisionMap[scene_mgr] = ct;
+      MOC::CollisionTools *ct = new MOC::CollisionTools(scene_mgr);
+      mSceneCollisionMap[scene_mgr] = ct;
+   CATCH("CreateSceneManager")
 
    return ConvertToGMPointer(scene_mgr);
 }
@@ -101,7 +105,18 @@ GMFN double SetCurrentSceneManager(double scene_mgr_ptr)
 }
 
 
-GMFN double SetSceneManagerWorldGeometry(char *filename)
+GMFN double ClearScene()
+{
+   if (mSceneMgr == NULL)
+      return FALSE;
+
+   mSceneMgr->clearScene();
+
+   return TRUE;
+}
+
+
+GMFN double SetWorldGeometry(char *filename)
 {
    try
    {   
@@ -119,6 +134,15 @@ GMFN double SetSceneManagerWorldGeometry(char *filename)
    return TRUE;
 }
 
+GMFN double SetVisibilityMask(double mask)
+{
+   if (mSceneMgr == NULL)
+      return FALSE;
+
+   mSceneMgr->setVisibilityMask(mask);
+
+   return TRUE;
+}
 
 GMFN double EnableSkyBox(double enable, char *material_name, double distance, double drawlast)
 {
@@ -192,6 +216,17 @@ GMFN double SetShadowTechnique(double type)
       return FALSE;
    
    mSceneMgr->setShadowTechnique(static_cast<Ogre::ShadowTechnique>((int)type));
+
+   return TRUE;
+}
+
+
+GMFN double EnableShadowLightClipPlanes(double enable)
+{
+   if (mSceneMgr == NULL)
+      return FALSE;
+   
+   mSceneMgr->setShadowUseLightClipPlanes((enable != 0));
 
    return TRUE;
 }

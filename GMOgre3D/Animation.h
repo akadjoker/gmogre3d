@@ -27,6 +27,38 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "GMOgre3D.h"
 
 
+
+GMFN double CreateAnimation(char *name, double length)
+{
+   if (mSceneMgr == NULL)
+      return FALSE;
+
+   Ogre::Animation *anim;
+   
+   TRY
+      anim = mSceneMgr->createAnimation(name, length);
+   CATCH("CreateAnimation")
+
+   return ConvertToGMPointer(anim);
+}
+
+
+GMFN double DestroyAnimation(double anim_ptr)
+{
+   if (mSceneMgr == NULL)
+      return FALSE;
+
+   Ogre::Animation *anim = ConvertFromGMPointer<Ogre::Animation*>(anim_ptr);
+
+   if (anim == NULL)
+      return FALSE;
+
+   mSceneMgr->destroyAnimation(anim->getName());
+
+   return TRUE;
+}
+
+
 GMFN double GetAnimationLength(double anim_ptr)
 {
    Ogre::Animation *anim = ConvertFromGMPointer<Ogre::Animation*>(anim_ptr);
@@ -63,25 +95,24 @@ GMFN double CreateAnimationNodeTrack(double anim_ptr, double handle, double node
    if (node == NULL)
       return NULL;
 
-   Ogre::NodeAnimationTrack *track = anim->createNodeTrack((unsigned short)handle, node);
+   Ogre::NodeAnimationTrack *track = NULL;
+   
+   TRY
+      track = anim->createNodeTrack((unsigned short)handle, node);
+   CATCH("CreateAnimationNodeTrack")
 
    return ConvertToGMPointer(track);
 }
 
 
-GMFN double DestroyAnimationNodeTrack(double anim_ptr, double node_track_ptr)
+GMFN double DestroyAnimationNodeTrackByHandle(double anim_ptr, double handle)
 {
    Ogre::Animation *anim = ConvertFromGMPointer<Ogre::Animation*>(anim_ptr);
 
    if (anim == NULL)
       return FALSE;
 
-   Ogre::NodeAnimationTrack *node_track = ConvertFromGMPointer<Ogre::NodeAnimationTrack*>(node_track_ptr);
-
-   if (node_track == NULL)
-      return FALSE;
-
-   anim->destroyNodeTrack(node_track->getHandle());
+   anim->destroyNodeTrack(handle);
 
    return TRUE;
 }
@@ -98,6 +129,5 @@ GMFN double GetAnimationNodeTrackByHandle(double anim_ptr, double handle)
 
    return ConvertToGMPointer(node_track);
 }
-
 
 #endif

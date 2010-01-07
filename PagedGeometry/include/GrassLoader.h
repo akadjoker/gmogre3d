@@ -92,6 +92,9 @@ public:
 	*/
 	inline void setWindDirection(Ogre::Vector3 &dir) { windDir = dir; }
 
+	inline void setBuildEdgesEnabled(bool value) { autoEdgeBuildEnabled=value; }
+	inline bool getBuildEdgesEnabled() { return autoEdgeBuildEnabled; }
+
 	/** \brief Returns the global wind direction for this GrassLoader.
 
 	\see setWindDirection() for more information about the wind direction. */
@@ -169,11 +172,10 @@ public:
 		heightFunctionUserData = userData;
 	}
 
-
 	/** INTERNAL FUNCTION - DO NOT USE */
 	void loadPage(PageInfo &page);
 	/** INTERNAL FUNCTION - DO NOT USE */
-	void unloadPage(const PageInfo &page);
+	void unloadPage(PageInfo &page);
 	/** INTERNAL FUNCTION - DO NOT USE */
 	void frameUpdate();
 
@@ -181,9 +183,9 @@ private:
 	friend class GrassLayer;
 
 	//Helper functions
-	Ogre::Mesh *GrassLoader::generateGrass_QUAD(PageInfo &page, GrassLayer *layer, float *grassPositions, unsigned int grassCount);
-	Ogre::Mesh *GrassLoader::generateGrass_CROSSQUADS(PageInfo &page, GrassLayer *layer, float *grassPositions, unsigned int grassCount);
-	Ogre::Mesh *GrassLoader::generateGrass_SPRITE(PageInfo &page, GrassLayer *layer, float *grassPositions, unsigned int grassCount);
+	Ogre::Mesh *generateGrass_QUAD(PageInfo &page, GrassLayer *layer, float *grassPositions, unsigned int grassCount);
+	Ogre::Mesh *generateGrass_CROSSQUADS(PageInfo &page, GrassLayer *layer, float *grassPositions, unsigned int grassCount);
+	Ogre::Mesh *generateGrass_SPRITE(PageInfo &page, GrassLayer *layer, float *grassPositions, unsigned int grassCount);
 
 	//List of grass types
 	std::list<GrassLayer*> layerList;
@@ -201,6 +203,8 @@ private:
 	Ogre::Timer windTimer;
 	Ogre::Vector3 windDir;
 	unsigned long lastTime;
+
+	bool autoEdgeBuildEnabled;
 
 	static unsigned long GUID;
 	static inline Ogre::String getUniqueID()
@@ -276,6 +280,34 @@ public:
 	as necessary. */
 	void setHeightRange(float minHeight, float maxHeight = 0) { minY = minHeight; maxY = maxHeight; }
 
+	/** \brief Set the maximum slope a grass of blade can be placed on.
+	\param maxSlopeRatio The maximum slope (h/w ratio) a grass blade is allowed to be placed on.
+
+	This function can be used to set the maximum slope you want your grass to be placed on
+	(although it doesn't work for sprite grass). By default grass is allowed on any slope.
+	
+	This version of setMaxSlope() accepts a slope ratio value, where ATan(maxSlopeRatio) =
+	maxSlopeAngle. If you wish to provide a maximum slope as an angle, either use the other
+	overload of this function, or convert your angle to a slope ratio first with Tan().*/
+	void setMaxSlope(const float maxSlopeRatio) { maxSlope = maxSlopeRatio; }
+
+	void setMaxSlope(Ogre::Radian maxSlopeAngle) {
+		if (maxSlopeAngle > Ogre::Degree(89.99f))
+			maxSlopeAngle = Ogre::Degree(89.99f);
+		if (maxSlopeAngle < Ogre::Degree(0))
+			maxSlopeAngle = Ogre::Degree(0);
+
+		maxSlope = Ogre::Math::Tan(maxSlopeAngle);
+	}
+
+	/** \brief Get the maximum slope a grass blade can be placed on (as set by setMaxSlope()).
+	\returns The currently set maximum slope ratio value (not an angle).
+
+	This returns the currently set maximum slope which is used to determine what ground is too steep
+	for grass to be placed on. Note that this returns the slope as a slope ratio, not an angle. If you
+	need an angle value, convert with ATan() (maxSlopeAngle = ATan(maxSlopeRatio)).*/
+	float getMaxSlope() const { return maxSlope; }
+
 	/** \brief Sets the density map used for this grass layer
 	\param mapFile The density map image
 	\param channel The color channel(s) to from the image to interpret as density
@@ -304,7 +336,7 @@ public:
 	
 	\note The texture data you provide is copied into the GrassLayer's own memory space, so you
 	can delete the texture after calling this function without risk of crashing. */
-	void setDensityMap(Ogre::Texture *map, MapChannel channel = CHANNEL_COLOR);
+	void setDensityMap(Ogre::TexturePtr map, MapChannel channel = CHANNEL_COLOR);
 
 	/** \brief Sets the filtering mode used for density maps
 
@@ -347,7 +379,7 @@ public:
 	
 	\note The texture data you provide is copied into RAM, so you can delete the texture after
 	calling this function without risk of crashing. */
-	void setColorMap(Ogre::Texture *map, MapChannel channel = CHANNEL_COLOR);
+	void setColorMap(Ogre::TexturePtr map, MapChannel channel = CHANNEL_COLOR);
 
 	/** \brief Sets the filtering mode used for color maps
 
@@ -375,10 +407,6 @@ public:
 	void setMapBounds(const TBounds &bounds)
 	{
 		mapBounds = bounds;
-		if (densityMap)
-			densityMap->setMapBounds(mapBounds);
-		if (colorMap)
-			colorMap->setMapBounds(mapBounds);
 	}
 
 	/** \brief Gets a pointer to the density map being used
@@ -438,6 +466,11 @@ public:
 	*/
 	void setAnimationEnabled(bool enabled);
 
+
+	/** \brief Enables/disables lighting on this layer
+	*/
+	void setLightingEnabled(bool enabled);
+
 	/** \brief Sets how far grass should sway back and forth
 
 	\note Since this is measured in world units, you may have to adjust this depending on
@@ -491,6 +524,7 @@ private:
 	float minHeight, maxHeight;
 
 	float minY, maxY;
+    float maxSlope;
 
 	FadeTechnique fadeTechnique;
 	GrassTechnique renderTechnique;
@@ -505,7 +539,7 @@ private:
 	MapFilter colorMapFilter;
 
 	//Grass shader properties
-	bool animate, blend, shaderNeedsUpdate;
+	bool animate, blend, lighting, shaderNeedsUpdate;
 	float animMag, animSpeed, animFreq;
 
 	//Current frame of animation for this layer
@@ -525,7 +559,7 @@ but it also means potentially poor performance if you don't know what you're doi
 class GrassPage: public GeometryPage
 {
 public:
-	void init(PagedGeometry *geom);
+	void init(PagedGeometry *geom, const Ogre::Any &data);
 	~GrassPage();
 
 	void addEntity(Ogre::Entity *ent, const Ogre::Vector3 &position, const Ogre::Quaternion &rotation, const Ogre::Vector3 &scale, const Ogre::ColourValue &color);

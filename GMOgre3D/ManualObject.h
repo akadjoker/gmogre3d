@@ -32,7 +32,11 @@ GMFN double CreateManualObject()
    if (mSceneMgr == NULL)
       return FALSE;
 
-   Ogre::ManualObject *man_obj = mSceneMgr->createManualObject(GenerateUniqueName());
+   Ogre::ManualObject *man_obj = NULL;
+   
+   TRY
+      man_obj = mSceneMgr->createManualObject(GenerateUniqueName());
+   CATCH("CreateManualObject")
 
    return ConvertToGMPointer(man_obj);
 }
@@ -113,7 +117,12 @@ GMFN double SetManualObjectBoundingBox(double man_obj_ptr, double mx, double mz,
    if (man_obj == NULL)
       return FALSE;
 
-   man_obj->setBoundingBox(Ogre::AxisAlignedBox(mx, mz, my, Mx, Mz, My));
+   Ogre::AxisAlignedBox aabb(mx, mz, my, Mx, Mz, My);
+
+   if (mx == -1.0 && mz == -1.0 && my == -1.0 && Mx == -1.0 && Mz == -1.0 && My == -1.0)
+      aabb.setInfinite();
+
+   man_obj->setBoundingBox(aabb);
 
    return TRUE;
 }
@@ -145,6 +154,19 @@ GMFN double EstimateManualObjectVertexCount(double man_obj_ptr, double size)
 }
 
 
+GMFN double EstimateManualObjectIndexCount(double man_obj_ptr, double size)
+{
+   Ogre::ManualObject *man_obj = ConvertFromGMPointer<Ogre::ManualObject*>(man_obj_ptr);
+
+   if (man_obj == NULL)
+      return FALSE;
+
+   man_obj->estimateIndexCount((size_t)size);
+
+   return TRUE;
+}
+
+
 GMFN double BeginManualObjectSection(double man_obj_ptr, char *mat_name, double type)
 {
    Ogre::ManualObject *man_obj = ConvertFromGMPointer<Ogre::ManualObject*>(man_obj_ptr);
@@ -158,7 +180,20 @@ GMFN double BeginManualObjectSection(double man_obj_ptr, char *mat_name, double 
 }
 
 
-GMFN double AddManualObjectPosition(double man_obj_ptr, double x, double z, double y)
+GMFN double BeginUpdateManualObjectSection(double man_obj_ptr, double index)
+{
+   Ogre::ManualObject *man_obj = ConvertFromGMPointer<Ogre::ManualObject*>(man_obj_ptr);
+
+   if (man_obj == NULL)
+      return FALSE;
+   
+   man_obj->beginUpdate(index);
+
+   return TRUE;
+}
+
+
+GMFN double ManualObjectPosition(double man_obj_ptr, double x, double z, double y)
 {
    Ogre::ManualObject *man_obj = ConvertFromGMPointer<Ogre::ManualObject*>(man_obj_ptr);
 
@@ -171,7 +206,7 @@ GMFN double AddManualObjectPosition(double man_obj_ptr, double x, double z, doub
 }
 
 
-GMFN double AddManualObjectNormal(double man_obj_ptr, double x, double z, double y)
+GMFN double ManualObjectNormal(double man_obj_ptr, double x, double z, double y)
 {
    Ogre::ManualObject *man_obj = ConvertFromGMPointer<Ogre::ManualObject*>(man_obj_ptr);
 
@@ -184,7 +219,7 @@ GMFN double AddManualObjectNormal(double man_obj_ptr, double x, double z, double
 }
 
 
-GMFN double AddManualObjectTriangle(double man_obj_ptr, double i1, double i2, double i3)
+GMFN double ManualObjectTriangle(double man_obj_ptr, double i1, double i2, double i3)
 {
    Ogre::ManualObject *man_obj = ConvertFromGMPointer<Ogre::ManualObject*>(man_obj_ptr);
 
@@ -197,7 +232,7 @@ GMFN double AddManualObjectTriangle(double man_obj_ptr, double i1, double i2, do
 }
 
 
-GMFN double AddManualObjectQuad(double man_obj_ptr, double i1, double i2, double i3, double i4)
+GMFN double ManualObjectQuad(double man_obj_ptr, double i1, double i2, double i3, double i4)
 {
    Ogre::ManualObject *man_obj = ConvertFromGMPointer<Ogre::ManualObject*>(man_obj_ptr);
 
@@ -210,7 +245,7 @@ GMFN double AddManualObjectQuad(double man_obj_ptr, double i1, double i2, double
 }
 
 
-GMFN double AddManualObjectTextureCoord1(double man_obj_ptr, double u)
+GMFN double ManualObjectTextureCoord1(double man_obj_ptr, double u)
 {
    Ogre::ManualObject *man_obj = ConvertFromGMPointer<Ogre::ManualObject*>(man_obj_ptr);
 
@@ -223,7 +258,7 @@ GMFN double AddManualObjectTextureCoord1(double man_obj_ptr, double u)
 }
 
 
-GMFN double AddManualObjectTextureCoord2(double man_obj_ptr, double u, double v)
+GMFN double ManualObjectTextureCoord2(double man_obj_ptr, double u, double v)
 {
    Ogre::ManualObject *man_obj = ConvertFromGMPointer<Ogre::ManualObject*>(man_obj_ptr);
 
@@ -236,7 +271,7 @@ GMFN double AddManualObjectTextureCoord2(double man_obj_ptr, double u, double v)
 }
 
 
-GMFN double AddManualObjectTextureCoord3(double man_obj_ptr, double u, double v, double w)
+GMFN double ManualObjectTextureCoord3(double man_obj_ptr, double u, double v, double w)
 {
    Ogre::ManualObject *man_obj = ConvertFromGMPointer<Ogre::ManualObject*>(man_obj_ptr);
 
@@ -249,7 +284,7 @@ GMFN double AddManualObjectTextureCoord3(double man_obj_ptr, double u, double v,
 }
 
 
-GMFN double AddManualObjectTextureCoord4(double man_obj_ptr, double x, double z, double y, double w)
+GMFN double ManualObjectTextureCoord4(double man_obj_ptr, double x, double z, double y, double w)
 {
    Ogre::ManualObject *man_obj = ConvertFromGMPointer<Ogre::ManualObject*>(man_obj_ptr);
 
@@ -262,7 +297,7 @@ GMFN double AddManualObjectTextureCoord4(double man_obj_ptr, double x, double z,
 }
 
 
-GMFN double AddManualObjectColor(double man_obj_ptr, double clr, double alpha)
+GMFN double ManualObjectColor(double man_obj_ptr, double clr, double alpha)
 {
    Ogre::ManualObject *man_obj = ConvertFromGMPointer<Ogre::ManualObject*>(man_obj_ptr);
 
@@ -275,7 +310,7 @@ GMFN double AddManualObjectColor(double man_obj_ptr, double clr, double alpha)
 }
 
 
-GMFN double AddManualObjectIndex(double man_obj_ptr, double index)
+GMFN double ManualObjectIndex(double man_obj_ptr, double index)
 {
    Ogre::ManualObject *man_obj = ConvertFromGMPointer<Ogre::ManualObject*>(man_obj_ptr);
 

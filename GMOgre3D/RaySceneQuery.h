@@ -167,57 +167,29 @@ GMFN double GetRaySceneQueryResultObject(double ray_scn_qry_ptr, double index)
 }
 
 
-GMFN double GetRaySceneQueryResultWorldFragmentIntersectX(double ray_scn_qry_ptr, double index)
+GMFN double GetRaySceneQueryResultWorldFragmentIntersectPoint(double ray_scn_qry_ptr, double index)
 {
    Ogre::RaySceneQuery *ray_scn_qry = ConvertFromGMPointer<Ogre::RaySceneQuery*>(ray_scn_qry_ptr);
 
    if (ray_scn_qry == NULL)
-      return 0;
+      return FALSE;
 
    Ogre::RaySceneQueryResult query_result = ray_scn_qry->getLastResults();
 
    Ogre::SceneQuery::WorldFragment *world_frag = query_result[(int)index].worldFragment;
 
    if (world_frag == NULL)
-      return 0;
+      return FALSE;
 
-   return world_frag->singleIntersection.x;
-}
+   AcquireGMVectorGlobals();
+   if (mVectorX != NULL)
+   {
+      *mVectorX = world_frag->singleIntersection.x;
+      *mVectorY = world_frag->singleIntersection.z;
+      *mVectorZ = world_frag->singleIntersection.y;
+   }
 
-
-GMFN double GetRaySceneQueryResultWorldFragmentIntersectY(double ray_scn_qry_ptr, double index)
-{
-   Ogre::RaySceneQuery *ray_scn_qry = ConvertFromGMPointer<Ogre::RaySceneQuery*>(ray_scn_qry_ptr);
-
-   if (ray_scn_qry == NULL)
-      return 0;
-
-   Ogre::RaySceneQueryResult query_result = ray_scn_qry->getLastResults();
-
-   Ogre::SceneQuery::WorldFragment *world_frag = query_result[(int)index].worldFragment;
-
-   if (world_frag == NULL)
-      return 0;
-
-   return world_frag->singleIntersection.z;
-}
-
-
-GMFN double GetRaySceneQueryResultWorldFragmentIntersectZ(double ray_scn_qry_ptr, double index)
-{
-   Ogre::RaySceneQuery *ray_scn_qry = ConvertFromGMPointer<Ogre::RaySceneQuery*>(ray_scn_qry_ptr);
-
-   if (ray_scn_qry == NULL)
-      return 0;
-
-   Ogre::RaySceneQueryResult query_result = ray_scn_qry->getLastResults();
-
-   Ogre::SceneQuery::WorldFragment *world_frag = query_result[(int)index].worldFragment;
-
-   if (world_frag == NULL)
-      return 0;
-
-   return world_frag->singleIntersection.y;
+   return TRUE;
 }
 
 

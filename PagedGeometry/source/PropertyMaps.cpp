@@ -23,22 +23,22 @@ using namespace Ogre;
 
 namespace Forests {
 
-std::map<Ogre::String, DensityMap*> DensityMap::selfList;
+std::map<String, DensityMap*> DensityMap::selfList;
 
-DensityMap *DensityMap::load(const Ogre::String &fileName, MapChannel channel)
+DensityMap *DensityMap::load(const String &fileName, MapChannel channel)
 {
 	//Load image
 	TexturePtr map = TextureManager::getSingleton().load(fileName, ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
 	//Copy image to pixelbox
-	return load(map.getPointer(), channel);
+	return load(map, channel);
 }
 
-DensityMap *DensityMap::load(Ogre::Texture *texture, MapChannel channel)
+DensityMap *DensityMap::load(TexturePtr texture, MapChannel channel)
 {
 	const String key = texture->getName() + StringConverter::toString((int)channel);
 
-	std::map<Ogre::String, DensityMap*>::iterator i;
+	std::map<String, DensityMap*>::iterator i;
 	i = selfList.find(key);
 
 	DensityMap *m;
@@ -68,9 +68,9 @@ DensityMap::~DensityMap()
 	selfList.erase(selfKey);
 }
 
-DensityMap::DensityMap(Texture *map, MapChannel channel)
+DensityMap::DensityMap(TexturePtr map, MapChannel channel)
 {
-	assert(map);
+	assert(map.isNull() == false);
 	filter = MAPFILTER_BILINEAR;
 
 	//Add self to selfList
@@ -122,7 +122,7 @@ DensityMap::DensityMap(Texture *map, MapChannel channel)
 
 //Returns the density map value at the given location
 //Make sure a density map exists before calling this.
-float DensityMap::_getDensityAt_Unfiltered(float x, float z)
+float DensityMap::_getDensityAt_Unfiltered(float x, float z, const TRect<Real> &mapBounds)
 {
 	assert(pixels);
 
@@ -130,6 +130,10 @@ float DensityMap::_getDensityAt_Unfiltered(float x, float z)
 	uint32 mapHeight = (uint32)pixels->getHeight();
 	float boundsWidth = mapBounds.width();
 	float boundsHeight = mapBounds.height();
+
+	//Patch incorrect PixelBox::getWidth() in OpenGL mode
+	if (Root::getSingleton().getRenderSystem()->getName() == "OpenGL Rendering Subsystem")
+		--mapWidth;
 
 	uint32 xindex = mapWidth * (x - mapBounds.left) / boundsWidth;
 	uint32 zindex = mapHeight * (z - mapBounds.top) / boundsHeight;
@@ -144,7 +148,7 @@ float DensityMap::_getDensityAt_Unfiltered(float x, float z)
 
 //Returns the density map value at the given location with bilinear filtering
 //Make sure a density map exists before calling this.
-float DensityMap::_getDensityAt_Bilinear(float x, float z)
+float DensityMap::_getDensityAt_Bilinear(float x, float z, const TRect<Real> &mapBounds)
 {
 	assert(pixels);
 
@@ -152,6 +156,10 @@ float DensityMap::_getDensityAt_Bilinear(float x, float z)
 	uint32 mapHeight = (uint32)pixels->getHeight();
 	float boundsWidth = mapBounds.width();
 	float boundsHeight = mapBounds.height();
+
+	//Patch incorrect PixelBox::getWidth() in OpenGL mode
+	if (Root::getSingleton().getRenderSystem()->getName() == "OpenGL Rendering Subsystem")
+		--mapWidth;
 
 	float xIndexFloat = (mapWidth * (x - mapBounds.left) / boundsWidth) - 0.5f;
 	float zIndexFloat = (mapHeight * (z - mapBounds.top) / boundsHeight) - 0.5f;
@@ -185,22 +193,22 @@ float DensityMap::_getDensityAt_Bilinear(float x, float z)
 
 //----------------------------------------------------------------------------------------------
 
-std::map<Ogre::String, ColorMap*> ColorMap::selfList;
+std::map<String, ColorMap*> ColorMap::selfList;
 
-ColorMap *ColorMap::load(const Ogre::String &fileName, MapChannel channel)
+ColorMap *ColorMap::load(const String &fileName, MapChannel channel)
 {
 	//Load image
 	TexturePtr map = TextureManager::getSingleton().load(fileName, ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
 	//Copy image to pixelbox
-	return load(map.getPointer(), channel);
+	return load(map, channel);
 }
 
-ColorMap *ColorMap::load(Ogre::Texture *texture, MapChannel channel)
+ColorMap *ColorMap::load(TexturePtr texture, MapChannel channel)
 {
 	const String key = texture->getName() + StringConverter::toString((int)channel);
 
-	std::map<Ogre::String, ColorMap*>::iterator i;
+	std::map<String, ColorMap*>::iterator i;
 	i = selfList.find(key);
 
 	ColorMap *m;
@@ -230,9 +238,9 @@ ColorMap::~ColorMap()
 	selfList.erase(selfKey);
 }
 
-ColorMap::ColorMap(Texture *map, MapChannel channel)
+ColorMap::ColorMap(TexturePtr map, MapChannel channel)
 {
-	assert(map);
+	assert(map.isNull() == false);
 	filter = MAPFILTER_BILINEAR;
 
 	//Add self to selfList
@@ -302,7 +310,7 @@ ColorMap::ColorMap(Texture *map, MapChannel channel)
 }
 
 //Returns the color map value at the given location
-uint32 ColorMap::_getColorAt(float x, float z)
+uint32 ColorMap::_getColorAt(float x, float z, const TRect<Real> &mapBounds)
 {
 	assert(pixels);
 
@@ -344,7 +352,7 @@ uint32 ColorMap::_interpolateColor(uint32 color1, uint32 color2, float ratio, fl
 	return clr;
 }
 
-uint32 ColorMap::_getColorAt_Bilinear(float x, float z)
+uint32 ColorMap::_getColorAt_Bilinear(float x, float z, const TRect<Real> &mapBounds)
 {
 	assert(pixels);
 

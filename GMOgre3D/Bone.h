@@ -77,6 +77,32 @@ GMFN double EnableBoneManualControl(double bone_ptr, double enable)
 }
 
 
+GMFN double EnableBoneInheritScale(double bone_ptr, double enable)
+{
+   Ogre::Bone *bone = ConvertFromGMPointer<Ogre::Bone*>(bone_ptr);
+
+   if (bone == NULL)
+      return FALSE;
+
+   bone->setInheritScale((enable != 0));
+
+   return TRUE;
+}
+
+
+GMFN double EnableBoneInheritOrientation(double bone_ptr, double enable)
+{
+   Ogre::Bone *bone = ConvertFromGMPointer<Ogre::Bone*>(bone_ptr);
+
+   if (bone == NULL)
+      return FALSE;
+
+   bone->setInheritOrientation((enable != 0));
+
+   return TRUE;
+}
+
+
 GMFN double SetBoneScale(double bone_ptr, double x, double z, double y)
 {
    Ogre::Bone *bone = ConvertFromGMPointer<Ogre::Bone*>(bone_ptr);
@@ -112,6 +138,7 @@ GMFN double GetBonePosition(double bone_ptr)
 
    Ogre::Vector3 vec = bone->getPosition();
 
+   AcquireGMVectorGlobals();
    if (mVectorX != NULL)
    {
       *mVectorX = vec.x;
@@ -158,6 +185,7 @@ GMFN double GetBoneOrientation(double bone_ptr)
 
    Ogre::Quaternion quat = bone->getOrientation();
 
+   AcquireGMEulerGlobals();
    if (mEulerYaw != NULL)
    {
       *mEulerYaw = ConvertToGMYaw(quat.getYaw().valueDegrees());
@@ -254,6 +282,19 @@ GMFN double GetBonePitch(double bone_ptr)
 }
 
 
+GMFN double RotateBone(double bone_ptr, double x, double z, double y, double degrees, double relative_type = 0.0)
+{
+   Ogre::Bone *bone = ConvertFromGMPointer<Ogre::Bone*>(bone_ptr);
+
+   if (bone == NULL)
+      return FALSE;
+
+   bone->rotate(Ogre::Vector3(x, y, z), Ogre::Degree(degrees), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
+
+   return TRUE;
+}
+
+
 GMFN double SetBoneInitialState(double bone_ptr)
 {
    Ogre::Bone *bone = ConvertFromGMPointer<Ogre::Bone*>(bone_ptr);
@@ -267,7 +308,7 @@ GMFN double SetBoneInitialState(double bone_ptr)
 }
 
 
-GMFN double ResetBoneInitialState(double bone_ptr)
+GMFN double ResetBoneToInitialState(double bone_ptr)
 {
    Ogre::Bone *bone = ConvertFromGMPointer<Ogre::Bone*>(bone_ptr);
 

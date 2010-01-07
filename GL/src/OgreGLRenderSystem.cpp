@@ -2321,6 +2321,9 @@ namespace Ogre {
 		if (!mCurrentCapabilities->hasCapability(RSC_ANISOTROPY))
 			return;
 
+		if (!activateGLTextureUnit(unit))
+			return;
+
 		GLfloat largest_supported_anisotropy = 0;
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &largest_supported_anisotropy);
 		if (maxAnisotropy > largest_supported_anisotropy)
@@ -2328,6 +2331,8 @@ namespace Ogre {
 			static_cast<uint>(largest_supported_anisotropy) : 1;
 		if (_getCurrentAnisotropy(unit) != maxAnisotropy)
 			glTexParameterf(mTextureTypes[unit], GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
+
+		activateGLTextureUnit(0);
 	}
 	//-----------------------------------------------------------------------------
 	void GLRenderSystem::_setTextureBlendMode(size_t stage, const LayerBlendModeEx& bm)
@@ -3258,6 +3263,17 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 			mCurrentGeometryProgram->unbindProgram();
 		if (mCurrentFragmentProgram)
 			mCurrentFragmentProgram->unbindProgram();
+
+		// Disable lights
+		for (unsigned short i = 0; i < mCurrentLights; ++i)
+		{
+			setGLLight(i, NULL);
+			mLights[i] = NULL;
+		}
+		mCurrentLights = 0;
+
+		// Disable textures
+		_disableTextureUnitsFrom(0);
 
 		// It's ready to switching
 		if (mCurrentContext)

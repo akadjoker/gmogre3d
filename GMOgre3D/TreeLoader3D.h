@@ -41,6 +41,19 @@ GMFN double CreateTreeLoader3D(double pg_ptr, double top, double left, double bo
 }
 
 
+GMFN double DestroyTreeLoader3D(double tl_ptr)
+{
+   Forests::TreeLoader3D *tl = ConvertFromGMPointer<Forests::TreeLoader3D*>(tl_ptr);
+
+   if (tl == NULL)
+      return FALSE;
+
+   delete tl;
+
+   return TRUE;
+}
+
+
 GMFN double AddTreeLoader3DTree(double tl_ptr, double entity_ptr, double x, double z, double y, double yaw, double scale)
 {
    Forests::TreeLoader3D *tl = ConvertFromGMPointer<Forests::TreeLoader3D*>(tl_ptr);
@@ -59,14 +72,19 @@ GMFN double AddTreeLoader3DTree(double tl_ptr, double entity_ptr, double x, doub
 }
 
 
-GMFN double RemoveTreeLoader3DTrees(double tl_ptr, double x, double z, double y, double radius)
+GMFN double RemoveTreeLoader3DTrees(double tl_ptr, double x, double z, double y, double radius, double ent_ptr)
 {
    Forests::TreeLoader3D *tl = ConvertFromGMPointer<Forests::TreeLoader3D*>(tl_ptr);
 
    if (tl == NULL)
       return FALSE;
 
-   tl->deleteTrees(Ogre::Vector3(x, y, z), radius);
+   Ogre::Entity *ent = NULL;
+
+   if (ent_ptr != 0)
+      ent = ConvertFromGMPointer<Ogre::Entity*>(ent_ptr);
+
+   tl->deleteTrees(Ogre::Vector3(x, y, z), radius, ent);
 
    return TRUE;
 }

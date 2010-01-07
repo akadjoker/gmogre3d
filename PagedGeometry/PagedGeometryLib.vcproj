@@ -333,6 +333,14 @@
 				RelativePath=".\source\TreeLoader3D.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\source\WindBatchedGeometry.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\WindBatchPage.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -373,6 +381,14 @@
 			</File>
 			<File
 				RelativePath=".\include\TreeLoader3D.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\WindBatchedGeometry.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\WindBatchPage.h"
 				>
 			</File>
 		</Filter>

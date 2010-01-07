@@ -43,7 +43,11 @@ GMFN double CreateAnimationState(char *name)
    if (mSceneMgr == NULL)
       return NULL;
 
-   Ogre::AnimationState *anim = mSceneMgr->createAnimationState(name);
+   Ogre::AnimationState *anim = NULL;
+      
+   TRY
+      anim = mSceneMgr->createAnimationState(name);
+   CATCH("CreateAnimationState")
 
    return ConvertToGMPointer(anim);
 }
@@ -121,6 +125,67 @@ GMFN double AddAnimationStateTime(double anim_ptr, double time)
       return FALSE;
 
    anim->addTime(time);
+
+   return TRUE;
+}
+
+
+GMFN double SetAnimationStateWeight(double anim_ptr, double weight)
+{
+   Ogre::AnimationState *anim = ConvertFromGMPointer<Ogre::AnimationState*>(anim_ptr);
+
+   if (anim == NULL)
+      return FALSE;
+
+   anim->setWeight(weight);
+
+   return TRUE;
+}
+
+
+GMFN double GetAnimationStateWeight(double anim_ptr)
+{
+   Ogre::AnimationState *anim = ConvertFromGMPointer<Ogre::AnimationState*>(anim_ptr);
+
+   if (anim == NULL)
+      return FALSE;
+
+   return anim->getWeight();
+}
+
+
+GMFN double SetAnimationStateTimePosition(double anim_ptr, double pos)
+{
+   Ogre::AnimationState *anim = ConvertFromGMPointer<Ogre::AnimationState*>(anim_ptr);
+
+   if (anim == NULL)
+      return FALSE;
+
+   anim->setTimePosition(pos);
+
+   return TRUE;
+}
+
+
+GMFN double GetAnimationStateTimePosition(double anim_ptr)
+{
+   Ogre::AnimationState *anim = ConvertFromGMPointer<Ogre::AnimationState*>(anim_ptr);
+
+   if (anim == NULL)
+      return FALSE;
+
+   return anim->getTimePosition();
+}
+
+
+GMFN double SetAnimationStateLength(double anim_ptr, double length)
+{
+   Ogre::AnimationState *anim = ConvertFromGMPointer<Ogre::AnimationState*>(anim_ptr);
+
+   if (anim == NULL)
+      return FALSE;
+
+   anim->setLength(length);
 
    return TRUE;
 }

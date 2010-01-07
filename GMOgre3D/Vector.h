@@ -31,6 +31,7 @@ GMFN double AddVector(double x1, double z1, double y1, double x2, double z2, dou
 {
    Ogre::Vector3 vec = Ogre::Vector3(x1, y1, z1) + Ogre::Vector3(x2, y2, z2);
 
+   AcquireGMVectorGlobals();
    if (mVectorX != NULL)
    {
       *mVectorX = vec.x;
@@ -46,6 +47,23 @@ GMFN double SubtractVector(double x1, double z1, double y1, double x2, double z2
 {
    Ogre::Vector3 vec = Ogre::Vector3(x1, y1, z1) - Ogre::Vector3(x2, y2, z2);
 
+   AcquireGMVectorGlobals();
+   if (mVectorX != NULL)
+   {
+      *mVectorX = vec.x;
+      *mVectorY = vec.z;
+      *mVectorZ = vec.y;
+   }
+
+   return TRUE;
+}
+
+
+GMFN double MultiplyVector(double x1, double z1, double y1, double x2, double z2, double y2)
+{
+   Ogre::Vector3 vec = Ogre::Vector3(x1, y1, z1) * Ogre::Vector3(x2, y2, z2);
+
+   AcquireGMVectorGlobals();
    if (mVectorX != NULL)
    {
       *mVectorX = vec.x;
@@ -78,6 +96,7 @@ GMFN double NormalizeVector(double x, double z, double y)
 
    Ogre::Real len = vec.normalise();
 
+   AcquireGMVectorGlobals();
    if (mVectorX != NULL)
    {
       *mVectorX = vec.x;
@@ -93,6 +112,7 @@ GMFN double NormalizeResultVector()
 {
    Ogre::Real len = 0.0;
 
+   AcquireGMVectorGlobals();
    if (mVectorX != NULL)
    {
       Ogre::Vector3 vec(*mVectorX, *mVectorZ, *mVectorY);

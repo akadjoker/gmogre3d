@@ -27,37 +27,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "GMOgre3D.h"
 
 
-GMFN double CreateBillboard(double bb_set_ptr, double x, double z, double y)
-{
-   Ogre::BillboardSet *bb_set = ConvertFromGMPointer<Ogre::BillboardSet *>(bb_set_ptr);
-
-   if (bb_set == NULL)
-      return FALSE;
-   
-   Ogre::Billboard *bb = bb_set->createBillboard(x, y, z);
-
-   return ConvertToGMPointer(bb);
-}
-
-
-GMFN double RemoveBillboard(double bb_set_ptr, double bb_ptr)
-{
-   Ogre::BillboardSet *bb_set = ConvertFromGMPointer<Ogre::BillboardSet *>(bb_set_ptr);
-
-   if (bb_set == NULL)
-      return FALSE;
-   
-   Ogre::Billboard *bb = ConvertFromGMPointer<Ogre::Billboard *>(bb_ptr);
-
-   if (bb == NULL)
-      return FALSE;
-   
-   bb_set->removeBillboard(bb);
-
-   return TRUE;
-}
-
-
 GMFN double SetBillboardPosition(double bb_ptr, double x, double z, double y)
 {
    Ogre::Billboard *bb = ConvertFromGMPointer<Ogre::Billboard *>(bb_ptr);
@@ -103,6 +72,19 @@ GMFN double GetBillboardHeight(double bb_ptr)
       return 0;
    
    return bb->getOwnHeight();
+}
+
+
+GMFN double SetBillboardColor(double bb_ptr, double color, double alpha)
+{
+   Ogre::Billboard *bb = ConvertFromGMPointer<Ogre::Billboard *>(bb_ptr);
+
+   if (bb == NULL)
+      return 0;
+
+   bb->setColour(Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), alpha));
+
+   return TRUE;
 }
 
 #endif

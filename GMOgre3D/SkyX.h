@@ -31,8 +31,7 @@ GMFN double CreateSkyX(double camera_ptr)
 {
    SkyX::SkyX *skyx = NULL;
 
-   try
-   {   
+   TRY
       if (mSceneMgr == NULL)
          return FALSE;
 
@@ -47,12 +46,7 @@ GMFN double CreateSkyX(double camera_ptr)
 
       if (!mat.isNull())
 	      mSkyX->getGPUManager()->addGroundPass(mat->getTechnique(0)->createPass(), 5000, Ogre::SBT_TRANSPARENT_COLOUR);
-   }
-   catch(Ogre::Exception& e)
-   {
-      LogError(e.what());
-      return 0;
-   }
+   CATCH("CreateSkyX")
 
    return ConvertToGMPointer(skyx);
 }

@@ -43,6 +43,19 @@ GMFN double CreateGrassLoader(double pg_ptr)
 }
 
 
+GMFN double DestroyGrassLoader(double gl_ptr)
+{
+   Forests::GrassLoader *gl = ConvertFromGMPointer<Forests::GrassLoader*>(gl_ptr);
+
+   if (gl == NULL)
+      return FALSE;
+
+   delete gl;
+
+   return TRUE;
+}
+
+
 GMFN double AddGrassLoaderLayer(double gl_ptr, char *mat_name)
 {
    Forests::GrassLoader *gl = ConvertFromGMPointer<Forests::GrassLoader*>(gl_ptr);

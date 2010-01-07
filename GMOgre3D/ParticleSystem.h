@@ -32,12 +32,50 @@ GMFN double CreateParticleSystem(char *name)
    if (mSceneMgr == NULL)
       return FALSE;
 
-   Ogre::ParticleSystem *part_sys = mSceneMgr->createParticleSystem(GenerateUniqueName(), name);
+   Ogre::ParticleSystem *part_sys = NULL;
+   
+   TRY
+      part_sys = mSceneMgr->createParticleSystem(GenerateUniqueName(), name);
+
+      if (part_sys == NULL)
+         return FALSE;
+   CATCH("CreateParticleSystem")
+
+   return ConvertToGMPointer(part_sys);
+}
+
+
+GMFN double CreateEmptyParticleSystem(double quota, char *group)
+{
+   if (mSceneMgr == NULL)
+      return FALSE;
+
+   Ogre::ParticleSystem *part_sys = NULL;
+   
+   TRY
+      part_sys = mSceneMgr->createParticleSystem(GenerateUniqueName(), (size_t)quota, group);
+
+      if (part_sys == NULL)
+         return FALSE;
+   CATCH("CreateEmptyParticleSystem")
+
+   return ConvertToGMPointer(part_sys);
+}
+
+
+GMFN double DestroyParticleSystem(double part_sys_ptr)
+{
+   if (mSceneMgr == NULL)
+      return FALSE;
+
+   Ogre::ParticleSystem *part_sys = ConvertFromGMPointer<Ogre::ParticleSystem*>(part_sys_ptr);
 
    if (part_sys == NULL)
       return FALSE;
 
-   return ConvertToGMPointer(part_sys);
+   mSceneMgr->destroyParticleSystem(part_sys);
+
+   return TRUE;
 }
 
 
@@ -230,14 +268,27 @@ GMFN double DetachParticleSystemFromSceneNode(double part_sys_ptr, double scene_
 
 
 
-GMFN double AddParticleSystemEmitter(double part_sys_ptr, char *name)
+GMFN double AddParticleSystemEmitter(double part_sys_ptr, double type)
 {
    Ogre::ParticleSystem *part_sys = ConvertFromGMPointer<Ogre::ParticleSystem*>(part_sys_ptr);
 
    if (part_sys == NULL)
       return 0;
 
-   Ogre::ParticleEmitter *emit = part_sys->addEmitter(name);
+   Ogre::ParticleEmitter *emit = NULL;
+
+   if (type == 0)
+      emit = part_sys->addEmitter("Box");
+   else if (type == 1)
+      emit = part_sys->addEmitter("Cylinder");
+   else if (type == 2)
+      emit = part_sys->addEmitter("Ellipsoid");
+   else if (type == 3)
+      emit = part_sys->addEmitter("HollowEllipsoid");
+   else if (type == 4)
+      emit = part_sys->addEmitter("Point");
+   else if (type == 5)
+      emit = part_sys->addEmitter("Ring");
 
    return ConvertToGMPointer(emit);
 }
@@ -288,6 +339,19 @@ GMFN double RemoveAllParticleSystemEmitters(double part_sys_ptr)
       return FALSE;
 
    part_sys->removeAllEmitters();
+
+   return TRUE;
+}
+
+
+GMFN double SetParticleSystemRenderQueueGroup(double part_sys_ptr, double type)
+{
+   Ogre::ParticleSystem *part_sys = ConvertFromGMPointer<Ogre::ParticleSystem*>(part_sys_ptr);
+
+   if (part_sys == NULL)
+      return FALSE;
+
+   part_sys->setRenderQueueGroup(static_cast<Ogre::RenderQueueGroupID>((int)type));
 
    return TRUE;
 }

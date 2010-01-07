@@ -24,93 +24,28 @@ http://www.gnu.org/copyleft/lesser.txt.
 #ifndef GMOGRE_FRAMELISTENER_H
 #define GMOGRE_FRAMELISTENER_H
 
-//#include "Ogre2D.h"
-
+#include "OgreNewt_World.h"
 
 class GMFrameListener: public Ogre::FrameListener
 {
 private:
-   void UpdateFPSStats(void)
-   {
-      static Ogre::String currFps = "Current FPS: ";
-      static Ogre::String avgFps = "Average FPS: ";
-      static Ogre::String bestFps = "Best FPS: ";
-      static Ogre::String worstFps = "Worst FPS: ";
-      static Ogre::String tris = "Triangle Count: ";
-      static Ogre::String batchCount = "Batch Count: ";
-
-      Ogre::RenderSystem *rs = Ogre::Root::getSingleton().getRenderSystem();
-
-      if (rs == NULL)
-         return;
-
-      Ogre::RenderTarget *rt = rs->getRenderTarget("GMOGRE 3D Window");
-
-      if (rt == NULL)
-         return;
-
-      // update stats when necessary
-      Ogre::OverlayElement* guiAvg = Ogre::OverlayManager::getSingleton().getOverlayElement("Core/AverageFps");
-      Ogre::OverlayElement* guiCurr = Ogre::OverlayManager::getSingleton().getOverlayElement("Core/CurrFps");
-      Ogre::OverlayElement* guiBest = Ogre::OverlayManager::getSingleton().getOverlayElement("Core/BestFps");
-      Ogre::OverlayElement* guiWorst = Ogre::OverlayManager::getSingleton().getOverlayElement("Core/WorstFps");
-      Ogre::OverlayElement* guiBatch = Ogre::OverlayManager::getSingleton().getOverlayElement("Core/NumBatches");
-
-      guiAvg->setCaption(avgFps + Ogre::StringConverter::toString(rt->getAverageFPS()));
-      guiCurr->setCaption(currFps + Ogre::StringConverter::toString(rt->getLastFPS()));
-      guiBest->setCaption(bestFps + Ogre::StringConverter::toString(rt->getBestFPS())+" "+Ogre::StringConverter::toString(rt->getBestFrameTime())+" ms");
-      guiWorst->setCaption(worstFps + Ogre::StringConverter::toString(rt->getWorstFPS())+" "+Ogre::StringConverter::toString(rt->getWorstFrameTime())+" ms");
-
-      guiBatch->setCaption(batchCount + Ogre::StringConverter::toString(rt->getBatchCount()));
-
-      Ogre::OverlayElement* guiTris = Ogre::OverlayManager::getSingleton().getOverlayElement("Core/NumTris");
-      guiTris->setCaption(tris + Ogre::StringConverter::toString(rt->getTriangleCount()));
-   }
+   void UpdateFPSStats(void);
 
 public:
-   GMFrameListener()
-      //: mOgre2DManager(NULL),
-      :mDisplayFPS(false)
-   {
-   }
+   GMFrameListener();
 
-   void Create2DManager(Ogre::SceneManager *scene_mgr)
-   {
-      //mOgre2DManager = new Ogre2dManager;
-	   //mOgre2DManager->init(scene_mgr, Ogre::RENDER_QUEUE_OVERLAY, true);
-   }
+   void Create2DManager(Ogre::SceneManager *scene_mgr);
+   void DisplayFPS(bool enable);
+   void DisplayNewtonDebugger(OgreNewt::World *world, bool enable);
 
-   void DisplayFPS(bool enable)
-   {
-      mDisplayFPS = enable;
-
-      Ogre::Overlay *overlay = Ogre::OverlayManager::getSingleton().getByName("Core/DebugOverlay");
-
-      if (overlay != NULL)
-      {
-         if (mDisplayFPS)
-            overlay->show();
-         else
-            overlay->hide();
-      }
-   }
-
-   bool frameStarted(const Ogre::FrameEvent& evt)
-   {
-      return true;
-   }
-
-   bool frameEnded(const Ogre::FrameEvent& evt)
-   {
-      if (mDisplayFPS)
-         UpdateFPSStats();
-
-      return true;
-   }
+   bool frameStarted(const Ogre::FrameEvent& evt);
+   bool frameEnded(const Ogre::FrameEvent& evt);
 
 protected:
    //Ogre2dManager *mOgre2DManager;
    bool mDisplayFPS;
+   bool mDisplayNewtonDebugger;
+   OgreNewt::World *mNewtonWorld;
 };
 
 #endif

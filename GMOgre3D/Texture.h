@@ -53,9 +53,11 @@ GMFN double CreateTexture1(char *name, char *group, double type)
 }
 
 
-GMFN char *CreateTexture2(double width, double height, double num_mips, double pixel_format, double usage = Ogre::TU_DEFAULT)
+GMFN char *CreateTexture2(double width, double height, double depth, double num_mips, double pixel_format, double usage = Ogre::TU_DEFAULT)
 {
-   Ogre::TextureManager::getSingleton().createManual(tex_name, tex_group, static_cast<Ogre::TextureType>((int)tex_type), width, height, num_mips, static_cast<Ogre::PixelFormat>((int)pixel_format), static_cast<Ogre::TextureUsage>((int)usage));
+   TRY
+      Ogre::TextureManager::getSingleton().createManual(tex_name, tex_group, static_cast<Ogre::TextureType>((int)tex_type), width, height, num_mips, static_cast<Ogre::PixelFormat>((int)pixel_format), static_cast<Ogre::TextureUsage>((int)usage));
+   CATCH("CreateTexture")
 
    return const_cast<char*>(tex_name.c_str());
 }
@@ -102,17 +104,22 @@ GMFN double CreateTextureViewport(char *name)
    if (tex.isNull())
       return NULL;
 
-   Ogre::RenderTexture *render_tex = tex->getBuffer()->getRenderTarget();
+   Ogre::RenderTexture *render_tex = NULL;
+   Ogre::Viewport *view = NULL;
 
-   if (render_tex == NULL)
-      return NULL;
+   TRY
+      render_tex = tex->getBuffer()->getRenderTarget();
 
-   Ogre::Viewport *view = render_tex->addViewport(NULL);
+      if (render_tex == NULL)
+         return NULL;
 
-   if (view == NULL)
-      return NULL;
+      view = render_tex->addViewport(NULL);
 
-   view->setBackgroundColour(Ogre::ColourValue(0.0f, 0.0f, 0.0f));
+      if (view == NULL)
+         return NULL;
+
+      view->setBackgroundColour(Ogre::ColourValue(0.0f, 0.0f, 0.0f));
+   CATCH("CreateTextureViewport")
 
    return ConvertToGMPointer(view);
 }

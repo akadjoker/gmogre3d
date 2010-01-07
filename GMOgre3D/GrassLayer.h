@@ -172,7 +172,7 @@ GMFN double SetGrassLayerColorMap(double gl_ptr, char *map_file)
 }
 
 
-GMFN double SetGrassLayerMapBounds(double gl_ptr, double top, double left, double bottom, double right)
+GMFN double SetGrassLayerMapBounds(double gl_ptr, double left, double top, double right, double bottom)
 {
    Forests::GrassLayer *gl = ConvertFromGMPointer<Forests::GrassLayer*>(gl_ptr);
 
@@ -185,14 +185,14 @@ GMFN double SetGrassLayerMapBounds(double gl_ptr, double top, double left, doubl
 }
 
 
-GMFN double SetGrassLayerRenderTechnique(double gl_ptr, double type)
+GMFN double SetGrassLayerRenderTechnique(double gl_ptr, double type, double fade_base)
 {
    Forests::GrassLayer *gl = ConvertFromGMPointer<Forests::GrassLayer*>(gl_ptr);
 
    if (gl == NULL)
       return FALSE;
 
-   gl->setRenderTechnique(static_cast<Forests::GrassTechnique>((int)type));
+   gl->setRenderTechnique(static_cast<Forests::GrassTechnique>((int)type), (fade_base != 0));
 
    return TRUE;
 }

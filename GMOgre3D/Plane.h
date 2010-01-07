@@ -29,7 +29,12 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 GMFN double CreatePlane(double normalx, double normalz, double normaly, double depth)
 {
-   Ogre::Plane *plane = new Ogre::Plane(Ogre::Vector3(normalx, normaly, normalz), depth);
+   Ogre::Plane *plane = NULL;
+   
+   TRY
+      plane = new Ogre::Plane(Ogre::Vector3(normalx, normaly, normalz), depth);
+   CATCH("CreatePlane")
+
    return ConvertToGMPointer(plane);
 }
 

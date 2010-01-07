@@ -40,9 +40,13 @@ GMFN double SetEulerDirection(double x, double z, double y)
    else
       orientation = Ogre::Vector3::UNIT_X.getRotationTo(direction);
 
-   *mEulerYaw = ConvertToGMYaw(orientation.getYaw().valueDegrees());
-   *mEulerPitch = orientation.getPitch().valueDegrees();
-   //*mEulerRoll = 0.0;
+   AcquireGMEulerGlobals();
+   if (mEulerYaw != NULL)
+   {
+      *mEulerYaw = ConvertToGMYaw(orientation.getYaw().valueDegrees());
+      *mEulerPitch = orientation.getPitch().valueDegrees();
+      //*mEulerRoll = 0.0;
+   }
 /*
 
             // Work out the direction

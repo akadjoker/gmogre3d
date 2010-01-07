@@ -40,36 +40,31 @@ GMFN double SetTextureUnitStateTextureName(double tex_unit_ptr, char *tex_name)
 }
 
 
-GMFN double SetTextureUnitStateCubicTextureNames1(double tex_unit_ptr, char *tex_name1, char *tex_name2, char *tex_name3)
+GMFN double SetTextureUnitStateCubicTextureNames1(char *tex_name1, char *tex_name2, char *tex_name3, char *tex_name4)
 {
-   Ogre::TextureUnitState *tex_unit = ConvertFromGMPointer<Ogre::TextureUnitState *>(tex_unit_ptr);
-   
-   if (tex_unit == NULL)
-      return FALSE;
-
    for (int x = 0; x < 6; x++)
       mCubeTextureNames[x].empty();
 
    mCubeTextureNames[0] = tex_name1;
    mCubeTextureNames[1] = tex_name2;
    mCubeTextureNames[2] = tex_name3;
+   mCubeTextureNames[3] = tex_name4;
 
    return TRUE;
 }
 
 
-GMFN double SetTextureUnitStateCubicTextureNames2(double tex_unit_ptr, char *tex_name4, char *tex_name5, char *tex_name6)
+GMFN double SetTextureUnitStateCubicTextureNames2(double tex_unit_ptr, char *tex_name5, char *tex_name6, double for_uvw = false)
 {
    Ogre::TextureUnitState *tex_unit = ConvertFromGMPointer<Ogre::TextureUnitState *>(tex_unit_ptr);
    
    if (tex_unit == NULL)
       return FALSE;
 
-   mCubeTextureNames[3] = tex_name4;
    mCubeTextureNames[4] = tex_name5;
    mCubeTextureNames[5] = tex_name6;
 
-   tex_unit->setCubicTextureName(mCubeTextureNames);
+   tex_unit->setCubicTextureName(mCubeTextureNames, (for_uvw != 0));
 
    return TRUE;
 }
@@ -109,6 +104,18 @@ GMFN double SetTextureUnitStateRotateAnimation(double tex_unit_ptr, double speed
       return FALSE;
 
    tex_unit->setRotateAnimation(speed);
+
+   return TRUE;
+}
+
+GMFN double SetTextureUnitStateTransformAnimation(double tex_unit_ptr, double transform_type, double waveform_type, double base, double frequency, double phase, double amplitude)
+{
+   Ogre::TextureUnitState *tex_unit = ConvertFromGMPointer<Ogre::TextureUnitState *>(tex_unit_ptr);
+
+   if (tex_unit == NULL)
+      return FALSE;
+
+   tex_unit->setTransformAnimation(static_cast<Ogre::TextureUnitState::TextureTransformType>((int)transform_type), static_cast<Ogre::WaveformType>((int)waveform_type), base, frequency, phase, amplitude);
 
    return TRUE;
 }

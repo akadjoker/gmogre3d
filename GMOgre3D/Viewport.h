@@ -30,8 +30,12 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 GMFN double CreateViewport(double zorder, double left, double top, double width, double height)
 {
-   Ogre::Viewport *view = mRenderWindow->addViewport(NULL, zorder, left / mWindowWidth, top / mWindowHeight, width / mWindowWidth, height / mWindowHeight);
-   view->setBackgroundColour(Ogre::ColourValue(0.0f, 0.0f, 0.0f));
+   Ogre::Viewport *view = NULL;
+   
+   TRY
+      view = mRenderWindow->addViewport(NULL, zorder, left / mWindowWidth, top / mWindowHeight, width / mWindowWidth, height / mWindowHeight);
+      view->setBackgroundColour(Ogre::ColourValue(0.0f, 0.0f, 0.0f));
+   CATCH("CreateViewport")
 
    return ConvertToGMPointer(view);
 }

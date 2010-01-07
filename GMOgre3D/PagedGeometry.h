@@ -26,6 +26,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "GMOgre3D.h"
 #include "../PagedGeometry/include/PagedGeometry.h"
+#include "../PagedGeometry/include/WindBatchPage.h"
 #include "../PagedGeometry/include/BatchPage.h"
 #include "../PagedGeometry/include/ImpostorPage.h"
 #include "../PagedGeometry/include/GrassLoader.h"
@@ -38,8 +39,12 @@ GMFN double CreatePagedGeometry(double cam_ptr, double page_size)
    if (cam_ptr != 0)
       cam = ConvertFromGMPointer<Ogre::Camera*>(cam_ptr);
 
-   Forests::PagedGeometry *pg = new Forests::PagedGeometry(cam, page_size);
-   pg->setInfinite();
+   Forests::PagedGeometry *pg = NULL;
+   
+   TRY
+      pg = new Forests::PagedGeometry(cam, page_size);
+      pg->setInfinite();
+   CATCH("CreatePagedGeometry")
 
    return ConvertToGMPointer(pg);
 }
@@ -128,6 +133,55 @@ GMFN double AddPagedGeometryGrassPageLOD(double pg_ptr, double max_range, double
 }
 
 
+GMFN double AddPagedGeometryWindBatchPageLOD(double pg_ptr, double max_range, double transition_length = 0)
+{
+   Forests::PagedGeometry *pg = ConvertFromGMPointer<Forests::PagedGeometry*>(pg_ptr);
+
+   if (pg == NULL)
+      return FALSE;
+
+   pg->addDetailLevel<Forests::WindBatchPage>(max_range, transition_length);
+
+   return TRUE;
+}
+
+
+GMFN double SetPagedGeometryWindFactorX(double pg_ptr, double entity_ptr, double magnitude)
+{
+   Forests::PagedGeometry *pg = ConvertFromGMPointer<Forests::PagedGeometry*>(pg_ptr);
+
+   if (pg == NULL)
+      return FALSE;
+
+   Ogre::Entity *entity = ConvertFromGMPointer<Ogre::Entity*>(entity_ptr);
+
+   if (entity == NULL)
+      return FALSE;
+
+   pg->setCustomParam(entity->getName(), "windFactorX", magnitude);
+
+   return TRUE;
+}
+
+
+GMFN double SetPagedGeometryWindFactorZ(double pg_ptr, double entity_ptr, double magnitude)
+{
+   Forests::PagedGeometry *pg = ConvertFromGMPointer<Forests::PagedGeometry*>(pg_ptr);
+
+   if (pg == NULL)
+      return FALSE;
+
+   Ogre::Entity *entity = ConvertFromGMPointer<Ogre::Entity*>(entity_ptr);
+
+   if (entity == NULL)
+      return FALSE;
+
+   pg->setCustomParam(entity->getName(), "windFactorY", magnitude);
+
+   return TRUE;
+}
+
+
 GMFN double SetPagedGeometryPageLoader(double pg_ptr, double pl_ptr)
 {
    Forests::PagedGeometry *pg = ConvertFromGMPointer<Forests::PagedGeometry*>(pg_ptr);
@@ -147,6 +201,19 @@ GMFN double SetPagedGeometryPageLoader(double pg_ptr, double pl_ptr)
 
 
 GMFN double UpdatePagedGeometry(double pg_ptr)
+{
+   Forests::PagedGeometry *pg = ConvertFromGMPointer<Forests::PagedGeometry*>(pg_ptr);
+
+   if (pg == NULL)
+      return FALSE;
+
+   pg->update();
+
+   return TRUE;
+}
+
+
+GMFN double ReloadPagedGeometry(double pg_ptr)
 {
    Forests::PagedGeometry *pg = ConvertFromGMPointer<Forests::PagedGeometry*>(pg_ptr);
 

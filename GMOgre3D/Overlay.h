@@ -37,7 +37,11 @@ GMFN double GetOverlayByName(char *name)
 
 GMFN double CreateOverlay()
 {
-   Ogre::Overlay *overlay = Ogre::OverlayManager::getSingleton().create(GenerateUniqueName());
+   Ogre::Overlay *overlay = NULL;
+   
+   TRY
+      overlay = Ogre::OverlayManager::getSingleton().create(GenerateUniqueName());
+   CATCH("CreateOverlay")
 
    return ConvertToGMPointer(overlay);
 }

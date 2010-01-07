@@ -118,14 +118,14 @@ GMFN double SetCompositionPassClearDepth(double pass_ptr, double depth)
 }
 
 
-GMFN double SetCompositionPassClearColor(double pass_ptr, double clr)
+GMFN double SetCompositionPassClearColor(double pass_ptr, double clr, double alpha)
 {
    Ogre::CompositionPass *pass = ConvertFromGMPointer<Ogre::CompositionPass *>(pass_ptr);
 
    if (pass == NULL)
       return FALSE;
 
-   pass->setClearColour(Ogre::ColourValue(GetRedFromGMColor(clr), GetGreenFromGMColor(clr), GetBlueFromGMColor(clr)));
+   pass->setClearColour(Ogre::ColourValue(GetRedFromGMColor(clr), GetGreenFromGMColor(clr), GetBlueFromGMColor(clr), alpha));
 
    return TRUE;
 }
@@ -248,14 +248,14 @@ GMFN double EnableCompositionPassTwoSidedOperation(double pass_ptr, double enabl
 }
 
 
-GMFN double SetCompositionPassInput(double pass_ptr, double id, char *tex_name)
+GMFN double SetCompositionPassInput(double pass_ptr, double id, char *tex_name, double mrt_index)
 {
    Ogre::CompositionPass *pass = ConvertFromGMPointer<Ogre::CompositionPass *>(pass_ptr);
 
    if (pass == NULL)
       return FALSE;
 
-   pass->setInput(id, tex_name);
+   pass->setInput(id, tex_name, (size_t)mrt_index);
 
    return TRUE;
 }

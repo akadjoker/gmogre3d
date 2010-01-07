@@ -48,11 +48,23 @@
 #include "TreeLoader2D.h"
 #include "GrassLoader.h"
 #include "GrassLayer.h"
+#include "SubEntity.h"
 #include "Vector.h"
 #include "Euler.h"
 #include "Plane.h"
+#include "NewtonBody.h"
+#include "NewtonCollision.h"
+#include "NewtonContact.h"
+#include "NewtonMaterial.h"
+#include "NewtonMaterialPair.h"
+#include "NewtonWorld.h"
+#include "NewtonPlayerController.h"
+#include "MovableText.h"
+#include "MovableObject.h"
 #include "GMApi.h"
 
+
+void UpdateSceneNodeAttachments();
 
 GMFN double Initialize(char *plugins_cfg, char *ogre_cfg, char *log_file)
 {
@@ -63,7 +75,8 @@ GMFN double Initialize(char *plugins_cfg, char *ogre_cfg, char *log_file)
       mLogFile = log_file;
 
       unsigned long result = 0;
-      mGMAPI = gm::CGMAPI::Create( &result );
+      if (!mGMAPI)
+         mGMAPI = gm::CGMAPI::Create( &result );
    }
    catch(Ogre::Exception& e)
    {
@@ -80,7 +93,7 @@ GMFN double Initialize(char *plugins_cfg, char *ogre_cfg, char *log_file)
 }
 
 
-GMFN double StartEngine(double render_engine, double hwnd, double window_width, double window_height)
+GMFN double StartEngine(double render_engine, double hwnd, double window_width, double window_height, double fullscreen)
 {
    try
    {
@@ -90,9 +103,13 @@ GMFN double StartEngine(double render_engine, double hwnd, double window_width, 
          return FALSE;
       }
 
+      if (!gMutex)
+         gMutex = CreateMutex(NULL, FALSE, NULL);
+
       mWindowWidth = window_width;
       mWindowHeight = window_height;
       mHWnd = hwnd;
+      mFullscreen = (fullscreen != 0);
 
       if (render_engine == 2)
          mRenderEngine = "OpenGL";
@@ -162,26 +179,33 @@ GMFN double StartEngine(double render_engine, double hwnd, double window_width, 
 
       mRoot->initialise(false);
  
-           // Attach to existing GM window
+      // Attach to existing GM window
       Ogre::NameValuePairList opts;
       opts["parentWindowHandle"] = Ogre::StringConverter::toString((size_t)mHWnd);
       opts["left"] = "0";
       opts["top"] = "0";
+      if (mUseVSync)
+         opts["vsync"] = "true";
+      opts["FSAA"] = Ogre::StringConverter::toString(mFSAALevel);
+      opts["FSAAQuality"] = Ogre::StringConverter::toString(mFSAAQuality);
+
+      // Fullscreen causes issues with input... it may be that it's actually creating a
+      // whole NEW window and not using GameMakers window.  Either way no keyboard input.
+      // But not going fullscreen everything seems to work, input included.
+      mFullscreen = false;
 
       mRenderWindow = mRoot->createRenderWindow("GMOGRE 3D Window", mWindowWidth, mWindowHeight, mFullscreen, &opts);
-/*
-      if (mFrameListener == NULL)
-         mFrameListener = new GMFrameListener;
-      mRoot->addFrameListener(mFrameListener);
-*/
-      // Setup the links to our GM vector/quaternion/euler result variables
-      mVectorX = mGMAPI->GetGlobalVariablePtr(mGMAPI->GetSymbolID("vector_resx"));
-      mVectorY = mGMAPI->GetGlobalVariablePtr(mGMAPI->GetSymbolID("vector_resy"));
-      mVectorZ = mGMAPI->GetGlobalVariablePtr(mGMAPI->GetSymbolID("vector_resz"));
 
-      mEulerYaw = mGMAPI->GetGlobalVariablePtr(mGMAPI->GetSymbolID("euler_yaw"));
-      mEulerPitch = mGMAPI->GetGlobalVariablePtr(mGMAPI->GetSymbolID("euler_pitch"));
-      mEulerRoll = mGMAPI->GetGlobalVariablePtr(mGMAPI->GetSymbolID("euler_roll"));
+      //if (mFrameListener == NULL)
+      //   mFrameListener = new GMFrameListener;
+      //mRoot->addFrameListener(mFrameListener);
+
+      if (mGMAPI)
+      {
+         // Setup the links to our GM vector/quaternion/euler result variables
+         AcquireGMVectorGlobals();
+         AcquireGMEulerGlobals();
+      }
    }
    catch(Ogre::Exception& e)
    {
@@ -195,7 +219,6 @@ GMFN double StartEngine(double render_engine, double hwnd, double window_width, 
       LogError("An unknown error has occurred starting the Ogre3D engine!");
       return FALSE;
    }
-
 
    return TRUE;
 }
@@ -214,6 +237,9 @@ GMFN double ShutdownEngine()
       //mFrameListener = NULL;
       mSceneMgr = NULL;
       mRenderWindow = NULL;
+
+      if (gMutex)
+         CloseHandle(gMutex);
    }    
 
    return TRUE;
@@ -225,50 +251,7 @@ GMFN double RenderFrame()
    if (mRoot == NULL)
       return FALSE;
 
-   // Cycle through all scene nodes attached to GM instances, and update position/scale/orientation
-   SceneNodeMap::iterator iter = mSceneNodeGMInstances.begin();
-   SceneNodeMap::iterator end_iter = mSceneNodeGMInstances.end();
-
-   while (iter != end_iter)
-   {
-      Ogre::SceneNode *node = iter->first;
-      GMInstance &gminst = iter->second;
-
-      gm::PGMINSTANCE gminstance = mGMAPI->GetInstancePtr(gminst.mGMInstanceID);
-      if (gminstance == NULL)
-      {
-         LogError("GM object instance " + Ogre::StringConverter::toString(gminst.mGMInstanceID) + " not found, DetachSceneNodeGMInstance() must not have been called!");
-         ++iter;
-         continue;
-      }
-
-      if (gminstance->x != gminst.mLastX || gminstance->y != gminst.mLastY || *gminst.pZ != gminst.mLastZ)
-      {
-         node->setPosition(gminstance->x, *gminst.pZ, gminstance->y);
-         gminst.mLastX = gminstance->x;
-         gminst.mLastY = gminstance->y;
-         gminst.mLastZ = *gminst.pZ;
-      }
-
-      if (gminstance->direction != gminst.mLastYaw || *gminst.pPitch != gminst.mLastPitch || *gminst.pRoll != gminst.mLastRoll)
-      {
-         node->setOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(gminstance->direction)), Ogre::Degree(*gminst.pPitch), Ogre::Degree(*gminst.pRoll)));
-
-         gminst.mLastYaw = gminstance->direction;
-         gminst.mLastPitch = *gminst.pPitch;
-         gminst.mLastRoll = *gminst.pRoll;
-      }
-
-      if (*gminst.pScaleX != gminst.mLastScaleX || *gminst.pScaleY != gminst.mLastScaleY || *gminst.pScaleZ != gminst.mLastScaleZ)
-      {
-         node->scale(*gminst.pScaleX, *gminst.pScaleZ, *gminst.pScaleY);
-         gminst.mLastScaleX = *gminst.pScaleX;
-         gminst.mLastScaleY = *gminst.pScaleY;
-         gminst.mLastScaleZ = *gminst.pScaleZ;
-      }
-
-      ++iter;
-   }
+   UpdateSceneNodeAttachments();
 
    mRoot->renderOneFrame();
 
@@ -278,15 +261,16 @@ GMFN double RenderFrame()
 
 GMFN double EnableWaitForVSync(double enable)
 {
-   if (mRoot == NULL)
-      return FALSE;
+   mUseVSync = (enable != 0);
 
-   Ogre::RenderSystem *rs = mRoot->getRenderSystem();
+   return TRUE;
+}
 
-   if (rs == NULL)
-      return FALSE;
 
-   rs->setWaitForVerticalBlank((enable != 0));
+GMFN double SetFSAA(double fsaa_level, double fsaa_quality)
+{
+   mFSAALevel = (unsigned int)fsaa_level;
+   mFSAAQuality = (unsigned int)fsaa_quality;
 
    return TRUE;
 }
@@ -294,7 +278,6 @@ GMFN double EnableWaitForVSync(double enable)
 
 GMFN double EnableDisplayFPS(double enable)
 {
-   // Delete frame listener
    GMFrameListener *fl = mSceneListener[mSceneMgr];
 
    if (fl == NULL)
@@ -342,4 +325,110 @@ GMFN double SaveScreenshot(char *filename)
    mRenderWindow->writeContentsToFile(filename);
    
    return TRUE;
+}
+
+
+GMFN char *GetOgre3DVersion()
+{
+   return "GMOgre3D v0.92";
+}
+
+
+void UpdateSceneNodeAttachments()
+{
+   LockMutex lm(gMutex);
+
+   try
+   {
+      if (mGMAPI)
+      {
+         // Cycle through all scene nodes attached to GM instances, and update position/scale/orientation
+         SceneNodeMap::iterator iter = mSceneNodeAttachments.begin();
+         SceneNodeMap::iterator end_iter = mSceneNodeAttachments.end();
+
+         while (iter != end_iter)
+         {
+            Ogre::SceneNode *node = iter->first;
+            GMInstance *gminst = &iter->second;
+
+            if (gminst->GMInstanceAttached && gminst->mGMInstancePtr)
+            {
+               gminst->mGMInstancePtr = mGMAPI->GetInstancePtr((int)gminst->mGMInstanceID);
+               AcquireGMLocalVariablePointers(gminst);
+
+               bool GMPosChanged = false;
+               bool GMRotChanged = false;
+
+               // Update scene node position if GM position changed (either from the
+               // user manually changing or from a previous Newton body changing them).
+               if (gminst->mGMInstancePtr->x != gminst->mLastX || gminst->mGMInstancePtr->y != gminst->mLastY || *gminst->pZ != gminst->mLastZ)
+               {
+                  GMPosChanged = true;
+                  node->setPosition(gminst->mGMInstancePtr->x, *gminst->pZ, gminst->mGMInstancePtr->y);
+
+                  if (gminst->BodyAttached && gminst->mBody)
+                     SetNewtonBodyPosition(ConvertToGMPointer(gminst->mBody), gminst->mGMInstancePtr->x, gminst->mGMInstancePtr->y, *gminst->pZ);
+               }
+
+               // Update scene node rotation if GM rotation changed (either from the
+               // user manually changing or from a previous Newton body changing them).
+               if (gminst->mGMInstancePtr->direction != gminst->mLastYaw || *gminst->pPitch != gminst->mLastPitch || *gminst->pRoll != gminst->mLastRoll)
+               {
+                  GMRotChanged = true;
+                  node->setOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(gminst->mGMInstancePtr->direction)), Ogre::Degree(*gminst->pPitch), Ogre::Degree(*gminst->pRoll)));
+
+                  if (gminst->BodyAttached && gminst->mBody)
+                     SetNewtonBodyOrientation(ConvertToGMPointer(gminst->mBody), gminst->mGMInstancePtr->direction, *gminst->pPitch, *gminst->pRoll);
+               }
+
+               // Update scene node scale if GM scale changed.
+               if (*gminst->pScaleX != gminst->mLastScaleX || *gminst->pScaleY != gminst->mLastScaleY || *gminst->pScaleZ != gminst->mLastScaleZ)
+               {
+                  node->scale(*gminst->pScaleX, *gminst->pScaleZ, *gminst->pScaleY);
+               }
+
+               // Update GM vars if needed
+               if (!GMPosChanged)
+               {
+                  Ogre::Vector3 pos = node->getPosition();
+                  gminst->mGMInstancePtr->x = pos.x;
+                  gminst->mGMInstancePtr->y = pos.z;
+                  *gminst->pZ = pos.y;
+               }
+               if (!GMRotChanged)
+               {
+                  Ogre::Quaternion orient = node->getOrientation();
+                  gminst->mGMInstancePtr->direction = ConvertToGMYaw(orient.getYaw().valueDegrees());
+                  *gminst->pPitch = orient.getPitch().valueDegrees();
+                  *gminst->pRoll = orient.getRoll().valueDegrees();
+               }
+               {
+                  Ogre::Vector3 scale = node->getScale();
+                  *gminst->pScaleX = scale.x;
+                  *gminst->pScaleY = scale.z;
+                  *gminst->pScaleZ = scale.y;
+               }
+            }
+
+            if (gminst->GMInstanceAttached && gminst->mGMInstancePtr)
+            {
+               gminst->mLastX = gminst->mGMInstancePtr->x;
+               gminst->mLastY = gminst->mGMInstancePtr->y;
+               gminst->mLastZ = *gminst->pZ;
+
+               gminst->mLastYaw = gminst->mGMInstancePtr->direction;
+               gminst->mLastPitch = *gminst->pPitch;
+               gminst->mLastRoll = *gminst->pRoll;
+
+               gminst->mLastScaleX = *gminst->pScaleX;
+               gminst->mLastScaleY = *gminst->pScaleY;
+               gminst->mLastScaleZ = *gminst->pScaleZ;
+            }
+            ++iter;
+         }
+      }
+   }
+   catch(...)
+   {
+   }
 }

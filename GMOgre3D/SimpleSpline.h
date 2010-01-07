@@ -29,7 +29,11 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 GMFN double CreateSimpleSpline()
 {
-   Ogre::SimpleSpline *spline = new Ogre::SimpleSpline;
+   Ogre::SimpleSpline *spline = NULL;
+   
+   TRY
+      spline = new Ogre::SimpleSpline;
+   CATCH("CreateSimpleSpline")
 
    return ConvertToGMPointer(spline);
 }
@@ -84,6 +88,7 @@ GMFN double GetSimpleSplinePoint(double spline_ptr, double index)
 
    Ogre::Vector3 vec = spline->getPoint((unsigned int)index);
 
+   AcquireGMVectorGlobals();
    if (mVectorX != NULL)
    {
       *mVectorX = vec.x;
@@ -130,6 +135,7 @@ GMFN double GetSimpleSplineInterpolate(double spline_ptr, double t)
 
    Ogre::Vector3 vec = spline->interpolate(t);
 
+   AcquireGMVectorGlobals();
    if (mVectorX != NULL)
    {
       *mVectorX = vec.x;
@@ -150,6 +156,7 @@ GMFN double GetSimpleSplineInterpolateFrom(double spline_ptr, double from_index,
 
    Ogre::Vector3 vec = spline->interpolate(from_index, t);
 
+   AcquireGMVectorGlobals();
    if (mVectorX != NULL)
    {
       *mVectorX = vec.x;

@@ -27,9 +27,13 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "GMOgre3D.h"
 
 
-GMFN double CreateRay()
+GMFN double CreateRay(double originx, double originz, double originy, double dirx, double dirz, double diry)
 {
-   Ogre::Ray *ray = new Ogre::Ray;
+   Ogre::Ray *ray = NULL;
+   
+   TRY
+      ray = new Ogre::Ray(Ogre::Vector3(originx, originy, originz), Ogre::Vector3(dirx, diry, dirz));
+   CATCH("CreateRay")
 
    return ConvertToGMPointer(ray);
 }

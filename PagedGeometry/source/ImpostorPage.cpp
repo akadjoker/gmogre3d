@@ -37,7 +37,7 @@ ColourValue ImpostorPage::impostorBackgroundColor = ColourValue(0.0f, 0.3f, 0.0f
 BillboardOrigin ImpostorPage::impostorPivot = BBO_CENTER;
 
 
-void ImpostorPage::init(PagedGeometry *geom)
+void ImpostorPage::init(PagedGeometry *geom, const Ogre::Any &data)
 {
 	//Save pointers to PagedGeometry object
 	sceneMgr = geom->getSceneManager();
@@ -49,6 +49,8 @@ void ImpostorPage::init(PagedGeometry *geom)
 	if (++selfInstances == 1){
 		//Set up a single instance of a scene node which will be used when rendering impostor textures
 		geom->getSceneNode()->createChildSceneNode("ImpostorPage::renderNode");
+		geom->getSceneNode()->createChildSceneNode("ImpostorPage::cameraNode");
+        ResourceGroupManager::getSingleton().createResourceGroup("Impostors");
 	}
 }
 
@@ -63,6 +65,8 @@ ImpostorPage::~ImpostorPage()
 
 	if (--selfInstances == 0){
 		sceneMgr->destroySceneNode("ImpostorPage::renderNode");
+		sceneMgr->destroySceneNode("ImpostorPage::cameraNode");
+        ResourceGroupManager::getSingleton().destroyResourceGroup("Impostors");
 	}
 }
 
@@ -249,20 +253,29 @@ ImpostorBatch *ImpostorBatch::getBatch(ImpostorPage *group, Entity *entity)
 void ImpostorBatch::setAngle(float pitchDeg, float yawDeg)
 {
 	//Calculate pitch material index
-	Ogre::uint16 newPitchIndex;
-	if (pitchDeg > 0){
-		newPitchIndex = static_cast<Ogre::uint16>(IMPOSTOR_PITCH_ANGLES * (pitchDeg / 67.5f));
+	int newPitchIndex;
+#ifdef IMPOSTOR_RENDER_ABOVE_ONLY
+	if (pitchDeg > 0) {
+		float maxPitchIndexDeg = (90.0f * (IMPOSTOR_PITCH_ANGLES-1)) / IMPOSTOR_PITCH_ANGLES;
+		newPitchIndex = (int)(IMPOSTOR_PITCH_ANGLES * (pitchDeg / maxPitchIndexDeg));
 		if (newPitchIndex > IMPOSTOR_PITCH_ANGLES-1) newPitchIndex = IMPOSTOR_PITCH_ANGLES-1;
 	} else {
 		newPitchIndex = 0;
 	}
+#else
+	float minPitchIndexDeg = -90.0f;
+	float maxPitchIndexDeg = ((180.0f * (IMPOSTOR_PITCH_ANGLES-1)) / IMPOSTOR_PITCH_ANGLES) - 90.0f;
+	newPitchIndex = (int)(IMPOSTOR_PITCH_ANGLES * ((pitchDeg - minPitchIndexDeg) / (maxPitchIndexDeg - minPitchIndexDeg)));
+	if (newPitchIndex > IMPOSTOR_PITCH_ANGLES-1) newPitchIndex = IMPOSTOR_PITCH_ANGLES-1;
+	if (newPitchIndex < 0) newPitchIndex = 0;
+#endif
 	
 	//Calculate yaw material index
-	Ogre::uint16 newYawIndex;
-	if (yawDeg > 0){
-		newYawIndex = static_cast<Ogre::uint16>(IMPOSTOR_YAW_ANGLES * (yawDeg / 360.0f) + 0.5f) % IMPOSTOR_YAW_ANGLES;
+	int newYawIndex;
+	if (yawDeg > 0) {
+		newYawIndex = (int)(IMPOSTOR_YAW_ANGLES * (yawDeg / 360.0f) + 0.5f) % IMPOSTOR_YAW_ANGLES;
 	} else {
-		newYawIndex = static_cast<Ogre::uint16>(IMPOSTOR_YAW_ANGLES + IMPOSTOR_YAW_ANGLES * (yawDeg / 360.0f) + 0.5f) % IMPOSTOR_YAW_ANGLES;
+		newYawIndex = (int)(IMPOSTOR_YAW_ANGLES + IMPOSTOR_YAW_ANGLES * (yawDeg / 360.0f) + 0.5f) % IMPOSTOR_YAW_ANGLES;
 	}
 	
 	//Change materials if necessary
@@ -290,6 +303,10 @@ String ImpostorBatch::generateEntityKey(Entity *entity)
 	for (uint32 i = 0; i < entity->getNumSubEntities(); ++i){
 		entityKey << "-" << entity->getSubEntity(i)->getMaterialName();
 	}
+	entityKey << "-" << IMPOSTOR_YAW_ANGLES << "_" << IMPOSTOR_PITCH_ANGLES;
+#ifdef IMPOSTOR_RENDER_ABOVE_ONLY
+	entityKey << "_RAO";
+#endif
 	return entityKey.str();
 }
 
@@ -322,6 +339,7 @@ ImpostorTexture::ImpostorTexture(ImpostorPage *group, Entity *entity)
 	//Store scene manager and entity
 	ImpostorTexture::sceneMgr = group->sceneMgr;
 	ImpostorTexture::entity = entity;
+	ImpostorTexture::group = group;
 
 	//Add self to list of ImpostorTexture's
 	entityKey = ImpostorBatch::generateEntityKey(entity);
@@ -351,7 +369,7 @@ ImpostorTexture::ImpostorTexture(ImpostorPage *group, Entity *entity)
 		material[i][o] = MaterialManager::getSingleton().create(getUniqueID("ImpostorMaterial"), "Impostors");
 
 		Material *m = material[i][o].getPointer();
-		Pass *p = m->getTechnique(0)->getPass(0);        
+		Pass *p = m->getTechnique(0)->getPass(0);
 		
 		TextureUnitState *t = p->createTextureUnitState(texture->getName());
 		
@@ -377,9 +395,8 @@ void ImpostorTexture::updateMaterials()
 	for (int o = 0; o < IMPOSTOR_YAW_ANGLES; ++o){
 		for (int i = 0; i < IMPOSTOR_PITCH_ANGLES; ++i){
 			Material *m = material[i][o].getPointer();
-			Pass *p = m->getTechnique(0)->getPass(0);       
+			Pass *p = m->getTechnique(0)->getPass(0);
 
-// 			int x = p->getNumTextureUnitStates();
 			TextureUnitState *t = p->getTextureUnitState(0);
 
 			t->setTextureName(texture->getName());
@@ -435,7 +452,7 @@ void ImpostorTexture::regenerateAll()
 
 void ImpostorTexture::renderTextures(bool force)
 {
-#if IMPOSTOR_FILE_SAVE
+#ifdef IMPOSTOR_FILE_SAVE
 	TexturePtr renderTexture;
 #else
 	TexturePtr renderTexture(texture);
@@ -445,6 +462,7 @@ void ImpostorTexture::renderTextures(bool force)
 	RenderTexture *renderTarget;
 	Camera *renderCamera;
 	Viewport *renderViewport;
+	SceneNode *camNode;
 
 	//Set up RTT texture
 	uint32 textureSize = ImpostorPage::impostorResolution;
@@ -459,11 +477,13 @@ void ImpostorTexture::renderTextures(bool force)
 	renderTarget->setAutoUpdated(false);
 	
 	//Set up camera
+	camNode = sceneMgr->getSceneNode("ImpostorPage::cameraNode");
 	renderCamera = sceneMgr->createCamera(getUniqueID("ImpostorCam"));
+	camNode->attachObject(renderCamera);
 	renderCamera->setLodBias(1000.0f);
 	renderViewport = renderTarget->addViewport(renderCamera);
 	renderViewport->setOverlaysEnabled(false);
-    renderViewport->setClearEveryFrame(true);
+	renderViewport->setClearEveryFrame(true);
 	renderViewport->setShadowsEnabled(false);
 	renderViewport->setBackgroundColour(ImpostorPage::impostorBackgroundColor);
 	
@@ -516,8 +536,8 @@ void ImpostorTexture::renderTextures(bool force)
 	entity->setRenderingDistance(0);
 
 	bool needsRegen = true;
-#if IMPOSTOR_FILE_SAVE
-	//Calculate the filename used to uniquely identity this render
+#ifdef IMPOSTOR_FILE_SAVE
+	//Calculate the filename hash used to uniquely identity this render
 	String strKey = entityKey;
 	char key[32] = {0};
 	uint32 i = 0;
@@ -529,17 +549,25 @@ void ImpostorTexture::renderTextures(bool force)
 	for (i = 0; i < sizeof(key); ++i)
 		key[i] = (key[i] % 26) + 'A';
 
-	ResourceGroupManager::getSingleton().addResourceLocation(".", "FileSystem", "BinFolder");
-	String fileName = "Impostor." + String(key, sizeof(key)) + '.' + StringConverter::toString(textureSize) + ".png";
+	String tempdir = this->group->geom->getTempdir();
+	ResourceGroupManager::getSingleton().addResourceLocation(tempdir, "FileSystem", "BinFolder");
+
+	String fileNamePNG = "Impostor." + String(key, sizeof(key)) + '.' + StringConverter::toString(textureSize) + ".png";
+	String fileNameDDS = "Impostor." + String(key, sizeof(key)) + '.' + StringConverter::toString(textureSize) + ".dds";
 
 	//Attempt to load the pre-render file if allowed
 	needsRegen = force;
 	if (!needsRegen){
 		try{
-			texture = TextureManager::getSingleton().load(fileName, "BinFolder", TEX_TYPE_2D, MIP_UNLIMITED);
+			texture = TextureManager::getSingleton().load(fileNameDDS, "BinFolder", TEX_TYPE_2D, MIP_UNLIMITED);
 		}
 		catch (...){
-			needsRegen = true;
+			try{
+				texture = TextureManager::getSingleton().load(fileNamePNG, "BinFolder", TEX_TYPE_2D, MIP_UNLIMITED);
+			}
+			catch (...){
+				needsRegen = true;
+			}
 		}
 	}
 #endif
@@ -549,30 +577,32 @@ void ImpostorTexture::renderTextures(bool force)
 		const float xDivFactor = 1.0f / IMPOSTOR_YAW_ANGLES;
 		const float yDivFactor = 1.0f / IMPOSTOR_PITCH_ANGLES;
 		for (int o = 0; o < IMPOSTOR_PITCH_ANGLES; ++o){ //4 pitch angle renders
+#ifdef IMPOSTOR_RENDER_ABOVE_ONLY
 			Radian pitch = Degree((90.0f * o) * yDivFactor); //0, 22.5, 45, 67.5
+#else
+			Radian pitch = Degree((180.0f * o) * yDivFactor - 90.0f);
+#endif
 
 			for (int i = 0; i < IMPOSTOR_YAW_ANGLES; ++i){ //8 yaw angle renders
 				Radian yaw = Degree((360.0f * i) * xDivFactor); //0, 45, 90, 135, 180, 225, 270, 315
 					
 				//Position camera
-				renderCamera->setPosition(0, 0, 0);
-				renderCamera->setOrientation(Quaternion::IDENTITY);
-				renderCamera->pitch(-pitch);
-				renderCamera->yaw(yaw);
-				renderCamera->moveRelative(Vector3(0, 0, objDist));
+				camNode->setPosition(0, 0, 0);
+                camNode->setOrientation(Quaternion(yaw, Vector3::UNIT_Y) * Quaternion(-pitch, Vector3::UNIT_X));
+                camNode->translate(Vector3(0, 0, objDist), Node::TS_LOCAL);
 						
 				//Render the impostor
 				renderViewport->setDimensions((float)(i) * xDivFactor, (float)(o) * yDivFactor, xDivFactor, yDivFactor);
 				renderTarget->update();
 			}
 		}
-		
-#if IMPOSTOR_FILE_SAVE
-		//Save RTT to file
-		renderTarget->writeContentsToFile(fileName);
+	
+#ifdef IMPOSTOR_FILE_SAVE
+		//Save RTT to file with respecting the temp dir
+		renderTarget->writeContentsToFile(tempdir + fileNamePNG);
 
 		//Load the render into the appropriate texture view
-		texture = TextureManager::getSingleton().load(fileName, "BinFolder", TEX_TYPE_2D, MIP_UNLIMITED);
+		texture = TextureManager::getSingleton().load(fileNamePNG, "BinFolder", TEX_TYPE_2D, MIP_UNLIMITED);
 #else
 		texture = renderTexture;
 #endif
@@ -601,7 +631,7 @@ void ImpostorTexture::renderTextures(bool force)
 	if (oldSceneNode) {
 		oldSceneNode->attachObject(entity);
 	}
-#if IMPOSTOR_FILE_SAVE
+#ifdef IMPOSTOR_FILE_SAVE
 	//Delete RTT texture
 	assert(!renderTexture.isNull());
 	String texName2(renderTexture->getName());

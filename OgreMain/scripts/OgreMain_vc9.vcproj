@@ -109,12 +109,12 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine=""
+				CommandLine="copy $(OutDir)\$(TargetFileName) ..\..\Samples\Common\bin\$(ConfigurationName)&#x0D;&#x0A;copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="..\..\bin"
+			OutputDirectory="..\..\lib"
 			IntermediateDirectory="..\obj\$(ConfigurationName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)\VCProjectDefaults\UpgradeFromVC70.vsprops"
@@ -178,7 +178,7 @@
 				AdditionalLibraryDirectories="..\..\Dependencies\lib\$(ConfigurationName)"
 				IgnoreAllDefaultLibraries="false"
 				IgnoreDefaultLibraryNames=""
-				GenerateDebugInformation="false"
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/OgreMain.pdb"
 				SubSystem="1"
 				OptimizeReferences="2"
@@ -186,7 +186,7 @@
 				OptimizeForWindows98="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="../../lib/OgreMain.lib"
+				ImportLibrary="$(OutDir)/OgreMain.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -210,7 +210,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine=""
+				CommandLine="copy $(OutDir)\$(TargetFileName) ..\..\Samples\Common\bin\$(ConfigurationName)&#x0D;&#x0A;copy $(OutDir)\$(TargetFileName) ..\..\Tools\Common\bin\$(ConfigurationName)&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration

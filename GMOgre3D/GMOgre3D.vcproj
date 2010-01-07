@@ -41,8 +41,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\OgreMain\include;..\GL\include;..\GL\src\GLSL\include;..\Direct3D9\include;..\OctreeSceneManager\include;..\ParticleFX\include;..\CgProgramManager\include;..\SkyX;..\GMAPI\include;..\Dependencies\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GMOGRE3D_EXPORTS"
+				AdditionalIncludeDirectories="..\OgreMain\include;..\GL\include;..\GL\src\GLSL\include;..\Direct3D9\include;..\OctreeSceneManager\include;..\ParticleFX\include;..\CgProgramManager\include;..\SkyX;..\GMAPI\include;..\Dependencies\include;&quot;$(BOOST_HOME)&quot;;.\inc"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GMOGRE3D_EXPORTS;OGRENEWT_NO_OGRE_ANY"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -61,7 +61,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="OgreMain_d.lib Plugin_OctreeSceneManager_d.lib RenderSystem_Direct3D9_d.lib RenderSystem_GL_d.lib Plugin_ParticleFX_d.lib Plugin_CgProgramManager_d.lib PagedGeometryLib_d.lib gmapi_d.lib"
+				AdditionalDependencies="Newton.lib dAnimation.lib dContainers.lib dMath.lib JointLibrary.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\lib"
 				GenerateDebugInformation="true"
@@ -119,8 +119,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\OgreMain\include;..\GL\include;..\GL\src\GLSL\include;..\Direct3D9\include;..\OctreeSceneManager\include;..\ParticleFX\include;..\CgProgramManager\include;..\SkyX;..\GMAPI\include;..\Dependencies\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GMOGRE3D_EXPORTS;OGRE_STATIC_LIB"
+				AdditionalIncludeDirectories="..\OgreMain\include;..\GL\include;..\GL\src\GLSL\include;..\Direct3D9\include;..\OctreeSceneManager\include;..\ParticleFX\include;..\CgProgramManager\include;..\SkyX;..\GMAPI\include;..\Dependencies\include;..\GMNewton;..\GMNewton\common;..\Newton\sdk\dContainers;..\Newton\sdk\dMath;..\Newton\sdk\dCustomJoints;..\Newton\sdk\dAnimation;..\Newton\sdk\;&quot;$(BOOST_HOME)&quot;;.\inc"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GMOGRE3D_EXPORTS;OGRE_STATIC_LIB;OGRENEWT_NO_OGRE_ANY"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -139,10 +139,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="OgreMainStatic_d.lib Plugin_OctreeSceneManagerStatic_d.lib RenderSystem_Direct3D9Static_d.lib RenderSystem_GLStatic_d.lib Plugin_ParticleFXStatic_d.lib Plugin_CgProgramManagerStatic_d.lib PagedGeometryLib_d.lib SkyXStatic_d.lib gmapi_d.lib"
+				AdditionalDependencies="Newton.lib dAnimation.lib dContainers.lib dMath.lib JointLibrary.lib"
 				OutputFile="$(OutDir)\$(ProjectName)Static.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\lib"
+				AdditionalLibraryDirectories="..\lib;..\GMNewton\ReleaseStaticLib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -201,8 +201,8 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				EnableFiberSafeOptimizations="true"
-				AdditionalIncludeDirectories="..\OgreMain\include;..\GL\include;..\GL\src\GLSL\include;..\Direct3D9\include;..\OctreeSceneManager\include;..\ParticleFX\include;..\CgProgramManager\include;..\SkyX;..\GMAPI\include;..\Dependencies\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GMOGRE3D_EXPORTS"
+				AdditionalIncludeDirectories="..\OgreMain\include;..\GL\include;..\GL\src\GLSL\include;..\Direct3D9\include;..\OctreeSceneManager\include;..\ParticleFX\include;..\CgProgramManager\include;..\SkyX;..\GMAPI\include;..\Dependencies\include;&quot;$(BOOST_HOME)&quot;;.\inc"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GMOGRE3D_EXPORTS;OGRENEWT_NO_OGRE_ANY"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
@@ -220,7 +220,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="OgreMain.lib Plugin_OctreeSceneManager.lib RenderSystem_Direct3D9.lib RenderSystem_GL.lib Plugin_ParticleFX.lib Plugin_CgProgramManager.lib PagedGeometryLib.lib gmapi.lib SkyX.lib"
+				AdditionalDependencies="Newton.lib dAnimation.lib dContainers.lib dMath.lib JointLibrary.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\lib"
 				GenerateDebugInformation="false"
@@ -286,13 +286,13 @@
 				OmitFramePointers="true"
 				EnableFiberSafeOptimizations="true"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="..\OgreMain\include;..\Direct3D9\include;..\GL\include;..\GL\src\GLSL\include;..\OctreeSceneManager\include;..\ParticleFX\include;..\CgProgramManager\include;..\SkyX;..\GMAPI\include;..\Dependencies\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GMOGRE3D_EXPORTS;OGRE_STATIC_LIB"
+				AdditionalIncludeDirectories="..\OgreMain\include;..\Direct3D9\include;..\GL\include;..\GL\src\GLSL\include;..\OctreeSceneManager\include;..\ParticleFX\include;..\CgProgramManager\include;..\SkyX;..\GMAPI\include;..\Dependencies\include;;..\GMNewton;..\GMNewton\common;..\Newton\sdk\dContainers;..\Newton\sdk\dMath;..\Newton\sdk\dCustomJoints;..\Newton\sdk\dAnimation;..\Newton\sdk\;..\OgreNewt\inc;&quot;$(BOOST_HOME)&quot;;.\inc"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GMOGRE3D_EXPORTS;OGRE_STATIC_LIB;_NEWTON_USE_LIB;OGRENEWT_NO_OGRE_ANY"
 				RuntimeLibrary="2"
 				BufferSecurityCheck="false"
 				EnableFunctionLevelLinking="true"
 				FloatingPointModel="2"
-				UsePrecompiledHeader="2"
+				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -307,8 +307,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				LinkLibraryDependencies="true"
 				AdditionalOptions="/LTCG"
-				AdditionalDependencies="OgreMainStatic.lib PagedGeometryLib.lib RenderSystem_GLStatic.lib RenderSystem_Direct3D9Static.lib Plugin_OctreeSceneManagerStatic.lib Plugin_ParticleFXStatic.lib Plugin_CgProgramManagerStatic.lib SkyXStatic.lib gmapi.lib"
+				AdditionalDependencies="Newton.lib dAnimation.lib dContainers.lib dMath.lib JointLibrary.lib OgreNewt.lib "
 				OutputFile="$(OutDir)\$(ProjectName)Static.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\lib"
@@ -381,7 +382,15 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\FrameListener.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\GMOgre3D.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\OgreMovableText.cpp"
 				>
 			</File>
 			<File
@@ -523,11 +532,51 @@
 				>
 			</File>
 			<File
+				RelativePath=".\MovableObject.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MovableText.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NewtonBody.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NewtonCollision.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NewtonContact.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NewtonMaterial.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NewtonMaterialPair.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NewtonPlayerController.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NewtonWorld.h"
+				>
+			</File>
+			<File
 				RelativePath=".\NodeAnimationTrack.h"
 				>
 			</File>
 			<File
 				RelativePath=".\OgreEuler.h"
+				>
+			</File>
+			<File
+				RelativePath=".\OgreMovableText.h"
 				>
 			</File>
 			<File
@@ -612,6 +661,10 @@
 			</File>
 			<File
 				RelativePath=".\stdafx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SubEntity.h"
 				>
 			</File>
 			<File

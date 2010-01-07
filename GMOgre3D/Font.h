@@ -40,11 +40,13 @@ GMFN char *GetFontByName(char *name)
 
 GMFN char *CreateGMFont(char *name, char *group = const_cast<char*>(Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME.c_str()), char *font_source = "", double size = 12)
 {
-   Ogre::ResourcePtr font = Ogre::FontManager::getSingleton().create(name, group);
-   font->setParameter("type", "truetype");
-   font->setParameter("source", font_source);
-   font->setParameter("size", Ogre::StringConverter::toString((Ogre::Real)size));
-   font->setParameter("resolution", "96");
+   TRY
+      Ogre::ResourcePtr font = Ogre::FontManager::getSingleton().create(name, group);
+      font->setParameter("type", "truetype");
+      font->setParameter("source", font_source);
+      font->setParameter("size", Ogre::StringConverter::toString((Ogre::Real)size));
+      font->setParameter("resolution", "96");
+   CATCH("CreateFont")
 
    return name;
 }

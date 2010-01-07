@@ -28,7 +28,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "../PagedGeometry/include/TreeLoader2D.h"
 
 
-GMFN double CreateTreeLoader2D(double pg_ptr, double top, double left, double bottom, double right)
+GMFN double CreateTreeLoader2D(double pg_ptr, double left, double top, double right, double bottom)
 {
    Forests::PagedGeometry *pg = ConvertFromGMPointer<Forests::PagedGeometry*>(pg_ptr);
 
@@ -40,6 +40,19 @@ GMFN double CreateTreeLoader2D(double pg_ptr, double top, double left, double bo
    tl->setHeightFunction(CalcTerrainHeight);
 
    return ConvertToGMPointer(tl);
+}
+
+
+GMFN double DestroyTreeLoader2D(double tl_ptr)
+{
+   Forests::TreeLoader2D *tl = ConvertFromGMPointer<Forests::TreeLoader2D*>(tl_ptr);
+
+   if (tl == NULL)
+      return FALSE;
+
+   delete tl;
+
+   return TRUE;
 }
 
 
@@ -61,14 +74,19 @@ GMFN double AddTreeLoader2DTree(double tl_ptr, double entity_ptr, double x, doub
 }
 
 
-GMFN double RemoveTreeLoader2DTrees(double tl_ptr, double x, double z, double y, double radius)
+GMFN double RemoveTreeLoader2DTrees(double tl_ptr, double x, double z, double y, double radius, double ent_ptr)
 {
    Forests::TreeLoader2D *tl = ConvertFromGMPointer<Forests::TreeLoader2D*>(tl_ptr);
 
    if (tl == NULL)
       return FALSE;
 
-   tl->deleteTrees(Ogre::Vector3(x, y, z), radius);
+   Ogre::Entity *ent = NULL;
+
+   if (ent_ptr != 0)
+      ent = ConvertFromGMPointer<Ogre::Entity*>(ent_ptr);
+
+   tl->deleteTrees(Ogre::Vector3(x, y, z), radius, ent);
 
    return TRUE;
 }

@@ -126,7 +126,11 @@ GMFN double CreateCompositorTechnique(char *name)
    if (com.isNull())
       return 0;
 
-   Ogre::CompositionTechnique *tech = com->createTechnique();
+   Ogre::CompositionTechnique *tech = NULL;
+
+   TRY
+      tech = com->createTechnique();
+   CATCH("CreateCompositorTechnique")
 
    return ConvertToGMPointer(tech);
 }

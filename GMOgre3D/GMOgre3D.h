@@ -36,15 +36,71 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreText.h"
 #include "OgreSprite.h"
 #include "OgreEuler.h"
-#include "FrameListener.h"
+#include "OgreMovableText.h"
 #include "CollisionTools.h"
+#include "OgreNewt_Body.h"
+#include "OgreNewt_Collision.h"
+#include "FrameListener.h"
 #include <GMAPI.h>
+#include <OgreAny.h>
+#include <vector>
+
 
 #define GMFN extern "C" __declspec(dllexport)
 
+#define TRY try {
+#define CATCH(func) } catch(Ogre::Exception& e) { LogError(e.what()); } catch(std::exception& e) { LogError(e.what()); }  catch(...) { LogError("An unknown error has occurred in " + Ogre::String(func) + "!"); }
+
+struct NewtonBody;
+
+class LockMutex
+{
+public:
+   LockMutex(HANDLE mutex)
+   {
+      m_mutex = mutex;
+      WaitForSingleObject(m_mutex, INFINITE);
+   }
+
+   ~LockMutex()
+   {
+      ReleaseMutex(m_mutex);
+   }
+
+protected:
+   HANDLE m_mutex;
+};
+
+
+struct GMCallback
+{
+   unsigned int mGMInstanceID;
+   unsigned int mGMEventNum1;
+   unsigned int mGMEventNum2;
+   bool mTriggered;
+
+   void *mParam1;
+   void *mParam2;
+};
+
+
 struct GMInstance
 {
+   GMInstance()
+   {
+      BodyAttached = false;
+      GMInstanceAttached = false;
+      mGMInstanceID = 0;
+      mGMInstancePtr = NULL;
+      mBody = NULL;
+   }
+
+   bool BodyAttached;
+   bool GMInstanceAttached;
+
    int mGMInstanceID;
+   gm::PGMINSTANCE mGMInstancePtr;
+   OgreNewt::Body *mBody;
 
 	gm::GMVARIABLE *pX;
 	gm::GMVARIABLE *pY;
@@ -73,10 +129,26 @@ enum
    OVERLAY_TEXT_AREA
 };
 
+enum
+{
+   MO_TYPE_BILLBOARD_CHAIN = 1,
+   MO_TYPE_BILLBOARD_SET,
+   MO_TYPE_ENTITY,
+   MO_TYPE_LIGHT,
+   MO_TYPE_PARTICLE_SYSTEM,
+   MO_TYPE_RIBBON_TRAIL,
+   MO_TYPE_DEFAULT_SCENE_MANAGER,
+   MO_TYPE_OCTREE_SCENE_MANAGER,
+   MO_TYPE_TERRAIN_SCENE_MANAGER
+};
+
 unsigned int mWindowWidth = 0;
 unsigned int mWindowHeight = 0;
 unsigned int mHWnd = 0;
 bool mFullscreen = false;
+bool mUseVSync = false;
+unsigned int mFSAALevel = 0;
+unsigned int mFSAAQuality = 0;
 Ogre::String mRenderEngine = "";
 Ogre::String mLogFile = "";
 Ogre::String mPluginsCfg = "";
@@ -103,19 +175,31 @@ gm::GMVARIABLE *mVectorZ = NULL;
 gm::GMVARIABLE *mEulerYaw = NULL;
 gm::GMVARIABLE *mEulerPitch = NULL;
 gm::GMVARIABLE *mEulerRoll = NULL;
+int xsymbol = 0;
+
+HANDLE gMutex = NULL;
 
 Ogre::Material::LodDistanceList mLODLevels;
 Ogre::String mCubeTextureNames[6];
 //MOC::CollisionTools mCollisionTools;
 
 typedef std::map<Ogre::SceneNode *, GMInstance> SceneNodeMap;
-SceneNodeMap mSceneNodeGMInstances;
+SceneNodeMap mSceneNodeAttachments;
+
+typedef std::map<OgreNewt::Body *, Ogre::SceneNode *> NewtonBodyMap;
+NewtonBodyMap mNewtonBodyAttachments;
 
 typedef std::map<Ogre::SceneManager *, GMFrameListener*> SceneFrameListenerMap;
 SceneFrameListenerMap mSceneListener;
 
 typedef std::map<Ogre::SceneManager *, MOC::CollisionTools*> SceneCollisionToolsMap;
 SceneCollisionToolsMap mSceneCollisionMap;
+
+typedef std::map<OgreNewt::Collision *, OgreNewt::CollisionPtr> NewtonCollisionMap;
+NewtonCollisionMap mNewtonCollisionMap;
+
+//typedef std::map<std::pair<OgreNewt::MaterialID *, GMCallback> NewtonMaterialMap;
+//NewtonMaterialMap mNewtonMaterialMap;
 
 
 // Helper functions
@@ -147,22 +231,6 @@ float GetBlueFromGMColor(double color)
    return (float)((((int)color >> 16) & 0xFF)) / 255;
 }
 
-/*
-SetEulerInstance(node, Euler(Ogre::Degree(ConvertFromGMYaw(0)), Ogre::Degree(0), Ogre::Degree(0)));
-node->setOrientation(GetEulerInstance(node));
-
-template<typename T>
-void SetEulerInstance(T ptr, Euler &euler)
-{
-   ptr->setUserAny(Ogre::Any(euler));
-}
-
-template<typename T>
-Euler GetEulerInstance(T ptr)
-{
-   return (Ogre::any_cast<Euler>(ptr->getUserAny()));
-}
-*/
 template<typename T>
 T ConvertFromGMPointer(double ptr)
 {
@@ -217,6 +285,136 @@ Ogre::Real ConvertFromGMYaw(double yaw)
    return ogre_yaw;
 }
 
+void AcquireGMVectorGlobals()
+{
+   if (!mGMAPI)
+      return;
+
+   static int symbolVectorX = mGMAPI->GetSymbolID("vector_resx");
+   static int symbolVectorY = mGMAPI->GetSymbolID("vector_resy");
+   static int symbolVectorZ = mGMAPI->GetSymbolID("vector_resz");
+
+   gm::GMVARIABLE* varArray = (gm::GMVARIABLE*) mGMAPI->GetGlobalVariableListPtr()->variables;
+   int varCount = mGMAPI->GetGlobalVariableListPtr()->count;
+   int acquiredCount = 0;
+      
+   for (int i = 0; i < varCount; i++)
+   {
+      if (varArray[i].symbolId == symbolVectorX)
+      {
+         mVectorX = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolVectorY)
+      {
+         mVectorY = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolVectorZ)
+      {
+         mVectorZ = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+
+      if (acquiredCount >= 3)
+         break;
+   }
+}
+
+void AcquireGMEulerGlobals()
+{
+   if (!mGMAPI)
+      return;
+
+   static int symbolEulerYaw = mGMAPI->GetSymbolID("euler_yaw");
+   static int symbolEulerPitch = mGMAPI->GetSymbolID("euler_pitch");
+   static int symbolEulerRoll = mGMAPI->GetSymbolID("euler_roll");
+
+   gm::GMVARIABLE* varArray = (gm::GMVARIABLE*) mGMAPI->GetGlobalVariableListPtr()->variables;
+   int varCount = mGMAPI->GetGlobalVariableListPtr()->count;
+   int acquiredCount = 0;
+      
+   for (int i = 0; i < varCount; i++)
+   {
+      if (varArray[i].symbolId == symbolEulerYaw)
+      {
+         mEulerYaw = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolEulerPitch)
+      {
+         mEulerPitch = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolEulerRoll)
+      {
+         mEulerRoll = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+
+      if (acquiredCount >= 3)
+         break;
+   }
+}
+
+void AcquireGMLocalVariablePointers(GMInstance *gminst)
+{
+   if (!mGMAPI)
+      return;
+
+   // This function acquires all needed local variables for a GM object.
+   // We do it this way for two reasons:
+   //   1) Previously acquired pointers are NOT guaranteed to be valid each frame
+   //   2) Manually calling GetLocalVariablePtr for each variable is SLOW!
+   static int symbolZ = mGMAPI->GetSymbolID("z");
+   static int symbolPitch = mGMAPI->GetSymbolID("pitch");
+   static int symbolRoll = mGMAPI->GetSymbolID("roll");
+   static int symbolScaleX = mGMAPI->GetSymbolID("scalex");
+   static int symbolScaleY = mGMAPI->GetSymbolID("scaley");
+   static int symbolScaleZ = mGMAPI->GetSymbolID("scalez");
+
+   gm::GMVARIABLE* varArray = gminst->mGMInstancePtr->variableListPtr->variables;
+   int varCount = gminst->mGMInstancePtr->variableListPtr->count;
+   int acquiredCount = 0;
+
+   for ( int i = 0; i < varCount; i++ )
+   {
+      if (varArray[i].symbolId == symbolZ)
+      {
+         gminst->pZ = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolPitch)
+      {
+         gminst->pPitch = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolRoll)
+      {
+         gminst->pRoll = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolScaleX)
+      {
+         gminst->pScaleX = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolScaleY)
+      {
+         gminst->pScaleY = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolScaleZ)
+      {
+         gminst->pScaleZ = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+
+      if (acquiredCount >= 6)
+         break;
+   }
+}
+
 
 Ogre::Real CalcTerrainHeight(Ogre::Real x, Ogre::Real z, void*)
 {
@@ -250,5 +448,7 @@ void LogTrivial(Ogre::String error_msg)
 {
    Ogre::LogManager::getSingleton().getDefaultLog()->logMessage(error_msg, Ogre::LML_TRIVIAL);
 }
+
+GMFN double EnableDisplayFPS(double enable);
 
 #endif
