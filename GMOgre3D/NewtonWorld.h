@@ -24,40 +24,16 @@ http://www.gnu.org/copyleft/lesser.txt.
 #ifndef GMOGRE_NEWTON_WORLD
 #define GMOGRE_NEWTON_WORLD
 
-#include "OgreNewt_World.h"
+#include "OgreNewtWorld.h"
 #include <map>
-
-
-static std::map<OgreNewt::World*, Ogre::Vector3> mGravityMap;
-
-
-void DefaultForceCallback(OgreNewt::Body* me, float timestep, int threadIndex)
-{
-    std::map<OgreNewt::World*, Ogre::Vector3>::iterator iter = mGravityMap.find((OgreNewt::World*)me->getWorld());
-    if (iter != mGravityMap.end())
-    {
-       //apply a simple gravity force.
-       Ogre::Real mass;
-       Ogre::Vector3 inertia;
-
-       me->getMassMatrix(mass, inertia);
-
-       Ogre::Vector3 force = iter->second;
-       force *= mass;
-
-       me->addForce(force);
-    }
-}
 
 
 GMFN double CreateNewtonWorld()
 {
-   OgreNewt::World *world = NULL;
+   OgreNewtWorld *world = NULL;
 
    TRY
-      world = new OgreNewt::World;
-      mGravityMap[world] = Ogre::Vector3(0, -9.81, 0); // Default to earth gravity
-      world->setPlatformArchitecture(2);
+      world = new OgreNewtWorld();
    CATCH("CreateNewtonWorld")
 
    return ConvertToGMPointer(world);
@@ -66,7 +42,7 @@ GMFN double CreateNewtonWorld()
 
 GMFN double DestroyNewtonWorld(double newton_world_ptr)
 {
-   OgreNewt::World *newton_world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewtWorld *newton_world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr);
 
    if (!newton_world)
       return FALSE;
@@ -79,7 +55,7 @@ GMFN double DestroyNewtonWorld(double newton_world_ptr)
 
 GMFN double EnableNewtonWorldDebugger(double newton_world_ptr, double enable)
 {
-   OgreNewt::World *newton_world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewtWorld *newton_world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr);
 
    if (!newton_world)
       return FALSE;
@@ -94,7 +70,7 @@ GMFN double EnableNewtonWorldDebugger(double newton_world_ptr, double enable)
    else
       newton_world->getDebugger().deInit();
 
-   fl->DisplayNewtonDebugger(newton_world, (enable != 0));
+   fl->DisplayNewtonDebugger(newton_world->getOgreNewtWorld(), (enable != 0));
 
    return TRUE;
 }
@@ -102,7 +78,7 @@ GMFN double EnableNewtonWorldDebugger(double newton_world_ptr, double enable)
 
 GMFN double SetNewtonWorldDebuggerFont(double newton_world_ptr, char *name, double size)
 {
-   OgreNewt::World *newton_world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewtWorld *newton_world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr);
 
    if (!newton_world)
       return FALSE;
@@ -115,7 +91,7 @@ GMFN double SetNewtonWorldDebuggerFont(double newton_world_ptr, char *name, doub
 
 GMFN double DestroyAllNewtonWorldBodies(double newton_world_ptr)
 {
-   OgreNewt::World *newton_world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewtWorld *newton_world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr);
 
    if (!newton_world)
       return FALSE;
@@ -128,7 +104,7 @@ GMFN double DestroyAllNewtonWorldBodies(double newton_world_ptr)
 
 GMFN double SetNewtonWorldSolverModel(double newton_world_ptr, double type)
 {
-   OgreNewt::World *newton_world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewtWorld *newton_world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr);
 
    if (!newton_world)
       return FALSE;
@@ -141,7 +117,7 @@ GMFN double SetNewtonWorldSolverModel(double newton_world_ptr, double type)
 
 GMFN double SetNewtonWorldFrictionModel(double newton_world_ptr, double type)
 {
-   OgreNewt::World *newton_world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewtWorld *newton_world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr);
 
    if (!newton_world)
       return FALSE;
@@ -154,7 +130,7 @@ GMFN double SetNewtonWorldFrictionModel(double newton_world_ptr, double type)
 
 GMFN double SetNewtonWorldPlatformArchitecture(double newton_world_ptr, double type)
 {
-   OgreNewt::World *newton_world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewtWorld *newton_world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr);
 
    if (!newton_world)
       return FALSE;
@@ -167,7 +143,7 @@ GMFN double SetNewtonWorldPlatformArchitecture(double newton_world_ptr, double t
 
 GMFN double SetNewtonWorldThreadCount(double newton_world_ptr, double threads)
 {
-   OgreNewt::World *newton_world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewtWorld *newton_world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr);
 
    if (!newton_world)
       return FALSE;
@@ -180,11 +156,11 @@ GMFN double SetNewtonWorldThreadCount(double newton_world_ptr, double threads)
 
 GMFN double InvalidateNewtonWorldCache(double newton_world_ptr)
 {
-   OgreNewt::World *newton_world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewtWorld *newton_world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr);
 
    if (!newton_world)
       return FALSE;
-   
+
    newton_world->invalidateCache();
 
    return TRUE;
@@ -193,7 +169,7 @@ GMFN double InvalidateNewtonWorldCache(double newton_world_ptr)
 
 GMFN double SetNewtonWorldSize(double newton_world_ptr, double minx, double minz, double miny, double maxx, double maxz, double maxy)
 {
-   OgreNewt::World *newton_world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewtWorld *newton_world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr);
 
    if (!newton_world)
       return FALSE;
@@ -206,7 +182,7 @@ GMFN double SetNewtonWorldSize(double newton_world_ptr, double minx, double minz
 
 GMFN double GetNewtonWorldDefaultMaterial(double newton_world_ptr)
 {
-   OgreNewt::World *newton_world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewtWorld *newton_world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr);
 
    if (!newton_world)
       return FALSE;
@@ -217,12 +193,25 @@ GMFN double GetNewtonWorldDefaultMaterial(double newton_world_ptr)
 
 GMFN double SetNewtonWorldGravity(double newton_world_ptr, double x, double z, double y)
 {
-   OgreNewt::World *newton_world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewtWorld *newton_world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr);
 
    if (!newton_world)
       return FALSE;
 
-   mGravityMap[newton_world] = Ogre::Vector3(x, y, z);
+   newton_world->setWorldGravity(Ogre::Vector3(x, y, z));
+
+   return TRUE;
+}
+
+
+GMFN double SetNewtonWorldLeaveWorldCallback(double newton_world_ptr, double func)
+{
+   OgreNewtWorld *newton_world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr);
+
+   if (!newton_world)
+      return FALSE;
+
+   newton_world->setGMLeaveWorldFunc(func);
 
    return TRUE;
 }
@@ -230,11 +219,11 @@ GMFN double SetNewtonWorldGravity(double newton_world_ptr, double x, double z, d
 
 GMFN double UpdateNewtonWorld(double newton_world_ptr, double seconds)
 {
-   OgreNewt::World *newton_world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewtWorld *newton_world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr);
 
    if (!newton_world)
       return FALSE;
-   
+
    newton_world->update(seconds);
 
    return TRUE;

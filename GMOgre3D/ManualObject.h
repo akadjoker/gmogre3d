@@ -362,6 +362,42 @@ GMFN double SetManualObjectMaterial(double man_obj_ptr, double index, char *mat_
 }
 
 
+GMFN double AttachManualObjectToSceneNode(double man_obj_ptr, double scene_node_ptr)
+{
+   Ogre::ManualObject *man_obj = ConvertFromGMPointer<Ogre::ManualObject*>(man_obj_ptr);
+
+   if (man_obj == NULL)
+      return FALSE;
+
+   Ogre::SceneNode *node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
+   
+   if (node == NULL)
+      return FALSE;
+   
+   node->attachObject(man_obj);
+
+   return TRUE;
+}
+
+
+GMFN double DetachManualObjectFromSceneNode(double man_obj_ptr, double scene_node_ptr)
+{
+   Ogre::ManualObject *man_obj = ConvertFromGMPointer<Ogre::ManualObject*>(man_obj_ptr);
+
+   if (man_obj == NULL)
+      return FALSE;
+
+   Ogre::SceneNode *node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
+   
+   if (node == NULL)
+      return FALSE;
+   
+   node->detachObject(man_obj);
+
+   return TRUE;
+}
+
+
 GMFN double ConvertManualObjectToMesh(double man_obj_ptr, char *name, char *group)
 {
    Ogre::ManualObject *man_obj = ConvertFromGMPointer<Ogre::ManualObject*>(man_obj_ptr);

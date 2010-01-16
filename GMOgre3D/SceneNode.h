@@ -26,6 +26,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "GMOgre3D.h"
 #include "NewtonBody.h"
+#include "LockMutex.h"
 
 
 GMFN double GetRootSceneNode()

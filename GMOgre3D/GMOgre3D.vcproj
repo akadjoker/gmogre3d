@@ -314,6 +314,7 @@
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\lib"
 				ModuleDefinitionFile=""
+				DelayLoadDLLs="d3dx9_40.dll"
 				GenerateDebugInformation="false"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -391,6 +392,18 @@
 			</File>
 			<File
 				RelativePath=".\OgreMovableText.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\OgreNewtBody.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\OgreNewtContact.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\OgreNewtWorld.cpp"
 				>
 			</File>
 			<File
@@ -524,6 +537,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\LockMutex.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ManualObject.h"
 				>
 			</File>
@@ -532,11 +549,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Mesh.h"
+				>
+			</File>
+			<File
 				RelativePath=".\MovableObject.h"
 				>
 			</File>
 			<File
 				RelativePath=".\MovableText.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NewtonBallAndSocketJoint.h"
 				>
 			</File>
 			<File
@@ -552,6 +577,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NewtonHingeJoint.h"
+				>
+			</File>
+			<File
 				RelativePath=".\NewtonMaterial.h"
 				>
 			</File>
@@ -561,6 +590,14 @@
 			</File>
 			<File
 				RelativePath=".\NewtonPlayerController.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NewtonSliderJoint.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NewtonTest.h"
 				>
 			</File>
 			<File
@@ -577,6 +614,18 @@
 			</File>
 			<File
 				RelativePath=".\OgreMovableText.h"
+				>
+			</File>
+			<File
+				RelativePath=".\OgreNewtBody.h"
+				>
+			</File>
+			<File
+				RelativePath=".\OgreNewtContact.h"
+				>
+			</File>
+			<File
+				RelativePath=".\OgreNewtWorld.h"
 				>
 			</File>
 			<File

@@ -24,6 +24,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #ifndef GMOGRE_NEWTON_COLLISION
 #define GMOGRE_NEWTON_COLLISION
 
+#include "OgreNewtWorld.h"
 #include "OgreNewt_Collision.h"
 #include "OgreNewt_CollisionPrimitives.h"
 #include "OgreNewt_CollisionSerializer.h"
@@ -31,7 +32,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 GMFN double CreateNewtonBoxCollision(double newton_world_ptr, double x, double z, double y, double id = 0)
 {
-   OgreNewt::World *world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewt::World *world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr)->getOgreNewtWorld();
 
    if (!world)
       return 0;
@@ -49,7 +50,7 @@ GMFN double CreateNewtonBoxCollision(double newton_world_ptr, double x, double z
 
 GMFN double CreateNewtonCapsuleCollision(double newton_world_ptr, double radius, double height, double id = 0)
 {
-   OgreNewt::World *world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewt::World *world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr)->getOgreNewtWorld();
 
    if (!world)
       return 0;
@@ -67,7 +68,7 @@ GMFN double CreateNewtonCapsuleCollision(double newton_world_ptr, double radius,
 
 GMFN double CreateNewtonChamferCylinderCollision(double newton_world_ptr, double radius, double height, double id = 0)
 {
-   OgreNewt::World *world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewt::World *world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr)->getOgreNewtWorld();
 
    if (!world)
       return 0;
@@ -85,7 +86,7 @@ GMFN double CreateNewtonChamferCylinderCollision(double newton_world_ptr, double
 
 GMFN double CreateNewtonCylinderCollision(double newton_world_ptr, double radius, double height, double id = 0)
 {
-   OgreNewt::World *world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewt::World *world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr)->getOgreNewtWorld();
 
    if (!world)
       return 0;
@@ -103,7 +104,7 @@ GMFN double CreateNewtonCylinderCollision(double newton_world_ptr, double radius
 
 GMFN double CreateNewtonConeCollision(double newton_world_ptr, double radius, double height, double id = 0)
 {
-   OgreNewt::World *world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewt::World *world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr)->getOgreNewtWorld();
 
    if (!world)
       return 0;
@@ -121,7 +122,7 @@ GMFN double CreateNewtonConeCollision(double newton_world_ptr, double radius, do
 
 GMFN double CreateNewtonConvexHullCollisionFromEntity(double newton_world_ptr, double entity_ptr, double id = 0)
 {
-   OgreNewt::World *world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewt::World *world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr)->getOgreNewtWorld();
 
    if (!world)
       return 0;
@@ -144,7 +145,7 @@ GMFN double CreateNewtonConvexHullCollisionFromEntity(double newton_world_ptr, d
 
 GMFN double CreateNewtonEllipsoidCollision(double newton_world_ptr, double x, double z, double y, double id = 0)
 {
-   OgreNewt::World *world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewt::World *world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr)->getOgreNewtWorld();
 
    if (!world)
       return 0;
@@ -162,7 +163,7 @@ GMFN double CreateNewtonEllipsoidCollision(double newton_world_ptr, double x, do
 
 GMFN double CreateNewtonPyramidCollision(double newton_world_ptr, double x, double z, double y, double id = 0)
 {
-   OgreNewt::World *world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewt::World *world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr)->getOgreNewtWorld();
 
    if (!world)
       return 0;
@@ -180,7 +181,7 @@ GMFN double CreateNewtonPyramidCollision(double newton_world_ptr, double x, doub
 
 GMFN double CreateNewtonTreeCollision(double newton_world_ptr)
 {
-   OgreNewt::World *world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewt::World *world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr)->getOgreNewtWorld();
 
    if (!world)
       return 0;
@@ -198,7 +199,7 @@ GMFN double CreateNewtonTreeCollision(double newton_world_ptr)
 
 GMFN double CreateNewtonTreeCollisionFromEntity(double newton_world_ptr, double entity_ptr, double optimize, double id = 0, double face_winding = 0)
 {
-   OgreNewt::World *world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewt::World *world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr)->getOgreNewtWorld();
 
    if (!world)
       return 0;
@@ -221,7 +222,7 @@ GMFN double CreateNewtonTreeCollisionFromEntity(double newton_world_ptr, double 
 
 GMFN double CreateNewtonCollisionFromFile(double newton_world_ptr, char *filename)
 {
-   OgreNewt::World *world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewt::World *world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr)->getOgreNewtWorld();
 
    if (!world)
       return 0;

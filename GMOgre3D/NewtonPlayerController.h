@@ -29,7 +29,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 GMFN double CreateNewtonPlayerController(double newton_body_ptr, double max_stair_height_factor, double max_slope, double kinematic_cushion)
 {
-   OgreNewt::Body *body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!body)
       return 0;
@@ -37,7 +37,7 @@ GMFN double CreateNewtonPlayerController(double newton_body_ptr, double max_stai
    OgreNewt::PlayerController *controller;
 
    TRY
-      controller = new OgreNewt::PlayerController(body, max_stair_height_factor, max_slope, kinematic_cushion);
+      controller = new OgreNewt::PlayerController(body->getOgreNewtBody(), max_stair_height_factor, max_slope, kinematic_cushion);
       controller->setVelocity(0.0f, 0.0f, Ogre::Degree(ConvertFromGMYaw(-90.0f)));
    CATCH("CreateNewtonPlayerController")
 

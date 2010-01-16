@@ -52,19 +52,35 @@
 #include "Vector.h"
 #include "Euler.h"
 #include "Plane.h"
+#include "NewtonBallAndSocketJoint.h"
 #include "NewtonBody.h"
 #include "NewtonCollision.h"
 #include "NewtonContact.h"
+#include "NewtonHingeJoint.h"
 #include "NewtonMaterial.h"
 #include "NewtonMaterialPair.h"
+#include "NewtonSliderJoint.h"
 #include "NewtonWorld.h"
+#include "NewtonTest.h"
 #include "NewtonPlayerController.h"
 #include "MovableText.h"
 #include "MovableObject.h"
+#include "Mesh.h"
 #include "GMApi.h"
+#include "LockMutex.h"
+#include <OgreDynLib.h>
+#include <algorithm>
 
 
 void UpdateSceneNodeAttachments();
+
+
+// We delay load DX9 so it's not required if running GL
+#ifdef _DEBUG
+#	pragma comment(lib, "d3dx9d.lib")
+#else
+#	pragma comment(lib, "d3dx9.lib")
+#endif
 
 GMFN double Initialize(char *plugins_cfg, char *ogre_cfg, char *log_file)
 {
@@ -120,7 +136,14 @@ GMFN double StartEngine(double render_engine, double hwnd, double window_width, 
 
       mRoot = new Ogre::Root(mPluginsCfg, mOgreCfg, mLogFile);
 
+
 #ifdef OGRE_STATIC_LIB
+      static Ogre::OctreePlugin *mOctreePlugin = NULL;
+      static Ogre::ParticleFXPlugin *mParticleFXPlugin = NULL;
+      static Ogre::D3D9Plugin *mD3D9Plugin = NULL;
+      static Ogre::GLPlugin *mGLPlugin = NULL;
+      static Ogre::CgPlugin *mCGPlugin = NULL;
+
       if (mOctreePlugin == NULL)
          mOctreePlugin = new Ogre::OctreePlugin;
 
@@ -130,18 +153,35 @@ GMFN double StartEngine(double render_engine, double hwnd, double window_width, 
       if (mCGPlugin == NULL)
          mCGPlugin = new Ogre::CgPlugin;
 
-      if (mD3D9Plugin == NULL)
-         mD3D9Plugin = new Ogre::D3D9Plugin;
+      if (mD3D9Plugin == NULL && render_engine == 1)
+      {
+         // Verify a later version of DX is installed and if not display a nice
+         // error message.  Otherwise the DX renderer cannot load and the game
+         // will crash!
+         HMODULE hmod = LoadLibraryA("D3DX9_40.dll");
+         if (!hmod)
+         {
+            DisplayError("Unable to find a recent version of DirectX 9. Please visit Microsoft's website and update your DirectX 9 version.");
+            return false;
+         }
+         FreeLibrary(hmod);
 
-      if (mGLPlugin == NULL)
+         mD3D9Plugin = new Ogre::D3D9Plugin;
+      }
+
+      if (mGLPlugin == NULL && render_engine == 2)
          mGLPlugin = new Ogre::GLPlugin;
 
-      mRoot->installPlugin(mOctreePlugin);
-      mRoot->installPlugin(mParticleFXPlugin);
-      mRoot->installPlugin(mCGPlugin);
-
-      mRoot->installPlugin(mD3D9Plugin);
-      mRoot->installPlugin(mGLPlugin);
+      if (mOctreePlugin != NULL)
+         mRoot->installPlugin(mOctreePlugin);
+      if (mParticleFXPlugin != NULL)
+         mRoot->installPlugin(mParticleFXPlugin);
+      if (mCGPlugin != NULL)
+         mRoot->installPlugin(mCGPlugin);
+      if (mGLPlugin != NULL)
+         mRoot->installPlugin(mGLPlugin);
+      if (mD3D9Plugin != NULL)
+         mRoot->installPlugin(mD3D9Plugin);
 
 #endif
 
@@ -269,8 +309,20 @@ GMFN double EnableWaitForVSync(double enable)
 
 GMFN double SetFSAA(double fsaa_level, double fsaa_quality)
 {
-   mFSAALevel = (unsigned int)fsaa_level;
-   mFSAAQuality = (unsigned int)fsaa_quality;
+   mFSAALevel = (int)fsaa_level;
+   mFSAAQuality = (int)fsaa_quality;
+
+   // Ensure the combinations are valid!
+   mFSAALevel = std::min(6, mFSAALevel);
+   if (mFSAALevel == 5)
+      mFSAALevel = 4;
+   else if (mFSAALevel == 3)
+      mFSAALevel = 2;
+
+   if (mFSAALevel > 2)
+      mFSAAQuality = 0;
+   else if (mFSAALevel == 1)
+      mFSAAQuality = std::min(2, mFSAAQuality);
 
    return TRUE;
 }
@@ -330,7 +382,24 @@ GMFN double SaveScreenshot(char *filename)
 
 GMFN char *GetOgre3DVersion()
 {
-   return "GMOgre3D v0.92";
+   return "GMOgre3D v0.94";
+}
+
+
+GMFN double HasCapability(double capability)
+{
+   if (mRenderWindow == NULL)
+      return FALSE;
+
+   if (mRoot->getRenderSystem() == NULL)
+      return FALSE;
+
+   Ogre::RenderSystemCapabilities *rsc = (Ogre::RenderSystemCapabilities *)mRoot->getRenderSystem()->getCapabilities();
+
+   if (rsc == NULL)
+      return FALSE;
+
+   return rsc->hasCapability(static_cast<Ogre::Capabilities>((int)capability));
 }
 
 

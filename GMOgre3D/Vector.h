@@ -25,6 +25,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define GMOGRE_VECTOR_H
 
 #include "GMOgre3D.h"
+#include "Euler.h"
 
 
 GMFN double AddVector(double x1, double z1, double y1, double x2, double z2, double y2)
@@ -62,6 +63,22 @@ GMFN double SubtractVector(double x1, double z1, double y1, double x2, double z2
 GMFN double MultiplyVector(double x1, double z1, double y1, double x2, double z2, double y2)
 {
    Ogre::Vector3 vec = Ogre::Vector3(x1, y1, z1) * Ogre::Vector3(x2, y2, z2);
+
+   AcquireGMVectorGlobals();
+   if (mVectorX != NULL)
+   {
+      *mVectorX = vec.x;
+      *mVectorY = vec.z;
+      *mVectorZ = vec.y;
+   }
+
+   return TRUE;
+}
+
+
+GMFN double RotateVector(double x1, double z1, double y1, double yaw, double pitch, double roll)
+{
+   Ogre::Vector3 vec = Euler(Ogre::Degree(yaw * -1), Ogre::Degree(pitch * -1), Ogre::Degree(roll * -1)).toQuaternion() * Ogre::Vector3(x1, y1, z1);
 
    AcquireGMVectorGlobals();
    if (mVectorX != NULL)

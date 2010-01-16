@@ -36,6 +36,8 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreText.h"
 #include "OgreSprite.h"
 #include "OgreEuler.h"
+#include "OgreNewtBody.h"
+#include "OgreNewtWorld.h"
 #include "OgreMovableText.h"
 #include "CollisionTools.h"
 #include "OgreNewt_Body.h"
@@ -52,25 +54,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define CATCH(func) } catch(Ogre::Exception& e) { LogError(e.what()); } catch(std::exception& e) { LogError(e.what()); }  catch(...) { LogError("An unknown error has occurred in " + Ogre::String(func) + "!"); }
 
 struct NewtonBody;
-
-class LockMutex
-{
-public:
-   LockMutex(HANDLE mutex)
-   {
-      m_mutex = mutex;
-      WaitForSingleObject(m_mutex, INFINITE);
-   }
-
-   ~LockMutex()
-   {
-      ReleaseMutex(m_mutex);
-   }
-
-protected:
-   HANDLE m_mutex;
-};
-
 
 struct GMCallback
 {
@@ -100,7 +83,7 @@ struct GMInstance
 
    int mGMInstanceID;
    gm::PGMINSTANCE mGMInstancePtr;
-   OgreNewt::Body *mBody;
+   OgreNewtBody *mBody;
 
 	gm::GMVARIABLE *pX;
 	gm::GMVARIABLE *pY;
@@ -147,8 +130,8 @@ unsigned int mWindowHeight = 0;
 unsigned int mHWnd = 0;
 bool mFullscreen = false;
 bool mUseVSync = false;
-unsigned int mFSAALevel = 0;
-unsigned int mFSAAQuality = 0;
+int mFSAALevel = 0;
+int mFSAAQuality = 0;
 Ogre::String mRenderEngine = "";
 Ogre::String mLogFile = "";
 Ogre::String mPluginsCfg = "";
@@ -186,8 +169,8 @@ Ogre::String mCubeTextureNames[6];
 typedef std::map<Ogre::SceneNode *, GMInstance> SceneNodeMap;
 SceneNodeMap mSceneNodeAttachments;
 
-typedef std::map<OgreNewt::Body *, Ogre::SceneNode *> NewtonBodyMap;
-NewtonBodyMap mNewtonBodyAttachments;
+//typedef std::map<OgreNewt::Body *, Ogre::SceneNode *> NewtonBodyMap;
+//NewtonBodyMap mNewtonBodyAttachments;
 
 typedef std::map<Ogre::SceneManager *, GMFrameListener*> SceneFrameListenerMap;
 SceneFrameListenerMap mSceneListener;

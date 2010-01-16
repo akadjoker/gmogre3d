@@ -25,14 +25,14 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define GMOGRE_NEWTON_BODY_H
 
 #include "GMOgre3D.h"
+#include "OgreNewtBody.h"
 #include "NewtonWorld.h"
-#include "OgreNewt_Body.h"
-#include "OgreNewt_World.h"
+#include "LockMutex.h"
 
 
 GMFN double CreateNewtonBody(double newton_world_ptr, double newton_collision_ptr, double type = 0)
 {
-   OgreNewt::World *world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewt::World *world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr)->getOgreNewtWorld();
 
    if (!world)
       return 0;
@@ -42,14 +42,12 @@ GMFN double CreateNewtonBody(double newton_world_ptr, double newton_collision_pt
    if (!collision)
       return 0;
 
-   OgreNewt::Body *body = NULL;
+   OgreNewtBody *body = NULL;
 
    TRY
       OgreNewt::CollisionPtr col = mNewtonCollisionMap[collision];
 
-      body = new OgreNewt::Body(world, col, type);
-      //body->setStandardForceCallback();
-      body->setCustomForceAndTorqueCallback(DefaultForceCallback);
+      body = new OgreNewtBody(world, col, type);
       body->setPositionOrientation(Ogre::Vector3(0,0,0), Euler(Ogre::Degree(ConvertFromGMYaw(0)), Ogre::Degree(0), Ogre::Degree(0)));
    CATCH("CreateNewtonBody")
 
@@ -59,7 +57,7 @@ GMFN double CreateNewtonBody(double newton_world_ptr, double newton_collision_pt
 
 GMFN double DestroyNewtonBody(double newton_body_ptr)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -72,7 +70,7 @@ GMFN double DestroyNewtonBody(double newton_body_ptr)
 
 GMFN double SetNewtonBodyPosition(double newton_body_ptr, double x, double z, double y)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -89,7 +87,7 @@ GMFN double SetNewtonBodyPosition(double newton_body_ptr, double x, double z, do
 
 GMFN double GetNewtonBodyPosition(double newton_body_ptr)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -113,7 +111,7 @@ GMFN double GetNewtonBodyPosition(double newton_body_ptr)
 
 GMFN double SetNewtonBodyOrientation(double newton_body_ptr, double yaw, double pitch, double roll)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -130,7 +128,7 @@ GMFN double SetNewtonBodyOrientation(double newton_body_ptr, double yaw, double 
 
 GMFN double GetNewtonBodyOrientation(double newton_body_ptr)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -154,7 +152,7 @@ GMFN double GetNewtonBodyOrientation(double newton_body_ptr)
 
 GMFN double AddNewtonBodyForce(double newton_body_ptr, double x, double z, double y)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -167,7 +165,7 @@ GMFN double AddNewtonBodyForce(double newton_body_ptr, double x, double z, doubl
 
 GMFN double AddNewtonBodyImpulse(double newton_body_ptr, double deltax, double deltaz, double deltay, double posx, double posz, double posy)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -180,7 +178,7 @@ GMFN double AddNewtonBodyImpulse(double newton_body_ptr, double deltax, double d
 
 GMFN double AddNewtonBodyTorque(double newton_body_ptr, double x, double z, double y)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -193,7 +191,7 @@ GMFN double AddNewtonBodyTorque(double newton_body_ptr, double x, double z, doub
 
 GMFN double SetNewtonBodyAngularDamping(double newton_body_ptr, double x, double z, double y)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -206,7 +204,7 @@ GMFN double SetNewtonBodyAngularDamping(double newton_body_ptr, double x, double
 
 GMFN double SetNewtonBodyCenterOfMass(double newton_body_ptr, double x, double z, double y)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -219,7 +217,7 @@ GMFN double SetNewtonBodyCenterOfMass(double newton_body_ptr, double x, double z
 
 GMFN double EnableNewtonBodyAutoSleep(double newton_body_ptr, double enable)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -232,7 +230,7 @@ GMFN double EnableNewtonBodyAutoSleep(double newton_body_ptr, double enable)
 
 GMFN double EnableNewtonBodyContinuousCollisionChecks(double newton_body_ptr, double enable)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -245,7 +243,7 @@ GMFN double EnableNewtonBodyContinuousCollisionChecks(double newton_body_ptr, do
 
 GMFN double SetNewtonBodyForce(double newton_body_ptr, double x, double z, double y)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -256,9 +254,23 @@ GMFN double SetNewtonBodyForce(double newton_body_ptr, double x, double z, doubl
 }
 
 
+GMFN double SetNewtonBodyGravity(double newton_body_ptr, double x, double z, double y)
+{
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
+
+   if (!newton_body)
+      return FALSE;
+
+   newton_body->EnableGravityOverride(true);
+   newton_body->setGravity(Ogre::Vector3(x, y, z));
+
+   return TRUE;
+}
+
+
 GMFN double SetNewtonBodyMassMatrix(double newton_body_ptr, double mass, double x, double z, double y)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -271,7 +283,7 @@ GMFN double SetNewtonBodyMassMatrix(double newton_body_ptr, double mass, double 
 
 GMFN double SetNewtonBodyLinearDamping(double newton_body_ptr, double damp)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -284,7 +296,7 @@ GMFN double SetNewtonBodyLinearDamping(double newton_body_ptr, double damp)
 
 GMFN double SetNewtonBodyMaterial(double newton_body_ptr, double material_id_ptr)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -302,7 +314,7 @@ GMFN double SetNewtonBodyMaterial(double newton_body_ptr, double material_id_ptr
 
 GMFN double GetNewtonBodyMaterial(double newton_body_ptr)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return 0;
@@ -313,7 +325,7 @@ GMFN double GetNewtonBodyMaterial(double newton_body_ptr)
 
 GMFN double SetNewtonBodyOmega(double newton_body_ptr, double x, double z, double y)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -326,7 +338,7 @@ GMFN double SetNewtonBodyOmega(double newton_body_ptr, double x, double z, doubl
 
 GMFN double SetNewtonBodyTorque(double newton_body_ptr, double x, double z, double y)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -339,7 +351,7 @@ GMFN double SetNewtonBodyTorque(double newton_body_ptr, double x, double z, doub
 
 GMFN double SetNewtonBodyVelocity(double newton_body_ptr, double x, double z, double y)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -350,9 +362,35 @@ GMFN double SetNewtonBodyVelocity(double newton_body_ptr, double x, double z, do
 }
 
 
+GMFN double AddNewtonBodyGlobalForce(double newton_body_ptr, double x, double z, double y, double posx, double posz, double posy)
+{
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
+
+   if (!newton_body)
+      return FALSE;
+
+   newton_body->addGlobalForce(Ogre::Vector3(x, y, z), Ogre::Vector3(posx, posy, posz));
+
+   return TRUE;
+}
+
+
+GMFN double AddNewtonBodyLocalForce(double newton_body_ptr, double x, double z, double y, double posx, double posz, double posy)
+{
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
+
+   if (!newton_body)
+      return FALSE;
+
+   newton_body->addLocalForce(Ogre::Vector3(x, y, z), Ogre::Vector3(posx, posy, posz));
+
+   return TRUE;
+}
+
+
 GMFN double GetNewtonBodyType(double newton_body_ptr)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -365,7 +403,7 @@ GMFN double GetNewtonBodyType(double newton_body_ptr)
 
 GMFN double FreezeNewtonBody(double newton_body_ptr)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -378,7 +416,7 @@ GMFN double FreezeNewtonBody(double newton_body_ptr)
 
 GMFN double UnfreezeNewtonBody(double newton_body_ptr)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -391,7 +429,7 @@ GMFN double UnfreezeNewtonBody(double newton_body_ptr)
 
 GMFN double SetNewtonBodyUserData(double newton_body_ptr, double data)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -404,7 +442,7 @@ GMFN double SetNewtonBodyUserData(double newton_body_ptr, double data)
 
 GMFN double GetNewtonBodyUserData(double newton_body_ptr)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return 0;
@@ -412,10 +450,23 @@ GMFN double GetNewtonBodyUserData(double newton_body_ptr)
    return ConvertToGMPointer(newton_body->getUserData());
 }
 
+/*
+GMFN double SetNewtonBodyForceCallback(double newton_body_ptr, double func)
+{
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
+
+   if (!newton_body)
+      return 0;
+
+   newton_body->SetForceCallback(func);
+
+   return TRUE;
+}
+*/
 
 GMFN double AttachNewtonBodyToSceneNode(double newton_body_ptr, double scene_node_ptr)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -439,7 +490,7 @@ GMFN double AttachNewtonBodyToSceneNode(double newton_body_ptr, double scene_nod
    gminst.mBody = newton_body;
 
    mSceneNodeAttachments[node] = gminst;
-   mNewtonBodyAttachments[newton_body] = node;
+   //mNewtonBodyAttachments[newton_body] = node;
 
    // We are already attached to our GM object, so update body position/orientation
    if (mGMAPI && gminst.GMInstanceAttached)
@@ -457,7 +508,7 @@ GMFN double AttachNewtonBodyToSceneNode(double newton_body_ptr, double scene_nod
 
 GMFN double DetachNewtonBodyFromSceneNode(double newton_body_ptr, double scene_node_ptr)
 {
-   OgreNewt::Body *newton_body = ConvertFromGMPointer<OgreNewt::Body*>(newton_body_ptr);
+   OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
@@ -484,7 +535,7 @@ GMFN double DetachNewtonBodyFromSceneNode(double newton_body_ptr, double scene_n
       if (iter->second.GMInstanceAttached == false)
          mSceneNodeAttachments.erase(iter);
 
-      mNewtonBodyAttachments.erase(mNewtonBodyAttachments.find(newton_body));
+      //mNewtonBodyAttachments.erase(mNewtonBodyAttachments.find(newton_body));
    }
 
    return TRUE;

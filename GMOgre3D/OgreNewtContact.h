@@ -21,51 +21,34 @@ http://www.gnu.org/copyleft/lesser.txt.
 --------------------------------------------------------------------------------
 */
 
-#ifndef GMOGRE_NEWTON_MATERIAL
-#define GMOGRE_NEWTON_MATERIAL
+#ifndef OGRE_NEWT_CONTACT_H
+#define OGRE_NEWT_CONTACT_H
 
-#include "OgreNewt_MaterialID.h"
-#include "OgreNewtWorld.h"
+#include "OgreNewt_MaterialPair.h"
 
 
-GMFN double CreateNewtonMaterial(double newton_world_ptr)
+struct OgreNewtContact
 {
-   OgreNewt::World *world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr)->getOgreNewtWorld();
-
-   if (!world)
-      return 0;
-
-   OgreNewt::MaterialID *mat;
-
-   TRY
-      mat = new OgreNewt::MaterialID(world);
-   CATCH("CreateNewtonMaterial")
-
-   return ConvertToGMPointer(mat);
-}
+   OgreNewtBody *m_body1;
+   OgreNewtBody *m_body2;
+   Ogre::Real m_speed;
+   Ogre::Vector3 m_position;
+   int m_function;
+};
 
 
-GMFN double DestroyNewtonMaterial(double material_ptr)
+class NewtonContactCallback : public OgreNewt::ContactCallback
 {
-   OgreNewt::MaterialID *mat = ConvertFromGMPointer<OgreNewt::MaterialID*>(material_ptr);
+public:
+   NewtonContactCallback(OgreNewt::MaterialPair* mat_pair, unsigned int function);
+	~NewtonContactCallback();
+   
+   int onAABBOverlap( OgreNewt::Body* body0, OgreNewt::Body* body1, int threadIndex );
+   void contactsProcess( OgreNewt::ContactJoint &contactJoint, Ogre::Real timeStep, int threadIndex );
 
-   if (!mat)
-      return FALSE;
-
-   delete mat;
-
-   return TRUE;
-}
-
-
-GMFN double GetNewtonMaterialID(double material_ptr)
-{
-   OgreNewt::MaterialID *mat = ConvertFromGMPointer<OgreNewt::MaterialID*>(material_ptr);
-
-   if (!mat)
-      return 0;
-
-   return mat->getID();
-}
+private:
+	OgreNewt::MaterialPair *mMaterialPair;
+   unsigned int mFunction;
+};
 
 #endif

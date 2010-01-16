@@ -91,13 +91,13 @@ GMFN double SetStaticGeometryOrigin(double static_geo_ptr, double sizex, double 
    if (static_geo == NULL)
       return FALSE;
 
-   static_geo->setRegionDimensions(Ogre::Vector3(sizex, sizey, sizez));
+   static_geo->setOrigin(Ogre::Vector3(sizex, sizey, sizez));
 
    return TRUE;
 }
 
 
-GMFN double AddStaticGeometryEntity(double static_geo_ptr, double entity_ptr, double posx, double posz, double posy, double orientx, double orientz, double orienty, double scalex, double scalez, double scaley)
+GMFN double AddStaticGeometryEntity(double static_geo_ptr, double entity_ptr, double posx, double posz, double posy, double yaw, double pitch, double roll, double scalex, double scalez, double scaley)
 {
    Ogre::StaticGeometry *static_geo = ConvertFromGMPointer<Ogre::StaticGeometry*>(static_geo_ptr);
 
@@ -109,7 +109,7 @@ GMFN double AddStaticGeometryEntity(double static_geo_ptr, double entity_ptr, do
    if (ent == NULL)
       return FALSE;
 
-   static_geo->addEntity(ent, Ogre::Vector3(posx, posy, posz), Ogre::Quaternion(orientx, orienty, orientz), Ogre::Vector3(scalex, scaley, scalez));
+   static_geo->addEntity(ent, Ogre::Vector3(posx, posy, posz), Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)), Ogre::Vector3(scalex, scaley, scalez));
 
    return TRUE;
 }

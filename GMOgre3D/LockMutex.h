@@ -21,51 +21,26 @@ http://www.gnu.org/copyleft/lesser.txt.
 --------------------------------------------------------------------------------
 */
 
-#ifndef GMOGRE_NEWTON_MATERIAL
-#define GMOGRE_NEWTON_MATERIAL
-
-#include "OgreNewt_MaterialID.h"
-#include "OgreNewtWorld.h"
+#ifndef GMOGRE_LOCK_MUTEX_H
+#define GMOGRE_LOCK_MUTEX_H
 
 
-GMFN double CreateNewtonMaterial(double newton_world_ptr)
+class LockMutex
 {
-   OgreNewt::World *world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr)->getOgreNewtWorld();
+public:
+   LockMutex(HANDLE mutex)
+   {
+      m_mutex = mutex;
+      WaitForSingleObject(m_mutex, INFINITE);
+   }
 
-   if (!world)
-      return 0;
+   ~LockMutex()
+   {
+      ReleaseMutex(m_mutex);
+   }
 
-   OgreNewt::MaterialID *mat;
-
-   TRY
-      mat = new OgreNewt::MaterialID(world);
-   CATCH("CreateNewtonMaterial")
-
-   return ConvertToGMPointer(mat);
-}
-
-
-GMFN double DestroyNewtonMaterial(double material_ptr)
-{
-   OgreNewt::MaterialID *mat = ConvertFromGMPointer<OgreNewt::MaterialID*>(material_ptr);
-
-   if (!mat)
-      return FALSE;
-
-   delete mat;
-
-   return TRUE;
-}
-
-
-GMFN double GetNewtonMaterialID(double material_ptr)
-{
-   OgreNewt::MaterialID *mat = ConvertFromGMPointer<OgreNewt::MaterialID*>(material_ptr);
-
-   if (!mat)
-      return 0;
-
-   return mat->getID();
-}
+protected:
+   HANDLE m_mutex;
+};
 
 #endif

@@ -26,46 +26,12 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgreNewt_MaterialID.h"
 #include "OgreNewt_MaterialPair.h"
-
-
-class NewtonMaterialPairCallback : public OgreNewt::ContactCallback
-{
-public:
-   NewtonMaterialPairCallback(OgreNewt::MaterialPair* mat_pair, unsigned int function)
-      : mMaterialPair(mat_pair), mFunction(function)
-   {
-   }
-
-	~NewtonMaterialPairCallback()
-   {
-   }
-
-    int onAABBOverlap( OgreNewt::Body* body0, OgreNewt::Body* body1, int threadIndex )
-    {
-       // If we set a callback we ALWAYS want to process hits
-       return 1;
-    }
-
-    void contactsProcess( OgreNewt::ContactJoint &contactJoint, Ogre::Real timeStep, int threadIndex )
-    {
-       // Call our GM script to handle this contact
-       gm::CGMVariable args[3];
-       args[0].Set(ConvertToGMPointer((OgreNewt::Contact*)&contactJoint.getFirstContact()));
-       args[1].Set(ConvertToGMPointer(contactJoint.getBody0()));
-       args[2].Set(ConvertToGMPointer(contactJoint.getBody1()));
-
-       gm::script_execute(mFunction, args, 3);
-    }
-
-private:
-	OgreNewt::MaterialPair *mMaterialPair;
-   unsigned int mFunction;
-};
+#include "OgreNewtContact.h"
 
 
 GMFN double CreateNewtonMaterialPair(double newton_world_ptr, double material1_ptr, double material2_ptr)
 {
-   OgreNewt::World *world = ConvertFromGMPointer<OgreNewt::World*>(newton_world_ptr);
+   OgreNewt::World *world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr)->getOgreNewtWorld();
 
    if (!world)
       return 0;
@@ -188,7 +154,7 @@ GMFN double SetNewtonMaterialPairContactCallback(double material_pair_ptr, doubl
    if (!mat_pair)
       return FALSE;
 
-   mat_pair->setContactCallback(new NewtonMaterialPairCallback(mat_pair, func));
+   mat_pair->setContactCallback(new NewtonContactCallback(mat_pair, func));
 
    return TRUE;
 }
