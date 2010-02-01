@@ -257,7 +257,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalDependencies="d3d9.lib d3dx9.lib dxerr.lib dxguid.lib"
+				AdditionalDependencies="d3d9.lib dxerr.lib dxguid.lib"
 				OutputFile="$(OutDir)\$(ProjectName)Static.lib"
 			/>
 			<Tool
