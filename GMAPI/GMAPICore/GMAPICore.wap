@@ -1,0 +1,21 @@
+[PROJECT]
+Type=3
+ReleaseCommandLine=
+DebugCommandLine=
+AutoIncFileVersion=0
+RCSilent=0
+PellesTools=0
+[MAKE]
+ActiveBuild=0
+CompileRC=/v
+RCToObj=
+Assemble=/c /coff /Cp /nologo
+Link=
+Out=
+DebAssemble=/c /coff /Cp /nologo /Fm /Zi /Zd
+DebLink=
+DebOut=
+[FILES]
+1=main.asm
+[SHOWFILE]
+1=5800000060000000F002000002020000000000000300000041000000F2

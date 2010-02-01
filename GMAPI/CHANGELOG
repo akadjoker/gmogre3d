@@ -1,0 +1,40 @@
+V0.6 (30, Jan 2010)
+  - The library is now GM8 compatible
+  - Added GM8 functions and constants
+  - Added new interfaces that accesses: fonts, built-in variables, particle systems, particle types, emitters, deflectors, destroyers, changers and attractors
+  - Improved the method of GM function replacing and added possibility to register your own GM functions
+  - Added new functions to the CGMVariable class that converts between string and real values
+  - Added following methods to CGMAPI class: PatchIdentifierTypeCheckOrder, ParticleData, GetOtherInstancePtr, GetOtherInstanceID, SetOtherInstance
+  - Changed SetGMFunctionAddress method into GMFunctionRegister in CGMAPI class
+  - GM functions that have changed in GM8 (e.g. sprite_add) are overloaded with the new set of parameters.
+  - Fixed some bugs in GM functions, comments and CGMVariable class
+  - GMINSTANCE structure uses now properties to access its members.
+  - Renamed following methods in the CGMAPI class: GetD3DTexture (GetDirect3DTexture), D3DData (Direct3DData), EnumInstances (EnumerateInstances)
+  - Renamed some of the functions defined in GmapiCore
+  - Renamed some of the variables and structure members
+  - Removed ReleaseBitmap methods from interfaces
+  - Renamed most of the functions declared in GmapiCore.h
+  - Some other bug fixes and changes
+
+V0.5 (26, Nov 2009)
+  - Some bugs has been fixed
+  - Several small fixes in comments
+  - New methods in CGMAPI class: SetGMFunctionAddress, SetGMFunctionResult, PreserveFunctionData and RestoreFunctionData, which are helpful in manipulating GM's function table (replacing GM functions with user-defined)
+
+V0.4 (17, May 2009)
+  - From now to use D3D8 with GMAPI You have to define GMAPI_USE_D3D, "GMAPI_NO_D3D" has been removed
+  - GMVARIABLE structure: renamed to GMVALUE, added << operator overload with std::ostream, member names changed
+  - New GMVARIABLE structure (it turned out that the previous GMVARIABLE structure represents, in fact, GM's value format - that's why i've renamed above-mentioned structure)
+  - CGMVariable: New ctor that takes GMVALUE ref in parameter
+  - New methods in CGMAPI class: GetSymbolID, GetLocalVariablePtr, GetGlobalVariablePtr, GetInstancePtr, GetCurrentInstancePtr, GetCurrentInstanceID, SetCurrentInstance, EnumInstances & With. (+ other, unimportant :))
+  - Small fixes in GMAPICore\main.asm (+ new GMFindSymbolID function)
+  - MessageBox calls changed to MessageBoxA (projects with UNICODE character set could'nt be compiled)
+  - Prefixes of pointer type definitions in GmapiDefs has been changed from "LP" to "P" (e.g. LPGMSPRITE >>> PGMSPRITE)
+  - Several small fixes in comments
+
+V0.3 (5, Apr 2009)
+  - Added ReleaseBitmap method to ISpriteSubimage & IBackground classes, which deallocates image's bitmap from memory
+
+V0.2 (4, Apr 2009)
+  - Added ISounds (CGMAPI::Sounds) & ISound interfaces, which gives access to the sound resources
+  - Several small fixes in resource accessors interfaces (IBackgrounds, IScripts...)
