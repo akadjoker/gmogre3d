@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -32,7 +32,7 @@ GMFN double CreateRay(double originx, double originz, double originy, double dir
    Ogre::Ray *ray = NULL;
    
    TRY
-      ray = new Ogre::Ray(Ogre::Vector3(originx, originy, originz), Ogre::Vector3(dirx, diry, dirz));
+      ray = new Ogre::Ray(ConvertFromGMAxis(originx, originy, originz), ConvertFromGMAxis(dirx, diry, dirz));
    CATCH("CreateRay")
 
    return ConvertToGMPointer(ray);
@@ -77,7 +77,7 @@ GMFN double SetRayDirection(double ray_ptr, double x, double z, double y)
    if (ray == NULL)
       return FALSE;
 
-   ray->setDirection(Ogre::Vector3(x, y, z));
+   ray->setDirection(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -90,7 +90,7 @@ GMFN double SetRayOrigin(double ray_ptr, double x, double z, double y)
    if (ray == NULL)
       return FALSE;
 
-   ray->setDirection(Ogre::Vector3(x, y, z));
+   ray->setDirection(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }

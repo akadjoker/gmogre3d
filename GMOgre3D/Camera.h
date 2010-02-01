@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -77,9 +77,9 @@ GMFN double SetCameraProjection(double camera_ptr, double xfrom, double zfrom, d
    if (cam == NULL)
       return FALSE;
 
-   cam->setPosition(xfrom, yfrom, zfrom);
-   cam->setDirection(xto, yto, zto);
-   cam->lookAt(xup, yup, zup);
+   cam->setPosition(ConvertFromGMAxis(xfrom, yfrom, zfrom));
+   cam->setDirection(ConvertFromGMAxis(xto, yto, zto));
+   cam->lookAt(ConvertFromGMAxis(xup, yup, zup));
 
    return TRUE;
 }
@@ -105,7 +105,7 @@ GMFN double SetCameraPosition(double camera_ptr, double x, double z, double y)
    if (cam == NULL)
       return FALSE;
 
-   cam->setPosition(Ogre::Vector3(x, y, z));
+   cam->setPosition(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -118,7 +118,7 @@ GMFN double SetCameraDirection(double camera_ptr, double xto, double zto, double
    if (cam == NULL)
       return FALSE;
 
-   cam->setDirection(xto, yto, zto);
+   cam->setDirection(ConvertFromGMAxis(xto, yto, zto));
 
    return TRUE;
 }
@@ -133,13 +133,7 @@ GMFN double GetCameraDirection(double camera_ptr, double xto, double zto, double
 
    Ogre::Vector3 vec = cam->getDirection();
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      *mVectorX = vec.x;
-      *mVectorY = vec.z;
-      *mVectorZ = vec.y;
-   }
+   SetGMVectorGlobals(vec);
 
    return TRUE;
 }
@@ -232,13 +226,7 @@ GMFN double GetCameraPosition(double camera_ptr)
 
    Ogre::Vector3 vec = cam->getPosition();
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      *mVectorX = vec.x;
-      *mVectorY = vec.z;
-      *mVectorZ = vec.y;
-   }
+   SetGMVectorGlobals(vec);
 
    return TRUE;
 }
@@ -251,7 +239,7 @@ GMFN double SetCameraLookAt(double camera_ptr, double x, double z, double y)
    if (cam == NULL)
       return FALSE;
 
-   cam->lookAt(Ogre::Vector3(x, y, z));
+   cam->lookAt(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -454,7 +442,7 @@ GMFN double EnableCameraAutoTracking(double camera_ptr, double enable, double sc
       return FALSE;
 
    if (enable != 0)
-      cam->setAutoTracking(true, node, Ogre::Vector3(x, y, z));
+      cam->setAutoTracking(true, node, ConvertFromGMAxis(x, y, z));
    else
       cam->setAutoTracking(false);
 
@@ -469,7 +457,7 @@ GMFN double EnableCameraFixedYawAxis(double cam_ptr, double enable, double x, do
    if (cam == NULL)
       return FALSE;
    
-   cam->setFixedYawAxis((enable != 0), Ogre::Vector3(x, y, z));
+   cam->setFixedYawAxis((enable != 0), ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 } 
@@ -503,8 +491,11 @@ GMFN double GetCameraToViewportRay(double cam_ptr, double x, double y)
    if (cam == NULL)
       return 0;
    
+   Ogre::Real realitive_x = x / cam->getViewport()->getActualWidth();
+   Ogre::Real realitive_y = y / cam->getViewport()->getActualHeight();
+
    Ogre::Ray *ray = new Ogre::Ray;
-   cam->getCameraToViewportRay(x, y, ray);
+   cam->getCameraToViewportRay(realitive_x, realitive_y, ray);
 
    return ConvertToGMPointer(ray);;
 } 

@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -43,14 +43,7 @@ GMFN double CreateSceneManager(double type)
 
       // Set our current to the only one that exists
       if (mSceneMgr == NULL)
-      {
          mSceneMgr = scene_mgr;
-
-         //if (mFrameListener != NULL)
-         //   mFrameListener->Create2DManager(mSceneMgr);
-
-         //mCollisionTools.setSceneManager(mSceneMgr);
-      }
 
       GMFrameListener *fl = new GMFrameListener;
       mRoot->addFrameListener(fl);
@@ -143,6 +136,39 @@ GMFN double SetVisibilityMask(double mask)
 
    return TRUE;
 }
+
+
+GMFN double SetStartFrameCallback(double func)
+{
+   if (mSceneMgr == NULL)
+      return FALSE;
+
+   GMFrameListener *fl = mSceneListener[mSceneMgr];
+   
+   if (fl == NULL)
+      return false;
+
+   fl->SetStartFrameCallback(func);
+
+   return TRUE;
+}
+
+
+GMFN double SetEndFrameCallback(double func)
+{
+   if (mSceneMgr == NULL)
+      return FALSE;
+
+   GMFrameListener *fl = mSceneListener[mSceneMgr];
+   
+   if (fl == NULL)
+      return false;
+
+   fl->SetEndFrameCallback(func);
+
+   return TRUE;
+}
+
 
 GMFN double EnableSkyBox(double enable, char *material_name, double distance, double drawlast)
 {
@@ -243,7 +269,52 @@ GMFN double SetShadowFarDistance(double distance)
 }
 
 
-GMFN double EnableShadowUseInfiniteFarPlane(double enable)
+GMFN double SetShadowDirectionalLightExtrusionDistance(double distance)
+{
+   if (mSceneMgr == NULL)
+      return FALSE;
+
+   mSceneMgr->setShadowDirectionalLightExtrusionDistance(distance);
+
+   return TRUE;
+}
+
+
+GMFN double SetShadowTextureCountPerLightType(double light_types, double count)
+{
+   if (mSceneMgr == NULL)
+      return FALSE;
+
+   mSceneMgr->setShadowTextureCountPerLightType(static_cast<Ogre::Light::LightTypes>((int)light_types), count);
+
+   return TRUE;
+}
+
+
+GMFN double SetShadowTextureSettings(double size, double count, double pixel_format)
+{
+   if (mSceneMgr == NULL)
+      return FALSE;
+
+   mSceneMgr->setShadowTextureSettings(size, count, static_cast<Ogre::PixelFormat>((int)pixel_format));
+
+   return TRUE;
+}
+
+
+GMFN double SetShadowTextureFade(double fade_start, double fade_end)
+{
+   if (mSceneMgr == NULL)
+      return FALSE;
+
+   mSceneMgr->setShadowTextureFadeStart(fade_start);
+   mSceneMgr->setShadowTextureFadeEnd(fade_end);
+
+   return TRUE;
+}
+
+
+GMFN double EnableShadowInfiniteFarPlane(double enable)
 {
    if (mSceneMgr == NULL)
       return FALSE;
@@ -260,6 +331,50 @@ GMFN double SetShadowColor(double color)
       return FALSE;
 
    mSceneMgr->setShadowColour(Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color)));
+
+   return TRUE;
+}
+
+
+GMFN double EnableShadowTextureSelfShadow(double enable)
+{
+   if (mSceneMgr == NULL)
+      return FALSE;
+
+   mSceneMgr->setShadowTextureSelfShadow((enable != 0));
+
+   return TRUE;
+}
+
+
+GMFN double SetShadowTextureCasterMaterial(char *material)
+{
+   if (mSceneMgr == NULL)
+      return FALSE;
+
+   mSceneMgr->setShadowTextureCasterMaterial(material);
+
+   return TRUE;
+}
+
+
+GMFN double SetShadowTextureReceiverMaterial(char *material)
+{
+   if (mSceneMgr == NULL)
+      return FALSE;
+
+   mSceneMgr->setShadowTextureReceiverMaterial(material);
+
+   return TRUE;
+}
+
+
+GMFN double EnableShadowCasterRenderBackFaces(double enable)
+{
+   if (mSceneMgr == NULL)
+      return FALSE;
+
+   mSceneMgr->setShadowCasterRenderBackFaces((enable != 0));
 
    return TRUE;
 }

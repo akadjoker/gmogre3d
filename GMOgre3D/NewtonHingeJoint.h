@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -48,7 +48,7 @@ GMFN double CreateNewtonHingeJoint(double newton_child_body_ptr, double newton_p
    OgreNewt::Joint *joint;
 
    TRY
-      joint = new OgreNewt::Hinge(newton_child_body->getOgreNewtBody(), newton_parent_body ? newton_parent_body->getOgreNewtBody() : NULL, Ogre::Vector3(posx, posy, posz), Ogre::Vector3(pinx, piny, pinz));
+      joint = new OgreNewt::Hinge(newton_child_body->getOgreNewtBody(), newton_parent_body ? newton_parent_body->getOgreNewtBody() : NULL, ConvertFromGMAxis(posx, posy, posz), ConvertFromGMAxis(pinx, piny, pinz));
    CATCH("CreateNewtonHingeJoint")
 
    return ConvertToGMPointer(joint);
@@ -123,15 +123,9 @@ GMFN double GetNewtonHingeJointPinAxis(double newton_joint_ptr)
    if (!newton_joint)
       return FALSE;
 
-   Ogre::Vector3 pos = newton_joint->getJointPin();
+   Ogre::Vector3 vec = newton_joint->getJointPin();
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      *mVectorX = pos.x;
-      *mVectorY = pos.z;
-      *mVectorZ = pos.y;
-   }
+   SetGMVectorGlobals(vec);
 
    return TRUE;
 }

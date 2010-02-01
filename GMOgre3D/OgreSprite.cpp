@@ -75,3 +75,15 @@ void OgreSprite::SetScale(double x, double y)
 {
    m_overlay->setScale(x, y);
 }
+
+
+void OgreSprite::Show()
+{
+   m_overlay->show();
+}
+
+
+void OgreSprite::Hide()
+{
+   m_overlay->hide();
+}

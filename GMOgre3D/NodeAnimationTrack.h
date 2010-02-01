@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -25,6 +25,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define GMOGRE_NODE_ANIMATION_TRACK_H
 
 #include "GMOgre3D.h"
+#include "TransformKeyFrame.h"
 
 
 GMFN double CreateAnimationNodeTrackNodeKeyFrame(double anim_node_ptr, double time)
@@ -38,6 +39,7 @@ GMFN double CreateAnimationNodeTrackNodeKeyFrame(double anim_node_ptr, double ti
    
    TRY
       key_frm = node_anim->createNodeKeyFrame(time);
+      SetTransformKeyFrameRotation(ConvertToGMPointer(key_frm), 0, 0, 0);
    CATCH("CreateAnimationNodeTrackNodeKeyFrame")
 
    return ConvertToGMPointer(key_frm);

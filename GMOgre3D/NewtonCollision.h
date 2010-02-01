@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -40,7 +40,7 @@ GMFN double CreateNewtonBoxCollision(double newton_world_ptr, double x, double z
    OgreNewt::CollisionPtr col;
 
    TRY
-      col = OgreNewt::CollisionPtr(new OgreNewt::CollisionPrimitives::Box(world, Ogre::Vector3(x, y, z), id));
+      col = OgreNewt::CollisionPtr(new OgreNewt::CollisionPrimitives::Box(world, ConvertFromGMAxis(x, y, z), id));
       mNewtonCollisionMap[col.get()] = col;
    CATCH("CreateNewtonBoxCollision")
 
@@ -153,7 +153,7 @@ GMFN double CreateNewtonEllipsoidCollision(double newton_world_ptr, double x, do
    OgreNewt::CollisionPtr col;
 
    TRY
-      col.reset(new OgreNewt::CollisionPrimitives::Ellipsoid(world, Ogre::Vector3(x, y, z), id));
+      col.reset(new OgreNewt::CollisionPrimitives::Ellipsoid(world, ConvertFromGMAxis(x, y, z), id));
       mNewtonCollisionMap[col.get()] = col;
    CATCH("CreateNewtonEllipsoidCollision")
 
@@ -171,7 +171,7 @@ GMFN double CreateNewtonPyramidCollision(double newton_world_ptr, double x, doub
    OgreNewt::CollisionPtr col;
 
    TRY
-      col.reset(new OgreNewt::CollisionPrimitives::Pyramid(world, Ogre::Vector3(x, y, z), id));
+      col.reset(new OgreNewt::CollisionPrimitives::Pyramid(world, ConvertFromGMAxis(x, y, z), id));
       mNewtonCollisionMap[col.get()] = col;
    CATCH("CreateNewtonPyramidCollision")
 
@@ -300,7 +300,7 @@ GMFN double AddNewtonTreeCollisionPoly(double newton_collision_ptr, double x, do
       return FALSE;
 
    OgreNewt::CollisionPrimitives::TreeCollision *tree_col = (OgreNewt::CollisionPrimitives::TreeCollision *)collision;
-   tree_col->addPoly(&Ogre::Vector3(x, y, z), id);
+   tree_col->addPoly(&ConvertFromGMAxis(x, y, z), id);
 
    return TRUE;
 }
@@ -339,13 +339,7 @@ GMFN double CalculateNewtonConvexCollisionInertia(double newton_collision_ptr)
 
    col->calculateInertialMatrix(vec, vec2);
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      *mVectorX = vec.x;
-      *mVectorY = vec.z;
-      *mVectorZ = vec.y;
-   }
+   SetGMVectorGlobals(vec);
 
    return TRUE;
 }
@@ -367,13 +361,7 @@ GMFN double CalculateNewtonConvexCollisionCenterOfMass(double newton_collision_p
 
    col->calculateInertialMatrix(vec2, vec);
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      *mVectorX = vec.x;
-      *mVectorY = vec.z;
-      *mVectorZ = vec.y;
-   }
+   SetGMVectorGlobals(vec);
 
    return TRUE;
 }

@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -163,7 +163,7 @@ GMFN double CreateBillboardSetBillboard(double bb_set_ptr, double x, double z, d
    if (bb_set == NULL)
       return FALSE;
    
-   Ogre::Billboard *bb = bb_set->createBillboard(x, y, z, Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), alpha));
+   Ogre::Billboard *bb = bb_set->createBillboard(ConvertFromGMAxis(x, y, z), Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), alpha));
 
    return ConvertToGMPointer(bb);
 }

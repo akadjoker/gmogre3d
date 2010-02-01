@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -30,15 +30,9 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 GMFN double AddVector(double x1, double z1, double y1, double x2, double z2, double y2)
 {
-   Ogre::Vector3 vec = Ogre::Vector3(x1, y1, z1) + Ogre::Vector3(x2, y2, z2);
+   Ogre::Vector3 vec = ConvertFromGMAxis(x1, y1, z1) + ConvertFromGMAxis(x2, y2, z2);
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      *mVectorX = vec.x;
-      *mVectorY = vec.z;
-      *mVectorZ = vec.y;
-   }
+   SetGMVectorGlobals(vec);
 
    return TRUE;
 }
@@ -46,15 +40,9 @@ GMFN double AddVector(double x1, double z1, double y1, double x2, double z2, dou
 
 GMFN double SubtractVector(double x1, double z1, double y1, double x2, double z2, double y2)
 {
-   Ogre::Vector3 vec = Ogre::Vector3(x1, y1, z1) - Ogre::Vector3(x2, y2, z2);
+   Ogre::Vector3 vec = ConvertFromGMAxis(x1, y1, z1) - ConvertFromGMAxis(x2, y2, z2);
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      *mVectorX = vec.x;
-      *mVectorY = vec.z;
-      *mVectorZ = vec.y;
-   }
+   SetGMVectorGlobals(vec);
 
    return TRUE;
 }
@@ -62,15 +50,9 @@ GMFN double SubtractVector(double x1, double z1, double y1, double x2, double z2
 
 GMFN double MultiplyVector(double x1, double z1, double y1, double x2, double z2, double y2)
 {
-   Ogre::Vector3 vec = Ogre::Vector3(x1, y1, z1) * Ogre::Vector3(x2, y2, z2);
+   Ogre::Vector3 vec = ConvertFromGMAxis(x1, y1, z1) * ConvertFromGMAxis(x2, y2, z2);
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      *mVectorX = vec.x;
-      *mVectorY = vec.z;
-      *mVectorZ = vec.y;
-   }
+   SetGMVectorGlobals(vec);
 
    return TRUE;
 }
@@ -78,15 +60,9 @@ GMFN double MultiplyVector(double x1, double z1, double y1, double x2, double z2
 
 GMFN double RotateVector(double x1, double z1, double y1, double yaw, double pitch, double roll)
 {
-   Ogre::Vector3 vec = Euler(Ogre::Degree(yaw * -1), Ogre::Degree(pitch * -1), Ogre::Degree(roll * -1)).toQuaternion() * Ogre::Vector3(x1, y1, z1);
+   Ogre::Vector3 vec = Euler(Ogre::Degree(yaw * -1), Ogre::Degree(pitch * -1), Ogre::Degree(roll * -1)).toQuaternion() * ConvertFromGMAxis(x1, y1, z1);
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      *mVectorX = vec.x;
-      *mVectorY = vec.z;
-      *mVectorZ = vec.y;
-   }
+   SetGMVectorGlobals(vec);
 
    return TRUE;
 }
@@ -94,8 +70,8 @@ GMFN double RotateVector(double x1, double z1, double y1, double yaw, double pit
 
 GMFN double CalcVectorCrossProduct(double x1, double z1, double y1, double x2, double z2, double y2)
 {
-   Ogre::Vector3 vec(x1, y1, z1);
-   vec.crossProduct(Ogre::Vector3(x2, y2, z2));
+   Ogre::Vector3 vec = ConvertFromGMAxis(x1, y1, z1);
+   vec.crossProduct(ConvertFromGMAxis(x2, y2, z2));
 
    return TRUE;
 }
@@ -103,23 +79,17 @@ GMFN double CalcVectorCrossProduct(double x1, double z1, double y1, double x2, d
 
 GMFN double CalcVectorDotProduct(double x1, double y1, double z1, double x2, double y2, double z2)
 {
-   return Ogre::Vector3(x1, y1, z1).dotProduct(Ogre::Vector3(x2, y2, z2));
+   return ConvertFromGMAxis(x1, y1, z1).dotProduct(ConvertFromGMAxis(x2, y2, z2));
 }
 
 
 GMFN double NormalizeVector(double x, double z, double y)
 {
-   Ogre::Vector3 vec(x, y, z);
+   Ogre::Vector3 vec = ConvertFromGMAxis(x, y, z);
 
    Ogre::Real len = vec.normalise();
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      *mVectorX = vec.x;
-      *mVectorY = vec.z;
-      *mVectorZ = vec.y;
-   }
+   SetGMVectorGlobals(vec);
 
    return len;
 }
@@ -129,16 +99,10 @@ GMFN double NormalizeResultVector()
 {
    Ogre::Real len = 0.0;
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      Ogre::Vector3 vec(*mVectorX, *mVectorZ, *mVectorY);
-      len = vec.normalise();
+   Ogre::Vector3 vec = ConvertFromGMAxis(*mVectorX, *mVectorZ, *mVectorY);
+   len = vec.normalise();
 
-      *mVectorX = vec.x;
-      *mVectorY = vec.z;
-      *mVectorZ = vec.y;
-   }
+   SetGMVectorGlobals(vec);
 
    return len;
 }
@@ -146,7 +110,7 @@ GMFN double NormalizeResultVector()
 
 GMFN double GetVectorLength(double x, double z, double y)
 {
-   return Ogre::Vector3(x, y, z).length();
+   return ConvertFromGMAxis(x, y, z).length();
 }
 
 #endif

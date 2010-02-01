@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -74,13 +74,7 @@ GMFN double GetNewtonContactForce(double contact_ptr)
 
    Ogre::Vector3 vec = contact->getForce();
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      *mVectorX = vec.x;
-      *mVectorY = vec.z;
-      *mVectorZ = vec.y;
-   }
+   SetGMVectorGlobals(vec);
 
    return TRUE;
 }
@@ -96,13 +90,7 @@ GMFN double GetNewtonContactPosition(double contact_ptr)
    Ogre::Vector3 vec, vec2;
    contact->getPositionAndNormal(vec, vec2);
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      *mVectorX = vec.x;
-      *mVectorY = vec.z;
-      *mVectorZ = vec.y;
-   }
+   SetGMVectorGlobals(vec);
 
    return TRUE;
 }
@@ -118,13 +106,7 @@ GMFN double GetNewtonContactNormal(double contact_ptr)
    Ogre::Vector3 vec, vec2;
    contact->getPositionAndNormal(vec2, vec);
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      *mVectorX = vec.x;
-      *mVectorY = vec.z;
-      *mVectorZ = vec.y;
-   }
+   SetGMVectorGlobals(vec);
 
    return TRUE;
 }
@@ -192,13 +174,7 @@ GMFN double GetNewtonContactPrimaryTangentDirection(double contact_ptr)
    Ogre::Vector3 vec, vec2;
    contact->getTangentDirections(vec, vec2);
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      *mVectorX = vec.x;
-      *mVectorY = vec.z;
-      *mVectorZ = vec.y;
-   }
+   SetGMVectorGlobals(vec);
 
    return TRUE;
 }
@@ -214,13 +190,7 @@ GMFN double GetNewtonContactSecondaryTangentDirection(double contact_ptr)
    Ogre::Vector3 vec, vec2;
    contact->getTangentDirections(vec2, vec);
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      *mVectorX = vec.x;
-      *mVectorY = vec.z;
-      *mVectorZ = vec.y;
-   }
+   SetGMVectorGlobals(vec);
 
    return TRUE;
 }
@@ -257,7 +227,7 @@ GMFN double RotateNewtonContactTangentDirections(double contact_ptr, double x, d
    if (!contact)
       return FALSE;
 
-   contact->rotateTangentDirections(Ogre::Vector3(x, y, z));
+   contact->rotateTangentDirections(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -270,7 +240,7 @@ GMFN double SetNewtonContactNormalDirections(double contact_ptr, double x, doubl
    if (!contact)
       return FALSE;
 
-   contact->setNormalDirection(Ogre::Vector3(x, y, z));
+   contact->setNormalDirection(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }

@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
 <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -25,13 +25,16 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "FrameListener.h"
 #include "OgreNewt_World.h"
 //#include "GMOgre3D.h"
+#include "GMAPI.h"
 
 
 GMFrameListener::GMFrameListener()
 //:   mOgre2DManager(NULL),
 :  mDisplayFPS(false),
    mDisplayNewtonDebugger(false),
-   mNewtonWorld(NULL)
+   mNewtonWorld(NULL),
+   mFrameStartedCallback(-1),
+   mFrameEndedCallback(-1)
 {
 }
 
@@ -104,8 +107,29 @@ void GMFrameListener::DisplayNewtonDebugger(OgreNewt::World *world, bool enable)
 }
 
 
+void GMFrameListener::SetStartFrameCallback(int func)
+{
+   mFrameStartedCallback = func;
+}
+
+
+void GMFrameListener::SetEndFrameCallback(int func)
+{
+   mFrameEndedCallback = func;
+}
+
+
 bool GMFrameListener::frameStarted(const Ogre::FrameEvent& evt)
 {
+   // Call our GM script to handle this callback
+   if (mFrameStartedCallback >= 0)
+   {
+      gm::CGMVariable args[1];
+      args[0].Set(evt.timeSinceLastFrame);
+
+      gm::script_execute(mFrameStartedCallback, args, 1);  
+   }
+
    if (mNewtonWorld)
    {
       if (mDisplayNewtonDebugger)
@@ -131,5 +155,23 @@ bool GMFrameListener::frameEnded(const Ogre::FrameEvent& evt)
    if (mDisplayFPS)
       UpdateFPSStats();
 
+   // Call our GM script to handle this callback
+   if (mFrameEndedCallback >= 0)
+   {
+      gm::CGMVariable args[1];
+      args[0].Set(evt.timeSinceLastFrame);
+
+      gm::script_execute(mFrameEndedCallback, args, 1);  
+   }
+
    return true;
 }
+
+
+/*
+bool GMFrameListener::processUnbufferedMouseInput(const Ogre::FrameEvent& evt)
+{
+   
+   return true;
+}
+*/

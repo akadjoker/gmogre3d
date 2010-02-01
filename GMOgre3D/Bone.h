@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -110,7 +110,7 @@ GMFN double SetBoneScale(double bone_ptr, double x, double z, double y)
    if (bone == NULL)
       return FALSE;
 
-   bone->setScale(Ogre::Vector3(x, y, z));
+   bone->setScale(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -123,7 +123,7 @@ GMFN double SetBonePosition(double bone_ptr, double x, double z, double y)
    if (bone == NULL)
       return FALSE;
 
-   bone->setPosition(Ogre::Vector3(x, y, z));
+   bone->setPosition(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -138,13 +138,7 @@ GMFN double GetBonePosition(double bone_ptr)
 
    Ogre::Vector3 vec = bone->getPosition();
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      *mVectorX = vec.x;
-      *mVectorY = vec.z;
-      *mVectorZ = vec.y;
-   }
+   SetGMVectorGlobals(vec);
 
    return TRUE;
 }
@@ -157,7 +151,7 @@ GMFN double BoneTranslate(double bone_ptr, double x, double z, double y, double 
    if (bone == NULL)
       return FALSE;
 
-   bone->translate(z, y, z, static_cast<Ogre::Node::TransformSpace>((int)relative_type));
+   bone->translate(ConvertFromGMAxis(x, y, z), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
 
    return TRUE;
 }
@@ -289,7 +283,7 @@ GMFN double RotateBone(double bone_ptr, double x, double z, double y, double deg
    if (bone == NULL)
       return FALSE;
 
-   bone->rotate(Ogre::Vector3(x, y, z), Ogre::Degree(degrees), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
+   bone->rotate(ConvertFromGMAxis(x, y, z), Ogre::Degree(degrees), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
 
    return TRUE;
 }

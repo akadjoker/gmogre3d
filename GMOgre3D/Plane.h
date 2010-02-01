@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -32,7 +32,7 @@ GMFN double CreatePlane(double normalx, double normalz, double normaly, double d
    Ogre::Plane *plane = NULL;
    
    TRY
-      plane = new Ogre::Plane(Ogre::Vector3(normalx, normaly, normalz), depth);
+      plane = new Ogre::Plane(ConvertFromGMAxis(normalx, normaly, normalz), depth);
    CATCH("CreatePlane")
 
    return ConvertToGMPointer(plane);

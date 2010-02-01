@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -33,7 +33,7 @@ GMFN double CreateAnimation(char *name, double length)
    if (mSceneMgr == NULL)
       return FALSE;
 
-   Ogre::Animation *anim;
+   Ogre::Animation *anim = NULL;
    
    TRY
       anim = mSceneMgr->createAnimation(name, length);

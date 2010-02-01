@@ -4,6 +4,12 @@
 #include <GMAPI.h>
 
 
+Ogre::Vector3 ConvertFromGMAxis2(double x, double y, double z)
+{
+   return Ogre::Vector3(x, y, z);
+}
+
+
 static void _CDECL LeaveWorldCallback(const NewtonBody* body, int threadIndex)
 {
    OgreNewt::Body *bod = (OgreNewt::Body*)NewtonBodyGetUserData(body);
@@ -68,13 +74,13 @@ void OgreNewtWorld::update( Ogre::Real t_step )
          // Call our GM script to handle this leave world callback
          gm::CGMVariable args[6];
          args[0].Set(static_cast<double>(reinterpret_cast<intptr_t>(contact.m_body1)));
-         args[1].Set(static_cast<double>(reinterpret_cast<intptr_t>(contact.m_body1)));
+         args[1].Set(static_cast<double>(reinterpret_cast<intptr_t>(contact.m_body2)));
          args[2].Set(contact.m_speed);
-         args[3].Set(contact.m_position.x);
-         args[4].Set(contact.m_position.z);
-         args[5].Set(contact.m_position.y);
+         args[3].Set(ConvertFromGMAxis2(contact.m_position.x, contact.m_position.z, contact.m_position.y).x);
+         args[4].Set(ConvertFromGMAxis2(contact.m_position.x, contact.m_position.z, contact.m_position.y).z);
+         args[5].Set(ConvertFromGMAxis2(contact.m_position.x, contact.m_position.z, contact.m_position.y).y);
 
-         gm::script_execute(contact.m_function, args, 6);  
+         gm::script_execute(contact.m_function, args, 6);
 
          contact_iter++;
       }

@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -157,7 +157,7 @@ GMFN double AddBillboardChainChainElement(double bb_chain_ptr, double index, dou
       return FALSE;
    
    Ogre::BillboardChain::Element element;
-   element.position = Ogre::Vector3(x, y, z);
+   element.position = ConvertFromGMAxis(x, y, z);
    element.width = width;
    element.texCoord = tex_coord;
    element.colour = Ogre::ColourValue(GetRedFromGMColor(clr), GetGreenFromGMColor(clr), GetBlueFromGMColor(clr), alpha);
@@ -189,7 +189,7 @@ GMFN double UpdateBillboardChainChainElement(double bb_chain_ptr, double index, 
       return FALSE;
    
    Ogre::BillboardChain::Element element;
-   element.position = Ogre::Vector3(x, y, z);
+   element.position = ConvertFromGMAxis(x, y, z);
    element.width = width;
    element.texCoord = tex_coord;
    element.colour = Ogre::ColourValue(GetRedFromGMColor(clr), GetGreenFromGMColor(clr), GetBlueFromGMColor(clr), alpha);

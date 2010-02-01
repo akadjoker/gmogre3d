@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -137,7 +137,7 @@ GMFN double SetMovableTextGlobalTranslation(double text_ptr, double x, double z,
    if (text == NULL)
       return FALSE;
 
-   text->setGlobalTranslation(Ogre::Vector3(x, y, z));
+   text->setGlobalTranslation(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -150,7 +150,7 @@ GMFN double SetMovableTextLocalTranslation(double text_ptr, double x, double z, 
    if (text == NULL)
       return FALSE;
 
-   text->setLocalTranslation(Ogre::Vector3(x, y, z));
+   text->setLocalTranslation(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }

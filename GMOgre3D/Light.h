@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -65,7 +65,7 @@ GMFN double SetLightPosition(double light_ptr, double x, double z, double y)
    if (light == NULL)
       return FALSE;
 
-   light->setPosition(x, y, z);
+   light->setPosition(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -78,7 +78,7 @@ GMFN double SetLightDirection(double light_ptr, double x, double z, double y)
    if (light == NULL)
       return FALSE;
 
-   light->setDirection(x, y, z);
+   light->setDirection(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }

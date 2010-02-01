@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -200,7 +200,7 @@ GMFN double ManualObjectPosition(double man_obj_ptr, double x, double z, double 
    if (man_obj == NULL)
       return FALSE;
 
-   man_obj->position(Ogre::Vector3(x, y, z));
+   man_obj->position(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -213,7 +213,7 @@ GMFN double ManualObjectNormal(double man_obj_ptr, double x, double z, double y)
    if (man_obj == NULL)
       return FALSE;
 
-   man_obj->normal(Ogre::Vector3(x, y, z));
+   man_obj->normal(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -291,7 +291,7 @@ GMFN double ManualObjectTextureCoord4(double man_obj_ptr, double x, double z, do
    if (man_obj == NULL)
       return FALSE;
 
-   man_obj->textureCoord(x, y, z, w);
+   man_obj->textureCoord(ConvertFromGMAxis(x, y, z).x, ConvertFromGMAxis(x, y, z).y, ConvertFromGMAxis(x, y, z).z, w);
 
    return TRUE;
 }

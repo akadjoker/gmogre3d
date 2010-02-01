@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -34,7 +34,7 @@ GMFN double SetTransformKeyFrameTranslate(double key_frame_ptr, double x, double
    if (key_frame == NULL)
       return FALSE;
 
-   key_frame->setTranslate(Ogre::Vector3(x, y, z));
+   key_frame->setTranslate(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -47,7 +47,7 @@ GMFN double SetTransformKeyFrameScale(double key_frame_ptr, double x, double z, 
    if (key_frame == NULL)
       return FALSE;
 
-   key_frame->setScale(Ogre::Vector3(x, y, z));
+   key_frame->setScale(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -60,7 +60,7 @@ GMFN double SetTransformKeyFrameRotation(double key_frame_ptr, double yaw, doubl
    if (key_frame == NULL)
       return FALSE;
 
-   key_frame->setRotation(Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)));
+   key_frame->setRotation(Euler(Ogre::Degree((yaw * -1) - 90), Ogre::Degree(pitch), Ogre::Degree(roll)));
 
    return TRUE;
 }

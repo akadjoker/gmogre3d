@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -48,7 +48,7 @@ GMFN double CreateNewtonSliderJoint(double newton_child_body_ptr, double newton_
    OgreNewt::Joint *joint;
 
    TRY
-      joint = new OgreNewt::Slider(newton_child_body->getOgreNewtBody(), newton_parent_body ? newton_parent_body->getOgreNewtBody() : NULL, Ogre::Vector3(posx, posy, posz), Ogre::Vector3(pinx, piny, pinz));
+      joint = new OgreNewt::Slider(newton_child_body->getOgreNewtBody(), newton_parent_body ? newton_parent_body->getOgreNewtBody() : NULL, ConvertFromGMAxis(posx, posy, posz), ConvertFromGMAxis(pinx, piny, pinz));
    CATCH("CreateNewtonSliderJoint")
 
    return ConvertToGMPointer(joint);

@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -43,6 +43,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreNewt_Body.h"
 #include "OgreNewt_Collision.h"
 #include "FrameListener.h"
+#include "Axes.h"
 #include <GMAPI.h>
 #include <OgreAny.h>
 #include <vector>
@@ -398,6 +399,18 @@ void AcquireGMLocalVariablePointers(GMInstance *gminst)
    }
 }
 
+void SetGMVectorGlobals(Ogre::Vector3 vec)
+{
+   Ogre::Vector3 v = ConvertToGMAxis(vec);
+
+   AcquireGMVectorGlobals();
+   if (mVectorX != NULL)
+   {
+      *mVectorX = v.x;
+      *mVectorY = v.y;
+      *mVectorZ = v.z;
+   }
+}
 
 Ogre::Real CalcTerrainHeight(Ogre::Real x, Ogre::Real z, void*)
 {

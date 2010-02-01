@@ -41,8 +41,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\OgreMain\include;..\GL\include;..\GL\src\GLSL\include;..\Direct3D9\include;..\OctreeSceneManager\include;..\ParticleFX\include;..\CgProgramManager\include;..\SkyX;..\GMAPI\include;..\Dependencies\include;&quot;$(BOOST_HOME)&quot;;.\inc"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GMOGRE3D_EXPORTS;OGRENEWT_NO_OGRE_ANY"
+				AdditionalIncludeDirectories="..\OgreMain\include;..\GL\include;..\GL\src\GLSL\include;..\Direct3D9\include;..\OctreeSceneManager\include;..\ParticleFX\include;..\CgProgramManager\include;..\SkyX;..\GMAPI\include;..\Dependencies\include;..\CameraControlSystem\include;&quot;$(BOOST_HOME)&quot;;.\inc"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GMOGRE3D_EXPORTS;OGRENEWT_NO_OGRE_ANY;CCS_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -119,8 +119,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\OgreMain\include;..\GL\include;..\GL\src\GLSL\include;..\Direct3D9\include;..\OctreeSceneManager\include;..\ParticleFX\include;..\CgProgramManager\include;..\SkyX;..\GMAPI\include;..\Dependencies\include;..\GMNewton;..\GMNewton\common;..\Newton\sdk\dContainers;..\Newton\sdk\dMath;..\Newton\sdk\dCustomJoints;..\Newton\sdk\dAnimation;..\Newton\sdk\;&quot;$(BOOST_HOME)&quot;;.\inc"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GMOGRE3D_EXPORTS;OGRE_STATIC_LIB;OGRENEWT_NO_OGRE_ANY"
+				AdditionalIncludeDirectories="..\OgreMain\include;..\GL\include;..\GL\src\GLSL\include;..\Direct3D9\include;..\OctreeSceneManager\include;..\ParticleFX\include;..\CgProgramManager\include;..\SkyX;..\GMAPI\include;..\Dependencies\include;..\GMNewton;..\GMNewton\common;..\Newton\sdk\dContainers;..\Newton\sdk\dMath;..\Newton\sdk\dCustomJoints;..\Newton\sdk\dAnimation;..\Newton\sdk\;..\CameraControlSystem\include;&quot;$(BOOST_HOME)&quot;;.\inc"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GMOGRE3D_EXPORTS;OGRE_STATIC_LIB;OGRENEWT_NO_OGRE_ANY;CCS_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -201,8 +201,8 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				EnableFiberSafeOptimizations="true"
-				AdditionalIncludeDirectories="..\OgreMain\include;..\GL\include;..\GL\src\GLSL\include;..\Direct3D9\include;..\OctreeSceneManager\include;..\ParticleFX\include;..\CgProgramManager\include;..\SkyX;..\GMAPI\include;..\Dependencies\include;&quot;$(BOOST_HOME)&quot;;.\inc"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GMOGRE3D_EXPORTS;OGRENEWT_NO_OGRE_ANY"
+				AdditionalIncludeDirectories="..\OgreMain\include;..\GL\include;..\GL\src\GLSL\include;..\Direct3D9\include;..\OctreeSceneManager\include;..\ParticleFX\include;..\CgProgramManager\include;..\SkyX;..\GMAPI\include;..\Dependencies\include;..\CameraControlSystem\include;&quot;$(BOOST_HOME)&quot;;.\inc"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GMOGRE3D_EXPORTS;OGRENEWT_NO_OGRE_ANY;CCS_LIB"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
@@ -286,8 +286,8 @@
 				OmitFramePointers="true"
 				EnableFiberSafeOptimizations="true"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="..\OgreMain\include;..\Direct3D9\include;..\GL\include;..\GL\src\GLSL\include;..\OctreeSceneManager\include;..\ParticleFX\include;..\CgProgramManager\include;..\SkyX;..\GMAPI\include;..\Dependencies\include;;..\GMNewton;..\GMNewton\common;..\Newton\sdk\dContainers;..\Newton\sdk\dMath;..\Newton\sdk\dCustomJoints;..\Newton\sdk\dAnimation;..\Newton\sdk\;..\OgreNewt\inc;&quot;$(BOOST_HOME)&quot;;.\inc"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GMOGRE3D_EXPORTS;OGRE_STATIC_LIB;_NEWTON_USE_LIB;OGRENEWT_NO_OGRE_ANY"
+				AdditionalIncludeDirectories="..\OgreMain\include;..\Direct3D9\include;..\GL\include;..\GL\src\GLSL\include;..\OctreeSceneManager\include;..\ParticleFX\include;..\CgProgramManager\include;..\SkyX;..\GMAPI\GMAPI;..\Dependencies\include;;..\GMNewton;..\GMNewton\common;..\Newton\sdk\dContainers;..\Newton\sdk\dMath;..\Newton\sdk\dCustomJoints;..\Newton\sdk\dAnimation;..\Newton\sdk\;..\OgreNewt\inc;..\CameraControlSystem\include;&quot;$(BOOST_HOME)&quot;;.\inc"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GMOGRE3D_EXPORTS;OGRE_STATIC_LIB;_NEWTON_USE_LIB;OGRENEWT_NO_OGRE_ANY;CCS_LIB"
 				RuntimeLibrary="2"
 				BufferSecurityCheck="false"
 				EnableFunctionLevelLinking="true"
@@ -309,7 +309,7 @@
 				Name="VCLinkerTool"
 				LinkLibraryDependencies="true"
 				AdditionalOptions="/LTCG"
-				AdditionalDependencies="Newton.lib dAnimation.lib dContainers.lib dMath.lib JointLibrary.lib OgreNewt.lib "
+				AdditionalDependencies="Newton.lib dAnimation.lib dContainers.lib dMath.lib JointLibrary.lib OgreNewt.lib"
 				OutputFile="$(OutDir)\$(ProjectName)Static.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\lib"
@@ -465,6 +465,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Axes.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Billboard.h"
 				>
 			</File>
@@ -482,6 +486,54 @@
 			</File>
 			<File
 				RelativePath=".\Camera.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CCS.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CCS_ChaseCameraMode.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CCS_ChaseFreeYawAxisCameraMode.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CCS_ClosestToTargetCameraMode.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CCS_FirstPersonCameraMode.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CCS_FixedCameraMode.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CCS_FixedDirectionCameraMode.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CCS_FixedTrackingCameraMode.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CCS_FreeCameraMode.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CCS_OrbitalCameraMode.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CCS_PlaneBindedCameraMode.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CCS_ThroughTargetCameraMode.h"
 				>
 			</File>
 			<File
@@ -597,10 +649,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NewtonTest.h"
-				>
-			</File>
-			<File
 				RelativePath=".\NewtonWorld.h"
 				>
 			</File>
@@ -610,6 +658,10 @@
 			</File>
 			<File
 				RelativePath=".\OgreEuler.h"
+				>
+			</File>
+			<File
+				RelativePath=".\OgreInputManager.h"
 				>
 			</File>
 			<File

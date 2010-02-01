@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -79,7 +79,7 @@ GMFN double SetNewtonBodyPosition(double newton_body_ptr, double x, double z, do
    Ogre::Quaternion orient;
 
    newton_body->getPositionOrientation(pos, orient);
-   newton_body->setPositionOrientation(Ogre::Vector3(x, y, z), orient);
+   newton_body->setPositionOrientation(ConvertFromGMAxis(x, y, z), orient);
 
    return TRUE;
 }
@@ -97,13 +97,7 @@ GMFN double GetNewtonBodyPosition(double newton_body_ptr)
 
    newton_body->getPositionOrientation(pos, orient);
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      *mVectorX = pos.x;
-      *mVectorY = pos.z;
-      *mVectorZ = pos.y;
-   }
+   SetGMVectorGlobals(pos);
 
    return TRUE;
 }
@@ -157,7 +151,7 @@ GMFN double AddNewtonBodyForce(double newton_body_ptr, double x, double z, doubl
    if (!newton_body)
       return FALSE;
 
-   newton_body->addForce(Ogre::Vector3(x, y, z));
+   newton_body->addForce(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -170,7 +164,7 @@ GMFN double AddNewtonBodyImpulse(double newton_body_ptr, double deltax, double d
    if (!newton_body)
       return FALSE;
 
-   newton_body->addImpulse(Ogre::Vector3(deltax, deltay, deltaz), Ogre::Vector3(posx, posy, posz));
+   newton_body->addImpulse(ConvertFromGMAxis(deltax, deltay, deltaz), ConvertFromGMAxis(posx, posy, posz));
 
    return TRUE;
 }
@@ -183,7 +177,7 @@ GMFN double AddNewtonBodyTorque(double newton_body_ptr, double x, double z, doub
    if (!newton_body)
       return FALSE;
 
-   newton_body->addTorque(Ogre::Vector3(x, y, z));
+   newton_body->addTorque(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -196,7 +190,7 @@ GMFN double SetNewtonBodyAngularDamping(double newton_body_ptr, double x, double
    if (!newton_body)
       return FALSE;
 
-   newton_body->setAngularDamping(Ogre::Vector3(x, y, z));
+   newton_body->setAngularDamping(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -209,7 +203,7 @@ GMFN double SetNewtonBodyCenterOfMass(double newton_body_ptr, double x, double z
    if (!newton_body)
       return FALSE;
 
-   newton_body->setCenterOfMass(Ogre::Vector3(x, y, z));
+   newton_body->setCenterOfMass(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -248,7 +242,7 @@ GMFN double SetNewtonBodyForce(double newton_body_ptr, double x, double z, doubl
    if (!newton_body)
       return FALSE;
 
-   newton_body->setForce(Ogre::Vector3(x, y, z));
+   newton_body->setForce(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -262,7 +256,7 @@ GMFN double SetNewtonBodyGravity(double newton_body_ptr, double x, double z, dou
       return FALSE;
 
    newton_body->EnableGravityOverride(true);
-   newton_body->setGravity(Ogre::Vector3(x, y, z));
+   newton_body->setGravity(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -275,7 +269,7 @@ GMFN double SetNewtonBodyMassMatrix(double newton_body_ptr, double mass, double 
    if (!newton_body)
       return FALSE;
 
-   newton_body->setMassMatrix(mass, Ogre::Vector3(x, y, z));
+   newton_body->setMassMatrix(mass, ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -330,7 +324,7 @@ GMFN double SetNewtonBodyOmega(double newton_body_ptr, double x, double z, doubl
    if (!newton_body)
       return FALSE;
 
-   newton_body->setOmega(Ogre::Vector3(x, y, z));
+   newton_body->setOmega(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -343,7 +337,7 @@ GMFN double SetNewtonBodyTorque(double newton_body_ptr, double x, double z, doub
    if (!newton_body)
       return FALSE;
 
-   newton_body->setTorque(Ogre::Vector3(x, y, z));
+   newton_body->setTorque(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -356,7 +350,7 @@ GMFN double SetNewtonBodyVelocity(double newton_body_ptr, double x, double z, do
    if (!newton_body)
       return FALSE;
 
-   newton_body->setVelocity(Ogre::Vector3(x, y, z));
+   newton_body->setVelocity(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -369,7 +363,7 @@ GMFN double AddNewtonBodyGlobalForce(double newton_body_ptr, double x, double z,
    if (!newton_body)
       return FALSE;
 
-   newton_body->addGlobalForce(Ogre::Vector3(x, y, z), Ogre::Vector3(posx, posy, posz));
+   newton_body->addGlobalForce(ConvertFromGMAxis(x, y, z), ConvertFromGMAxis(posx, posy, posz));
 
    return TRUE;
 }
@@ -382,7 +376,7 @@ GMFN double AddNewtonBodyLocalForce(double newton_body_ptr, double x, double z, 
    if (!newton_body)
       return FALSE;
 
-   newton_body->addLocalForce(Ogre::Vector3(x, y, z), Ogre::Vector3(posx, posy, posz));
+   newton_body->addLocalForce(ConvertFromGMAxis(x, y, z), ConvertFromGMAxis(posx, posy, posz));
 
    return TRUE;
 }

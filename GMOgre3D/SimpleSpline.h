@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -59,7 +59,7 @@ GMFN double AddSimpleSplinePoint(double spline_ptr, double x, double z, double y
    if (spline == NULL)
       return FALSE;
 
-   spline->addPoint(Ogre::Vector3(x, y, z));
+   spline->addPoint(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -88,13 +88,7 @@ GMFN double GetSimpleSplinePoint(double spline_ptr, double index)
 
    Ogre::Vector3 vec = spline->getPoint((unsigned int)index);
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      *mVectorX = vec.x;
-      *mVectorY = vec.z;
-      *mVectorZ = vec.y;
-   }
+   SetGMVectorGlobals(vec);
 
    return TRUE;
 }
@@ -120,7 +114,7 @@ GMFN double UpdateSimpleSplinePoint(double spline_ptr, double index, double x, d
    if (spline == NULL)
       return FALSE;
 
-   spline->updatePoint(index, Ogre::Vector3(x, y, z));
+   spline->updatePoint(index, ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -135,13 +129,7 @@ GMFN double GetSimpleSplineInterpolate(double spline_ptr, double t)
 
    Ogre::Vector3 vec = spline->interpolate(t);
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      *mVectorX = vec.x;
-      *mVectorY = vec.z;
-      *mVectorZ = vec.y;
-   }
+   SetGMVectorGlobals(vec);
 
    return TRUE;
 }
@@ -156,13 +144,7 @@ GMFN double GetSimpleSplineInterpolateFrom(double spline_ptr, double from_index,
 
    Ogre::Vector3 vec = spline->interpolate(from_index, t);
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      *mVectorX = vec.x;
-      *mVectorY = vec.z;
-      *mVectorZ = vec.y;
-   }
+   SetGMVectorGlobals(vec);
 
    return TRUE;
 }

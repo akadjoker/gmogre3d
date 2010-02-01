@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -27,6 +27,32 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "GMOgre3D.h"
 
 
+GMFN double FindEntityFromCameraPosition(double camera_ptr, double x, double y, double mask = 0xFFFFFFFF)
+{
+   MOC::CollisionTools *ct = mSceneCollisionMap[mSceneMgr];
+
+   if (ct == NULL)
+      return 0;
+
+   Ogre::Camera *cam = ConvertFromGMPointer<Ogre::Camera*>(camera_ptr);
+
+   if (cam == NULL)
+      return 0;
+
+   Ogre::Entity *ent = NULL;
+   Ogre::Vector3 result = Ogre::Vector3::ZERO;
+	float distToColl;
+
+   if (ct->raycastFromCamera(mRenderWindow, cam, Ogre::Vector2(x, y), result, ent, distToColl, mask))
+	{
+      SetGMVectorGlobals(result);
+		return ConvertToGMPointer(ent);
+	}
+
+   return 0;
+}
+
+
 GMFN double CollidesWithObject(double fromx, double fromz, double fromy, double tox, double toz, double toy, double collision_radius, double ray_height, double mask = 0xFFFFFFFF)
 {
    MOC::CollisionTools *ct = mSceneCollisionMap[mSceneMgr];
@@ -34,7 +60,7 @@ GMFN double CollidesWithObject(double fromx, double fromz, double fromy, double 
    if (ct == NULL)
       return FALSE;
 
-   return ct->collidesWithEntity(Ogre::Vector3(fromx, fromy, fromz), Ogre::Vector3(tox, toy, toz), collision_radius, ray_height, mask);
+   return ct->collidesWithEntity(ConvertFromGMAxis(fromx, fromy, fromz), ConvertFromGMAxis(tox, toy, toz), collision_radius, ray_height, mask);
 }
 
 
@@ -56,8 +82,12 @@ GMFN double GetZCollisionDistance(double scene_node_ptr, double check_terrain, d
 
 GMFN double DistanceToCollisionWithObject(double fromx, double fromz, double fromy, double tox, double toz, double toy, double collision_radius, double ray_height, double mask = 0xFFFFFFFF)
 {
-   Ogre::Vector3 fromPointAdj(fromx, fromy + ray_height, fromz);
-	Ogre::Vector3 toPointAdj(tox, toy + ray_height, toz);
+   Ogre::Vector3 fromPointAdj = ConvertFromGMAxis(fromx, fromy, fromz);
+   fromPointAdj.y += ray_height;
+
+   Ogre::Vector3 toPointAdj = ConvertFromGMAxis(tox, toy, toz);
+   toPointAdj.y += ray_height;
+
 	Ogre::Vector3 normal = toPointAdj - fromPointAdj;
 	float distToDest = normal.normalise();
 

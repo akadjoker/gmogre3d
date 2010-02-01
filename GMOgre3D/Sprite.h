@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -129,6 +129,32 @@ GMFN double RotateSprite(double sprite_ptr, double degrees)
       return FALSE;
 
    sprite->Rotate(degrees);
+
+   return TRUE;
+}
+
+
+GMFN double ShowSprite(double sprite_ptr)
+{
+   OgreSprite *sprite = ConvertFromGMPointer<OgreSprite*>(sprite_ptr);
+
+   if (sprite == NULL)
+      return FALSE;
+
+   sprite->Show();
+
+   return TRUE;
+}
+
+
+GMFN double HideSprite(double sprite_ptr)
+{
+   OgreSprite *sprite = ConvertFromGMPointer<OgreSprite*>(sprite_ptr);
+
+   if (sprite == NULL)
+      return FALSE;
+
+   sprite->Hide();
 
    return TRUE;
 }

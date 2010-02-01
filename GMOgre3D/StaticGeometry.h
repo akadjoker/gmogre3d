@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -78,7 +78,7 @@ GMFN double SetStaticGeometryRegionDimensions(double static_geo_ptr, double size
    if (static_geo == NULL)
       return FALSE;
 
-   static_geo->setRegionDimensions(Ogre::Vector3(sizex, sizey, sizez));
+   static_geo->setRegionDimensions(ConvertFromGMAxis(sizex, sizey, sizez));
 
    return TRUE;
 }
@@ -91,7 +91,7 @@ GMFN double SetStaticGeometryOrigin(double static_geo_ptr, double sizex, double 
    if (static_geo == NULL)
       return FALSE;
 
-   static_geo->setOrigin(Ogre::Vector3(sizex, sizey, sizez));
+   static_geo->setOrigin(ConvertFromGMAxis(sizex, sizey, sizez));
 
    return TRUE;
 }
@@ -109,7 +109,7 @@ GMFN double AddStaticGeometryEntity(double static_geo_ptr, double entity_ptr, do
    if (ent == NULL)
       return FALSE;
 
-   static_geo->addEntity(ent, Ogre::Vector3(posx, posy, posz), Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)), Ogre::Vector3(scalex, scaley, scalez));
+   static_geo->addEntity(ent, ConvertFromGMAxis(posx, posy, posz), Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)), ConvertFromGMAxis(scalex, scaley, scalez));
 
    return TRUE;
 }

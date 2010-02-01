@@ -61,11 +61,22 @@
 #include "NewtonMaterialPair.h"
 #include "NewtonSliderJoint.h"
 #include "NewtonWorld.h"
-#include "NewtonTest.h"
 #include "NewtonPlayerController.h"
 #include "MovableText.h"
 #include "MovableObject.h"
 #include "Mesh.h"
+#include "CCS.h"
+#include "CCS_FreeCameraMode.h"
+#include "CCS_ClosestToTargetCameraMode.h"
+#include "CCS_FixedTrackingCameraMode.h"
+#include "CCS_OrbitalCameraMode.h"
+#include "CCS_ChaseFreeYawAxisCameraMode.h"
+#include "CCS_FixedDirectionCameraMode.h"
+#include "CCS_FirstPersonCameraMode.h"
+#include "CCS_ThroughTargetCameraMode.h"
+#include "CCS_PlaneBindedCameraMode.h"
+#include "CCS_ChaseCameraMode.h"
+#include "CCS_FixedCameraMode.h"
 #include "GMApi.h"
 #include "LockMutex.h"
 #include <OgreDynLib.h>
@@ -74,13 +85,13 @@
 
 void UpdateSceneNodeAttachments();
 
-
 // We delay load DX9 so it's not required if running GL
 #ifdef _DEBUG
 #	pragma comment(lib, "d3dx9d.lib")
 #else
 #	pragma comment(lib, "d3dx9.lib")
 #endif
+
 
 GMFN double Initialize(char *plugins_cfg, char *ogre_cfg, char *log_file)
 {
@@ -221,7 +232,7 @@ GMFN double StartEngine(double render_engine, double hwnd, double window_width, 
  
       // Attach to existing GM window
       Ogre::NameValuePairList opts;
-      opts["parentWindowHandle"] = Ogre::StringConverter::toString((size_t)mHWnd);
+      opts["externalWindowHandle"] = Ogre::StringConverter::toString((size_t)mHWnd);
       opts["left"] = "0";
       opts["top"] = "0";
       if (mUseVSync)
@@ -382,9 +393,15 @@ GMFN double SaveScreenshot(char *filename)
 
 GMFN char *GetOgre3DVersion()
 {
-   return "GMOgre3D v0.94";
+   return "GMOgre3D v0.98";
 }
 
+GMFN double SetRotationMode(double mode)
+{
+   mRotationMode = static_cast<RotationMode>((int)mode);
+
+   return TRUE;
+}
 
 GMFN double HasCapability(double capability)
 {
@@ -400,6 +417,12 @@ GMFN double HasCapability(double capability)
       return FALSE;
 
    return rsc->hasCapability(static_cast<Ogre::Capabilities>((int)capability));
+}
+
+
+GMFN double IsGPUSyntaxSupported(char *syntax)
+{
+   return Ogre::GpuProgramManager::getSingleton().isSyntaxSupported(syntax);
 }
 
 
@@ -433,7 +456,7 @@ void UpdateSceneNodeAttachments()
                if (gminst->mGMInstancePtr->x != gminst->mLastX || gminst->mGMInstancePtr->y != gminst->mLastY || *gminst->pZ != gminst->mLastZ)
                {
                   GMPosChanged = true;
-                  node->setPosition(gminst->mGMInstancePtr->x, *gminst->pZ, gminst->mGMInstancePtr->y);
+                  node->setPosition(ConvertFromGMAxis(gminst->mGMInstancePtr->x, *gminst->pZ, gminst->mGMInstancePtr->y));
 
                   if (gminst->BodyAttached && gminst->mBody)
                      SetNewtonBodyPosition(ConvertToGMPointer(gminst->mBody), gminst->mGMInstancePtr->x, gminst->mGMInstancePtr->y, *gminst->pZ);
@@ -453,16 +476,16 @@ void UpdateSceneNodeAttachments()
                // Update scene node scale if GM scale changed.
                if (*gminst->pScaleX != gminst->mLastScaleX || *gminst->pScaleY != gminst->mLastScaleY || *gminst->pScaleZ != gminst->mLastScaleZ)
                {
-                  node->scale(*gminst->pScaleX, *gminst->pScaleZ, *gminst->pScaleY);
+                  node->scale(ConvertFromGMAxis(*gminst->pScaleX, *gminst->pScaleZ, *gminst->pScaleY));
                }
 
                // Update GM vars if needed
                if (!GMPosChanged)
                {
-                  Ogre::Vector3 pos = node->getPosition();
+                  Ogre::Vector3 pos = ConvertToGMAxis(node->getPosition());
                   gminst->mGMInstancePtr->x = pos.x;
-                  gminst->mGMInstancePtr->y = pos.z;
-                  *gminst->pZ = pos.y;
+                  gminst->mGMInstancePtr->y = pos.y;
+                  *gminst->pZ = pos.z;
                }
                if (!GMRotChanged)
                {
@@ -472,10 +495,10 @@ void UpdateSceneNodeAttachments()
                   *gminst->pRoll = orient.getRoll().valueDegrees();
                }
                {
-                  Ogre::Vector3 scale = node->getScale();
+                  Ogre::Vector3 scale = ConvertToGMAxis(node->getScale());
                   *gminst->pScaleX = scale.x;
-                  *gminst->pScaleY = scale.z;
-                  *gminst->pScaleZ = scale.y;
+                  *gminst->pScaleY = scale.y;
+                  *gminst->pScaleZ = scale.z;
                }
             }
 

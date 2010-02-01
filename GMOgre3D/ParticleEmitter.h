@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -34,7 +34,7 @@ GMFN double SetParticleEmitterPosition(double part_emit_ptr, double xfrom, doubl
    if (part_emit == NULL)
       return FALSE;
 
-   part_emit->setPosition(Ogre::Vector3(xfrom, yfrom, zfrom));
+   part_emit->setPosition(ConvertFromGMAxis(xfrom, yfrom, zfrom));
 
    return TRUE;
 }
@@ -47,7 +47,7 @@ GMFN double SetParticleEmitterDirection(double part_emit_ptr, double xto, double
    if (part_emit == NULL)
       return FALSE;
 
-   part_emit->setDirection(Ogre::Vector3(xto, yto, zto));
+   part_emit->setDirection(ConvertFromGMAxis(xto, yto, zto));
 
    return TRUE;
 }

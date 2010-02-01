@@ -21,63 +21,39 @@ http://www.gnu.org/copyleft/lesser.txt.
 --------------------------------------------------------------------------------
 */
 
-#ifndef GMOGRE_SUB_ENTITY_H
-#define GMOGRE_SUB_ENTITY_H
+#ifndef GMOGRE_CCS_FIRST_PERSON_CAMERA_MODE_H
+#define GMOGRE_CCS_FIRST_PERSON_CAMERA_MODE_H
 
 #include "GMOgre3D.h"
-#include "Material.h"
+#include "CCSCameraControlSystem.h"
+#include "CCSBasicCameraModes.h"
+#include "CCSOrbitalCameraMode.h"
+#include "CCSFreeCameraMode.h"
 
 
-GMFN double SetSubEntityMaterial(double sub_entity_ptr, char *mat_name)
+GMFN double ShowFirstPersonCameraModeCharacter(double camera_mode_ptr)
 {
-   Ogre::SubEntity *sub_ent = ConvertFromGMPointer<Ogre::SubEntity*>(sub_entity_ptr);
+   CCS::FirstPersonCameraMode *cam_mode = ConvertFromGMPointer<CCS::FirstPersonCameraMode*>(camera_mode_ptr);
 
-   if (sub_ent == NULL)
+   if (cam_mode == NULL)
       return FALSE;
 
-   sub_ent->setMaterialName(mat_name);
+   cam_mode->setCharacterVisible(true);
 
    return TRUE;
 }
 
 
-GMFN double ShowSubEntity(double sub_entity_ptr)
+GMFN double HideFirstPersonCameraModeCharacter(double camera_mode_ptr)
 {
-   Ogre::SubEntity *sub_ent = ConvertFromGMPointer<Ogre::SubEntity*>(sub_entity_ptr);
+   CCS::FirstPersonCameraMode *cam_mode = ConvertFromGMPointer<CCS::FirstPersonCameraMode*>(camera_mode_ptr);
 
-   if (sub_ent == NULL)
+   if (cam_mode == NULL)
       return FALSE;
 
-   sub_ent->setVisible(true);
+   cam_mode->setCharacterVisible(false);
 
    return TRUE;
 }
-
-
-GMFN double HideSubEntity(double sub_entity_ptr)
-{
-   Ogre::SubEntity *sub_ent = ConvertFromGMPointer<Ogre::SubEntity*>(sub_entity_ptr);
-
-   if (sub_ent == NULL)
-      return FALSE;
-
-   sub_ent->setVisible(false);
-
-   return TRUE;
-}
-
-
-GMFN double SetSubEntityCustomParameter(double sub_entity_ptr, double index, double p1, double p2, double p3, double p4)
-{
-   Ogre::SubEntity *sub_ent = ConvertFromGMPointer<Ogre::SubEntity*>(sub_entity_ptr);
-
-   if (sub_ent == NULL)
-      return FALSE;
-
-   sub_ent->setCustomParameter((size_t)index, Ogre::Vector4(p1, p2, p3, p4));
-
-   return TRUE;
-}
-
 
 #endif

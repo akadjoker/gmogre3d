@@ -21,33 +21,24 @@ http://www.gnu.org/copyleft/lesser.txt.
 --------------------------------------------------------------------------------
 */
 
-#ifndef GMOGRE_EULER_H
-#define GMOGRE_EULER_H
+#ifndef GMOGRE_CCS_PLANE_BINDED_CAMERA_MODE_H
+#define GMOGRE_CCS_PLANE_BINDED_CAMERA_MODE_H
 
 #include "GMOgre3D.h"
+#include "CCSCameraControlSystem.h"
+#include "CCSBasicCameraModes.h"
+#include "CCSOrbitalCameraMode.h"
+#include "CCSFreeCameraMode.h"
 
 
-GMFN double GetRotationTo(double fromx, double fromz, double fromy, double tox, double toz, double toy)
+GMFN double SetPlaneBindedCameraModeTightness(double camera_mode_ptr, double tightness)
 {
-   Ogre::Vector3 direction = ConvertFromGMAxis(fromx, fromy, fromz) - ConvertFromGMAxis(tox, toy, toz);
-   Ogre::Quaternion orientation;
+   CCS::PlaneBindedCameraMode *cam_mode = ConvertFromGMPointer<CCS::PlaneBindedCameraMode*>(camera_mode_ptr);
 
-   direction.normalise();
+   if (cam_mode == NULL)
+      return FALSE;
 
-   // Test for opposite vectors
-   Ogre::Real d = 1.0f + Ogre::Vector3::UNIT_X.dotProduct(direction);
-   if (fabs(d) < 0.00001)
-      orientation.FromAxes(Ogre::Vector3::NEGATIVE_UNIT_X, Ogre::Vector3::UNIT_Y, Ogre::Vector3::NEGATIVE_UNIT_Z);
-   else
-      orientation = Ogre::Vector3::UNIT_X.getRotationTo(direction);
-
-   AcquireGMEulerGlobals();
-   if (mEulerYaw != NULL)
-   {
-      *mEulerYaw = ConvertToGMYaw(orientation.getYaw().valueDegrees());
-      *mEulerPitch = orientation.getPitch().valueDegrees();
-      *mEulerRoll = orientation.getRoll().valueDegrees();
-   }
+   cam_mode->setCameraTightness(tightness);
 
    return TRUE;
 }

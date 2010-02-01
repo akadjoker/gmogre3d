@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -290,6 +290,22 @@ GMFN double GetNumMaterialTechniques(char *name)
       return 0;
 
    return mat->getNumTechniques();
+}
+
+
+GMFN double SetDefaultMaterialTextureFiltering(double type)
+{
+   Ogre::MaterialManager::getSingleton().setDefaultTextureFiltering(static_cast<Ogre::TextureFilterOptions>((int)type));
+
+   return TRUE;
+}
+
+
+GMFN double SetDefaultMaterialAnisotropy(double anisotropy)
+{
+   Ogre::MaterialManager::getSingleton().setDefaultAnisotropy(anisotropy);
+
+   return TRUE;
 }
 
 #endif

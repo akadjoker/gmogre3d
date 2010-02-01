@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -25,6 +25,8 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define GMOGRE_FRAMELISTENER_H
 
 #include "OgreNewt_World.h"
+#include "CCSCameraControlSystem.h"
+
 
 class GMFrameListener: public Ogre::FrameListener
 {
@@ -41,11 +43,18 @@ public:
    bool frameStarted(const Ogre::FrameEvent& evt);
    bool frameEnded(const Ogre::FrameEvent& evt);
 
+   //bool processUnbufferedMouseInput(const Ogre::FrameEvent& evt);
+
+   void SetStartFrameCallback(int func);
+   void SetEndFrameCallback(int func);
+
 protected:
    //Ogre2dManager *mOgre2DManager;
    bool mDisplayFPS;
    bool mDisplayNewtonDebugger;
    OgreNewt::World *mNewtonWorld;
+   int mFrameStartedCallback;
+   int mFrameEndedCallback;
 };
 
 #endif

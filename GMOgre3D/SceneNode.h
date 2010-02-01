@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -64,7 +64,7 @@ GMFN double CreateRootChildSceneNode(double x, double z, double y, double yaw, d
    Ogre::SceneNode *node = NULL;
    
    TRY
-      node = mSceneMgr->getRootSceneNode()->createChildSceneNode(Ogre::Vector3(x, y, z), Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)));
+      node = mSceneMgr->getRootSceneNode()->createChildSceneNode(ConvertFromGMAxis(x, y, z), Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)));
    CATCH("CreateRootChildSceneNode")
    
    return ConvertToGMPointer(node);
@@ -81,7 +81,10 @@ GMFN double CreateChildSceneNode(double scene_node_ptr, double x, double z, doub
    Ogre::SceneNode *child_node = NULL;
    
    TRY
-      child_node = scene_node->createChildSceneNode(Ogre::Vector3(x, y, z), Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)));
+      if (scene_node == mSceneMgr->getRootSceneNode())
+         child_node = scene_node->createChildSceneNode(ConvertFromGMAxis(x, y, z), Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)));
+      else
+         child_node = scene_node->createChildSceneNode(ConvertFromGMAxis(x, y, z), Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree(pitch), Ogre::Degree(roll)));
    CATCH("CreateChildSceneNode")
 
    return ConvertToGMPointer(child_node);
@@ -204,7 +207,7 @@ GMFN double SetSceneNodeScale(double scene_node_ptr, double x, double z, double 
    if (scene_node == NULL)
       return FALSE;
 
-   scene_node->setScale(Ogre::Vector3(x, y, z));
+   scene_node->setScale(ConvertFromGMAxis(x, y, z));
    
    return TRUE;
 }
@@ -219,26 +222,20 @@ GMFN double GetSceneNodeScale(double scene_node_ptr)
 
    Ogre::Vector3 vec = scene_node->getScale();
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      *mVectorX = vec.x;
-      *mVectorY = vec.z;
-      *mVectorZ = vec.y;
-   }
+   SetGMVectorGlobals(vec);
 
    return TRUE;
 }
 
 
-GMFN double SetSceneNodePosition(double scene_node_ptr, double xfrom, double zfrom, double yfrom)
+GMFN double SetSceneNodePosition(double scene_node_ptr, double x, double z, double y)
 {
    Ogre::SceneNode *scene_node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
 
    if (scene_node == NULL)
       return FALSE;
 
-   scene_node->setPosition(Ogre::Vector3(xfrom, yfrom, zfrom));
+   scene_node->setPosition(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -253,13 +250,22 @@ GMFN double GetSceneNodePosition(double scene_node_ptr)
 
    Ogre::Vector3 vec = scene_node->getPosition();
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      *mVectorX = vec.x;
-      *mVectorY = vec.z;
-      *mVectorZ = vec.y;
-   }
+   SetGMVectorGlobals(vec);
+
+   return TRUE;
+}
+
+
+GMFN double GetSceneNodeDerivedPosition(double scene_node_ptr)
+{
+   Ogre::SceneNode *scene_node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
+
+   if (scene_node == NULL)
+      return FALSE;
+
+   Ogre::Vector3 vec = scene_node->_getDerivedPosition();
+
+   SetGMVectorGlobals(vec);
 
    return TRUE;
 }
@@ -272,7 +278,7 @@ GMFN double SetSceneNodeDirection(double scene_node_ptr, double xto, double zto,
    if (scene_node == NULL)
       return FALSE;
 
-   scene_node->setDirection(xto, yto, zto, static_cast<Ogre::Node::TransformSpace>((int)relative_type));
+   scene_node->setDirection(ConvertFromGMAxis(xto, yto, zto), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
 
    return TRUE;
 }
@@ -285,7 +291,7 @@ GMFN double SetSceneNodeLookAt(double scene_node_ptr, double xup, double zup, do
    if (scene_node == NULL)
       return FALSE;
 
-   scene_node->lookAt(Ogre::Vector3(xup, yup, zup), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
+   scene_node->lookAt(ConvertFromGMAxis(xup, yup, zup), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
 
    return TRUE;
 }
@@ -304,6 +310,24 @@ GMFN double SetSceneNodeInitalState(double scene_node_ptr)
 }
 
 
+GMFN double SetSceneNodeDerivedOrientation(double scene_node_ptr, double yaw, double pitch, double roll)
+{
+   //DisplayError("cool1");
+   Ogre::SceneNode *scene_node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
+
+   if (scene_node == NULL)
+      return FALSE;
+
+   // This bit of trickery can be replaced with a simple _setDerivedOrientation call once
+   // OGRE 1.7 is released and merged into GMOgre.
+   //DisplayError("Old: " + Ogre::StringConverter::toString((floag)yaw) + ", New: " + Ogre::StringConverter::toString(Ogre::Degree(ConvertFromGMYaw(yaw)).valueDegrees()));
+   scene_node->setOrientation(scene_node->getParent()->_getDerivedOrientation().Inverse() * Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)));
+   //scene_node->_setDerivedOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)));
+
+   return TRUE;
+}
+
+
 GMFN double SetSceneNodeOrientation(double scene_node_ptr, double yaw, double pitch, double roll)
 {
    Ogre::SceneNode *scene_node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
@@ -311,7 +335,12 @@ GMFN double SetSceneNodeOrientation(double scene_node_ptr, double yaw, double pi
    if (scene_node == NULL)
       return FALSE;
 
-   scene_node->setOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)));
+   // If we are a child scene node that inherits our parents orientation then
+   // we don't WANT to yaw -90... so take this into consideration!
+   if (scene_node->getParentSceneNode() == mSceneMgr->getRootSceneNode())
+      scene_node->setOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)));
+   else
+      scene_node->setOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree(pitch), Ogre::Degree(roll)));
 
    return TRUE;
 }
@@ -329,7 +358,10 @@ GMFN double GetSceneNodeOrientation(double scene_node_ptr)
    AcquireGMEulerGlobals();
    if (mEulerYaw != NULL)
    {
-      *mEulerYaw = ConvertToGMYaw(quat.getYaw().valueDegrees());
+      if (scene_node->getParentSceneNode() == mSceneMgr->getRootSceneNode())
+         *mEulerYaw = ConvertToGMYaw(quat.getYaw().valueDegrees());
+      else
+         *mEulerYaw = ConvertToGMYaw(quat.getYaw().valueDegrees() - 90);
       *mEulerPitch = quat.getPitch().valueDegrees();
       *mEulerRoll = quat.getRoll().valueDegrees();
    }
@@ -345,7 +377,7 @@ GMFN double SetSceneNodeRoll(double scene_node_ptr, double degrees, double relat
    if (scene_node == NULL)
       return FALSE;
 
-   scene_node->roll(Ogre::Radian(Ogre::Degree(degrees)), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
+   scene_node->roll(Ogre::Degree(degrees), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
 
    return TRUE;
 }
@@ -371,7 +403,7 @@ GMFN double SetSceneNodeYaw(double scene_node_ptr, double degrees, double relati
    if (scene_node == NULL)
       return FALSE;
 
-   scene_node->yaw(Ogre::Radian(Ogre::Degree(degrees)), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
+   scene_node->yaw(Ogre::Degree(degrees), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
 
    return TRUE;
 }
@@ -397,7 +429,7 @@ GMFN double SetSceneNodePitch(double scene_node_ptr, double degrees, double rela
    if (scene_node == NULL)
       return FALSE;
 
-   scene_node->pitch(Ogre::Radian(Ogre::Degree(degrees)), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
+   scene_node->pitch(Ogre::Degree(degrees), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
 
    return TRUE;
 }
@@ -430,7 +462,7 @@ GMFN double RotateSceneNode(double scene_node_ptr, double x, double z, double y,
    if (scene_node == NULL)
       return FALSE;
 
-   scene_node->rotate(Ogre::Vector3(x, y, z), Ogre::Degree(degrees), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
+   scene_node->rotate(ConvertFromGMAxis(x, y, z), Ogre::Degree(degrees), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
 
    return TRUE;
 }
@@ -456,7 +488,7 @@ GMFN double TranslateSceneNode(double scene_node_ptr, double x, double z, double
    if (scene_node == NULL)
       return FALSE;
 
-   scene_node->translate(z, y, z, static_cast<Ogre::Node::TransformSpace>((int)relative_type));
+   scene_node->translate(ConvertFromGMAxis(x, y, z), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
 
    return TRUE;
 }
@@ -601,13 +633,7 @@ GMFN double GetSceneNodeBoundingBoxSize(double scene_node_ptr)
 
    Ogre::Vector3 vec = scene_node->_getWorldAABB().getSize();
 
-   AcquireGMVectorGlobals();
-   if (mVectorX != NULL)
-   {
-      *mVectorX = vec.x;
-      *mVectorY = vec.z;
-      *mVectorZ = vec.y;
-   }
+   SetGMVectorGlobals(vec);
 
    return TRUE;
 }
@@ -650,9 +676,9 @@ GMFN double AttachSceneNodeToGMInstance(double scene_node_ptr, double gm_instanc
    mSceneNodeAttachments[scene_node] = gminst;
 
    // Snap to current position, orientation, and scale
-   scene_node->setPosition(gminst.mLastX, gminst.mLastZ, gminst.mLastY);
+   scene_node->setPosition(ConvertFromGMAxis(gminst.mLastX, gminst.mLastZ, gminst.mLastY));
    scene_node->setOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(gminst.mGMInstancePtr->direction)), Ogre::Degree(*gminst.pPitch), Ogre::Degree(*gminst.pRoll)));
-   scene_node->setScale(gminst.mLastScaleX, gminst.mLastScaleZ, gminst.mLastScaleY);
+   scene_node->setScale(ConvertFromGMAxis(gminst.mLastScaleX, gminst.mLastScaleZ, gminst.mLastScaleY));
 
    if (gminst.BodyAttached && gminst.mBody != NULL)
    {

@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -174,7 +174,7 @@ GMFN double SetNewtonWorldSize(double newton_world_ptr, double minx, double minz
    if (!newton_world)
       return FALSE;
    
-   newton_world->setWorldSize(Ogre::Vector3(minx, miny, minz), Ogre::Vector3(maxx, maxy, maxz));
+   newton_world->setWorldSize(ConvertFromGMAxis(minx, miny, minz), ConvertFromGMAxis(maxx, maxy, maxz));
 
    return TRUE;
 }
@@ -198,7 +198,7 @@ GMFN double SetNewtonWorldGravity(double newton_world_ptr, double x, double z, d
    if (!newton_world)
       return FALSE;
 
-   newton_world->setWorldGravity(Ogre::Vector3(x, y, z));
+   newton_world->setWorldGravity(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }

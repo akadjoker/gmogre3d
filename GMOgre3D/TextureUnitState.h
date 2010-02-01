@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
-Copyright (C) 2009 Robert Geiman
+Copyright (C) 2010 Robert Geiman
                    <robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -197,6 +197,19 @@ GMFN double SetTextureUnitStateTextureFiltering(double tex_unit_ptr, double type
       return FALSE;
 
    tex_unit->setTextureFiltering(static_cast<Ogre::TextureFilterOptions>((int)type));
+
+   return TRUE;
+}
+
+
+GMFN double SetTextureUnitStateTextureAnisotropy(double tex_unit_ptr, double level)
+{
+   Ogre::TextureUnitState *tex_unit = ConvertFromGMPointer<Ogre::TextureUnitState *>(tex_unit_ptr);
+
+   if (tex_unit == NULL)
+      return FALSE;
+
+   tex_unit->setTextureAnisotropy(level);
 
    return TRUE;
 }
