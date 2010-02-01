@@ -371,6 +371,10 @@ namespace Ogre {
                 vpWidth = (Real) (oMgr.getViewportWidth());
                 vpHeight = (Real) (oMgr.getViewportHeight());
 
+                // cope with temporarily zero dimensions, avoid divide by zero
+				    vpWidth = vpWidth == 0.0f? 1.0f : vpWidth;
+				    vpHeight = vpHeight == 0.0f? 1.0f : vpHeight;
+
                 mPixelScaleX = 1.0 / vpWidth;
                 mPixelScaleY = 1.0 / vpHeight;
 
@@ -388,6 +392,10 @@ namespace Ogre {
                 OverlayManager& oMgr = OverlayManager::getSingleton();
                 vpWidth = (Real) (oMgr.getViewportWidth());
                 vpHeight = (Real) (oMgr.getViewportHeight());
+
+                // cope with temporarily zero dimensions, avoid divide by zero
+				    vpWidth = vpWidth == 0.0f? 1.0f : vpWidth;
+				    vpHeight = vpHeight == 0.0f? 1.0f : vpHeight;
 
                 mPixelScaleX = 1.0 / (10000.0 * (vpWidth / vpHeight));
                 mPixelScaleY = 1.0 /  10000.0;
@@ -442,10 +450,18 @@ namespace Ogre {
             RenderSystem* rSys = Root::getSingleton().getRenderSystem();
             OverlayManager& oMgr = OverlayManager::getSingleton();
 
+            Real vpWidth, vpHeight;
+            vpWidth = (Real) (oMgr.getViewportWidth());
+            vpHeight = (Real) (oMgr.getViewportHeight());
+            
+            // cope with temporarily zero dimensions, avoid divide by zero
+				vpWidth = vpWidth == 0.0f? 1.0f : vpWidth;
+				vpHeight = vpHeight == 0.0f? 1.0f : vpHeight;
+
             // Calculate offsets required for mapping texel origins to pixel origins in the
             // current rendersystem
-            Real hOffset = rSys->getHorizontalTexelOffset() / oMgr.getViewportWidth();
-            Real vOffset = rSys->getVerticalTexelOffset() / oMgr.getViewportHeight();
+            Real hOffset = rSys->getHorizontalTexelOffset() / vpWidth;
+            Real vOffset = rSys->getVerticalTexelOffset() / vpHeight;
 
             parentLeft = 0.0f + hOffset;
             parentTop = 0.0f + vOffset;
@@ -580,6 +596,10 @@ namespace Ogre {
                 vpWidth = (Real) (oMgr.getViewportWidth());
                 vpHeight = (Real) (oMgr.getViewportHeight());
 
+                // cope with temporarily zero dimensions, avoid divide by zero
+				    vpWidth = vpWidth == 0.0f? 1.0f : vpWidth;
+				    vpHeight = vpHeight == 0.0f? 1.0f : vpHeight;
+
                 mPixelScaleX = 1.0 / vpWidth;
                 mPixelScaleY = 1.0 / vpHeight;
             }
@@ -591,6 +611,10 @@ namespace Ogre {
                 OverlayManager& oMgr = OverlayManager::getSingleton();
                 vpWidth = (Real) (oMgr.getViewportWidth());
                 vpHeight = (Real) (oMgr.getViewportHeight());
+
+                // cope with temporarily zero dimensions, avoid divide by zero
+				    vpWidth = vpWidth == 0.0f? 1.0f : vpWidth;
+				    vpHeight = vpHeight == 0.0f? 1.0f : vpHeight;
 
                 mPixelScaleX = 1.0 / (10000.0 * (vpWidth / vpHeight));
                 mPixelScaleY = 1.0 /  10000.0;
@@ -708,10 +732,10 @@ namespace Ogre {
                 OverlayManager& oMgr = OverlayManager::getSingleton();
                 vpWidth = (Real) (oMgr.getViewportWidth());
                 vpHeight = (Real) (oMgr.getViewportHeight());
-
-				// cope with temporarily zero dimensions, avoid divide by zero
-				vpWidth = vpWidth == 0.0f? 1.0f : vpWidth;
-				vpHeight = vpHeight == 0.0f? 1.0f : vpHeight;
+				
+                // cope with temporarily zero dimensions, avoid divide by zero
+				    vpWidth = vpWidth == 0.0f? 1.0f : vpWidth;
+				    vpHeight = vpHeight == 0.0f? 1.0f : vpHeight;
 
                 mPixelScaleX = 1.0 / vpWidth;
                 mPixelScaleY = 1.0 / vpHeight;
@@ -732,6 +756,10 @@ namespace Ogre {
                 OverlayManager& oMgr = OverlayManager::getSingleton();
                 vpWidth = (Real) (oMgr.getViewportWidth());
                 vpHeight = (Real) (oMgr.getViewportHeight());
+
+                // cope with temporarily zero dimensions, avoid divide by zero
+				    vpWidth = vpWidth == 0.0f? 1.0f : vpWidth;
+				    vpHeight = vpHeight == 0.0f? 1.0f : vpHeight;
 
                 mPixelScaleX = 1.0 / (10000.0 * (vpWidth / vpHeight));
                 mPixelScaleY = 1.0 /  10000.0;

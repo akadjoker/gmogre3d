@@ -550,6 +550,10 @@ namespace Ogre {
 		vpWidth = (Real) (OverlayManager::getSingleton().getViewportWidth());
 		vpHeight = (Real) (OverlayManager::getSingleton().getViewportHeight());
 
+		// cope with temporarily zero dimensions, avoid divide by zero
+      vpWidth = vpWidth == 0.0f? 1.0f : vpWidth;
+      vpHeight = vpHeight == 0.0f? 1.0f : vpHeight;
+
 		mViewportAspectCoef = vpHeight/vpWidth;
 
 		OverlayElement::setMetricsMode(gmm);
