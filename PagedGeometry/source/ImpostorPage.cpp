@@ -452,6 +452,8 @@ void ImpostorTexture::regenerateAll()
 
 void ImpostorTexture::renderTextures(bool force)
 {
+   LogManager::getSingleton().logMessage("renderTextures - 1");
+
 #ifdef IMPOSTOR_FILE_SAVE
 	TexturePtr renderTexture;
 #else
@@ -463,78 +465,96 @@ void ImpostorTexture::renderTextures(bool force)
 	Camera *renderCamera;
 	Viewport *renderViewport;
 	SceneNode *camNode;
-
+LogManager::getSingleton().logMessage("renderTextures - 2");
 	//Set up RTT texture
 	uint32 textureSize = ImpostorPage::impostorResolution;
+LogManager::getSingleton().logMessage("renderTextures - 3");
 	if (renderTexture.isNull()) {
+LogManager::getSingleton().logMessage("renderTextures - 4");
 	renderTexture = TextureManager::getSingleton().createManual(getUniqueID("ImpostorTexture"), "Impostors",
 				TEX_TYPE_2D, textureSize * IMPOSTOR_YAW_ANGLES, textureSize * IMPOSTOR_PITCH_ANGLES, 0, PF_A8R8G8B8, TU_RENDERTARGET, loader.get());
 	}
+LogManager::getSingleton().logMessage("renderTextures - 5");
 	renderTexture->setNumMipmaps(MIP_UNLIMITED);
-	
+LogManager::getSingleton().logMessage("renderTextures - 6");
 	//Set up render target
 	renderTarget = renderTexture->getBuffer()->getRenderTarget(); 
+LogManager::getSingleton().logMessage("renderTextures - 7");
 	renderTarget->setAutoUpdated(false);
-	
+LogManager::getSingleton().logMessage("renderTextures - 8");
 	//Set up camera
 	camNode = sceneMgr->getSceneNode("ImpostorPage::cameraNode");
 	renderCamera = sceneMgr->createCamera(getUniqueID("ImpostorCam"));
+LogManager::getSingleton().logMessage("renderTextures - 9");
 	camNode->attachObject(renderCamera);
+LogManager::getSingleton().logMessage("renderTextures - 10");
 	renderCamera->setLodBias(1000.0f);
 	renderViewport = renderTarget->addViewport(renderCamera);
+LogManager::getSingleton().logMessage("renderTextures - 11");
 	renderViewport->setOverlaysEnabled(false);
 	renderViewport->setClearEveryFrame(true);
 	renderViewport->setShadowsEnabled(false);
+LogManager::getSingleton().logMessage("renderTextures - 12");
 	renderViewport->setBackgroundColour(ImpostorPage::impostorBackgroundColor);
-	
+LogManager::getSingleton().logMessage("renderTextures - 13");
 	//Set up scene node
 	SceneNode* node = sceneMgr->getSceneNode("ImpostorPage::renderNode");
-	
+LogManager::getSingleton().logMessage("renderTextures - 14");
 	Ogre::SceneNode* oldSceneNode = entity->getParentSceneNode();
+LogManager::getSingleton().logMessage("renderTextures - 15");
 	if (oldSceneNode) {
+LogManager::getSingleton().logMessage("renderTextures - 16");
 		oldSceneNode->detachObject(entity);
 	}
+LogManager::getSingleton().logMessage("renderTextures - 17");
 	node->attachObject(entity);
 	node->setPosition(-entityCenter);
-	
+LogManager::getSingleton().logMessage("renderTextures - 18");
 	//Set up camera FOV
 	const Real objDist = entityRadius * 100;
 	const Real nearDist = objDist - (entityRadius + 1); 
 	const Real farDist = objDist + (entityRadius + 1);
-	
+LogManager::getSingleton().logMessage("renderTextures - 19");
 	renderCamera->setAspectRatio(1.0f);
+LogManager::getSingleton().logMessage("renderTextures - 20");
 	renderCamera->setFOVy(Math::ATan(entityDiameter / objDist));
 	renderCamera->setNearClipDistance(nearDist);
 	renderCamera->setFarClipDistance(farDist);
-	
+LogManager::getSingleton().logMessage("renderTextures - 21");
 	//Disable mipmapping (without this, masked textures look bad)
 	MaterialManager *mm = MaterialManager::getSingletonPtr();
+LogManager::getSingleton().logMessage("renderTextures - 22");
 	FilterOptions oldMinFilter = mm->getDefaultTextureFiltering(FT_MIN);
+LogManager::getSingleton().logMessage("renderTextures - 23");
 	FilterOptions oldMagFilter = mm->getDefaultTextureFiltering(FT_MAG);
 	FilterOptions oldMipFilter = mm->getDefaultTextureFiltering(FT_MIP);
+LogManager::getSingleton().logMessage("renderTextures - 24");
 	mm->setDefaultTextureFiltering(FO_POINT, FO_LINEAR, FO_NONE);
-
+LogManager::getSingleton().logMessage("renderTextures - 25");
 	//Disable fog
 	FogMode oldFogMode = sceneMgr->getFogMode();
+LogManager::getSingleton().logMessage("renderTextures - 26");
 	ColourValue oldFogColor = sceneMgr->getFogColour();
 	Real oldFogDensity = sceneMgr->getFogDensity();
 	Real oldFogStart = sceneMgr->getFogStart();
 	Real oldFogEnd = sceneMgr->getFogEnd();
+LogManager::getSingleton().logMessage("renderTextures - 27");
 	sceneMgr->setFog(FOG_NONE);
-	
+LogManager::getSingleton().logMessage("renderTextures - 28");
 	// Get current status of the queue mode
 	Ogre::SceneManager::SpecialCaseRenderQueueMode OldSpecialCaseRenderQueueMode = sceneMgr->getSpecialCaseRenderQueueMode();
 	//Only render the entity
 	sceneMgr->setSpecialCaseRenderQueueMode(Ogre::SceneManager::SCRQM_INCLUDE); 
 	sceneMgr->addSpecialCaseRenderQueue(RENDER_QUEUE_6 + 1);
-
+LogManager::getSingleton().logMessage("renderTextures - 29");
 	uint8 oldRenderQueueGroup = entity->getRenderQueueGroup();
 	entity->setRenderQueueGroup(RENDER_QUEUE_6 + 1);
 	bool oldVisible = entity->getVisible();
+LogManager::getSingleton().logMessage("renderTextures - 30");
 	entity->setVisible(true);
 	float oldMaxDistance = entity->getRenderingDistance();
 	entity->setRenderingDistance(0);
-
+LogManager::getSingleton().logMessage("renderTextures - 31");
 	bool needsRegen = true;
 #ifdef IMPOSTOR_FILE_SAVE
 	//Calculate the filename hash used to uniquely identity this render
@@ -543,27 +563,35 @@ void ImpostorTexture::renderTextures(bool force)
 	uint32 i = 0;
 	for (String::const_iterator it = entityKey.begin(); it != entityKey.end(); ++it)
 	{
+LogManager::getSingleton().logMessage("renderTextures - 32");
 		key[i] ^= *it;
 		i = (i+1) % sizeof(key);
+LogManager::getSingleton().logMessage("renderTextures - 33");
 	}
+LogManager::getSingleton().logMessage("renderTextures - 34");
 	for (i = 0; i < sizeof(key); ++i)
 		key[i] = (key[i] % 26) + 'A';
-
+LogManager::getSingleton().logMessage("renderTextures - 35");
 	String tempdir = this->group->geom->getTempdir();
+LogManager::getSingleton().logMessage("renderTextures - 36");
 	ResourceGroupManager::getSingleton().addResourceLocation(tempdir, "FileSystem", "BinFolder");
-
+LogManager::getSingleton().logMessage("renderTextures - 37");
 	String fileNamePNG = "Impostor." + String(key, sizeof(key)) + '.' + StringConverter::toString(textureSize) + ".png";
 	String fileNameDDS = "Impostor." + String(key, sizeof(key)) + '.' + StringConverter::toString(textureSize) + ".dds";
-
+LogManager::getSingleton().logMessage("renderTextures - 38");
 	//Attempt to load the pre-render file if allowed
 	needsRegen = force;
 	if (!needsRegen){
 		try{
+LogManager::getSingleton().logMessage("renderTextures - 39");
 			texture = TextureManager::getSingleton().load(fileNameDDS, "BinFolder", TEX_TYPE_2D, MIP_UNLIMITED);
+LogManager::getSingleton().logMessage("renderTextures - 40");
 		}
 		catch (...){
 			try{
+LogManager::getSingleton().logMessage("renderTextures - 41");
 				texture = TextureManager::getSingleton().load(fileNamePNG, "BinFolder", TEX_TYPE_2D, MIP_UNLIMITED);
+LogManager::getSingleton().logMessage("renderTextures - 42");
 			}
 			catch (...){
 				needsRegen = true;
@@ -571,8 +599,9 @@ void ImpostorTexture::renderTextures(bool force)
 		}
 	}
 #endif
-
+LogManager::getSingleton().logMessage("renderTextures - 43");
 	if (needsRegen){
+LogManager::getSingleton().logMessage("renderTextures - 44");
 		//If this has not been pre-rendered, do so now
 		const float xDivFactor = 1.0f / IMPOSTOR_YAW_ANGLES;
 		const float yDivFactor = 1.0f / IMPOSTOR_PITCH_ANGLES;
@@ -582,50 +611,50 @@ void ImpostorTexture::renderTextures(bool force)
 #else
 			Radian pitch = Degree((180.0f * o) * yDivFactor - 90.0f);
 #endif
-
+LogManager::getSingleton().logMessage("renderTextures - 45");
 			for (int i = 0; i < IMPOSTOR_YAW_ANGLES; ++i){ //8 yaw angle renders
 				Radian yaw = Degree((360.0f * i) * xDivFactor); //0, 45, 90, 135, 180, 225, 270, 315
-					
+LogManager::getSingleton().logMessage("renderTextures - 46");
 				//Position camera
 				camNode->setPosition(0, 0, 0);
                 camNode->setOrientation(Quaternion(yaw, Vector3::UNIT_Y) * Quaternion(-pitch, Vector3::UNIT_X));
                 camNode->translate(Vector3(0, 0, objDist), Node::TS_LOCAL);
-						
+LogManager::getSingleton().logMessage("renderTextures - 47");
 				//Render the impostor
 				renderViewport->setDimensions((float)(i) * xDivFactor, (float)(o) * yDivFactor, xDivFactor, yDivFactor);
 				renderTarget->update();
+LogManager::getSingleton().logMessage("renderTextures - 48");
 			}
 		}
-	
+LogManager::getSingleton().logMessage("renderTextures - 49");
 #ifdef IMPOSTOR_FILE_SAVE
 		//Save RTT to file with respecting the temp dir
 		renderTarget->writeContentsToFile(tempdir + fileNamePNG);
-
+LogManager::getSingleton().logMessage("renderTextures - 50");
 		//Load the render into the appropriate texture view
 		texture = TextureManager::getSingleton().load(fileNamePNG, "BinFolder", TEX_TYPE_2D, MIP_UNLIMITED);
 #else
 		texture = renderTexture;
 #endif
 	}
-	
-
+LogManager::getSingleton().logMessage("renderTextures - 51");
 	entity->setVisible(oldVisible);
 	entity->setRenderQueueGroup(oldRenderQueueGroup);
 	entity->setRenderingDistance(oldMaxDistance);
 	sceneMgr->removeSpecialCaseRenderQueue(RENDER_QUEUE_6 + 1);
 	// Restore original state
 	sceneMgr->setSpecialCaseRenderQueueMode(OldSpecialCaseRenderQueueMode); 
-
+LogManager::getSingleton().logMessage("renderTextures - 52");
 	//Re-enable mipmapping
 	mm->setDefaultTextureFiltering(oldMinFilter, oldMagFilter, oldMipFilter);
-
+LogManager::getSingleton().logMessage("renderTextures - 53");
 	//Re-enable fog
 	sceneMgr->setFog(oldFogMode, oldFogColor, oldFogDensity, oldFogStart, oldFogEnd);
-
+LogManager::getSingleton().logMessage("renderTextures - 54");
 	//Delete camera
 	renderTarget->removeViewport(0);
 	renderCamera->getSceneManager()->destroyCamera(renderCamera);
-	
+LogManager::getSingleton().logMessage("renderTextures - 55");
 	//Delete scene node
 	node->detachAllObjects();
 	if (oldSceneNode) {
@@ -640,6 +669,7 @@ void ImpostorTexture::renderTextures(bool force)
 	if (TextureManager::getSingletonPtr())
 		TextureManager::getSingleton().remove(texName2);
 #endif
+LogManager::getSingleton().logMessage("renderTextures - 56");
 }
 
 String ImpostorTexture::removeInvalidCharacters(String s)
