@@ -288,7 +288,7 @@ protected:
     mutable pthread_mutex_t m_ogreMutex;
 #endif
 
-private:
+public:
 
     static void _CDECL newtonLeaveWorld( const NewtonBody* body, int threadIndex );
 
