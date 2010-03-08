@@ -1,0 +1,64 @@
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CEGUIBase", "CEGUIBase.vcproj", "{C0D3ABBD-29CB-F04D-9850-7CBEE1269945}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CEGUIFalagardWRBase", "CEGUIFalagardWRBase.vcproj", "{64356EB0-B8D1-B646-A376-153B5AD7A29F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C0D3ABBD-29CB-F04D-9850-7CBEE1269945} = {C0D3ABBD-29CB-F04D-9850-7CBEE1269945}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CEGUIExpatParser", "CEGUIExpatParser.vcproj", "{D13E2B95-6BD5-5B43-A187-89A2C6CF4589}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C0D3ABBD-29CB-F04D-9850-7CBEE1269945} = {C0D3ABBD-29CB-F04D-9850-7CBEE1269945}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CEGUIOgreRenderer", "CEGUIOgreRenderer.vcproj", "{C05A5902-77BF-9042-B2DF-1C575C3BAE38}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C0D3ABBD-29CB-F04D-9850-7CBEE1269945} = {C0D3ABBD-29CB-F04D-9850-7CBEE1269945}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		DebugStaticLib|Win32 = DebugStaticLib|Win32
+		Release|Win32 = Release|Win32
+		ReleaseStaticLib|Win32 = ReleaseStaticLib|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C0D3ABBD-29CB-F04D-9850-7CBEE1269945}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C0D3ABBD-29CB-F04D-9850-7CBEE1269945}.Debug|Win32.Build.0 = Debug|Win32
+		{C0D3ABBD-29CB-F04D-9850-7CBEE1269945}.DebugStaticLib|Win32.ActiveCfg = DebugStaticLib|Win32
+		{C0D3ABBD-29CB-F04D-9850-7CBEE1269945}.DebugStaticLib|Win32.Build.0 = DebugStaticLib|Win32
+		{C0D3ABBD-29CB-F04D-9850-7CBEE1269945}.Release|Win32.ActiveCfg = Release|Win32
+		{C0D3ABBD-29CB-F04D-9850-7CBEE1269945}.Release|Win32.Build.0 = Release|Win32
+		{C0D3ABBD-29CB-F04D-9850-7CBEE1269945}.ReleaseStaticLib|Win32.ActiveCfg = ReleaseStaticLib|Win32
+		{C0D3ABBD-29CB-F04D-9850-7CBEE1269945}.ReleaseStaticLib|Win32.Build.0 = ReleaseStaticLib|Win32
+		{64356EB0-B8D1-B646-A376-153B5AD7A29F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{64356EB0-B8D1-B646-A376-153B5AD7A29F}.Debug|Win32.Build.0 = Debug|Win32
+		{64356EB0-B8D1-B646-A376-153B5AD7A29F}.DebugStaticLib|Win32.ActiveCfg = DebugStaticLib|Win32
+		{64356EB0-B8D1-B646-A376-153B5AD7A29F}.DebugStaticLib|Win32.Build.0 = DebugStaticLib|Win32
+		{64356EB0-B8D1-B646-A376-153B5AD7A29F}.Release|Win32.ActiveCfg = Release|Win32
+		{64356EB0-B8D1-B646-A376-153B5AD7A29F}.Release|Win32.Build.0 = Release|Win32
+		{64356EB0-B8D1-B646-A376-153B5AD7A29F}.ReleaseStaticLib|Win32.ActiveCfg = ReleaseStaticLib|Win32
+		{64356EB0-B8D1-B646-A376-153B5AD7A29F}.ReleaseStaticLib|Win32.Build.0 = ReleaseStaticLib|Win32
+		{D13E2B95-6BD5-5B43-A187-89A2C6CF4589}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D13E2B95-6BD5-5B43-A187-89A2C6CF4589}.Debug|Win32.Build.0 = Debug|Win32
+		{D13E2B95-6BD5-5B43-A187-89A2C6CF4589}.DebugStaticLib|Win32.ActiveCfg = DebugStaticLib|Win32
+		{D13E2B95-6BD5-5B43-A187-89A2C6CF4589}.DebugStaticLib|Win32.Build.0 = DebugStaticLib|Win32
+		{D13E2B95-6BD5-5B43-A187-89A2C6CF4589}.Release|Win32.ActiveCfg = Release|Win32
+		{D13E2B95-6BD5-5B43-A187-89A2C6CF4589}.Release|Win32.Build.0 = Release|Win32
+		{D13E2B95-6BD5-5B43-A187-89A2C6CF4589}.ReleaseStaticLib|Win32.ActiveCfg = ReleaseStaticLib|Win32
+		{D13E2B95-6BD5-5B43-A187-89A2C6CF4589}.ReleaseStaticLib|Win32.Build.0 = ReleaseStaticLib|Win32
+		{C05A5902-77BF-9042-B2DF-1C575C3BAE38}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C05A5902-77BF-9042-B2DF-1C575C3BAE38}.Debug|Win32.Build.0 = Debug|Win32
+		{C05A5902-77BF-9042-B2DF-1C575C3BAE38}.DebugStaticLib|Win32.ActiveCfg = DebugStaticLib|Win32
+		{C05A5902-77BF-9042-B2DF-1C575C3BAE38}.DebugStaticLib|Win32.Build.0 = DebugStaticLib|Win32
+		{C05A5902-77BF-9042-B2DF-1C575C3BAE38}.Release|Win32.ActiveCfg = Release|Win32
+		{C05A5902-77BF-9042-B2DF-1C575C3BAE38}.Release|Win32.Build.0 = Release|Win32
+		{C05A5902-77BF-9042-B2DF-1C575C3BAE38}.ReleaseStaticLib|Win32.ActiveCfg = ReleaseStaticLib|Win32
+		{C05A5902-77BF-9042-B2DF-1C575C3BAE38}.ReleaseStaticLib|Win32.Build.0 = ReleaseStaticLib|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
