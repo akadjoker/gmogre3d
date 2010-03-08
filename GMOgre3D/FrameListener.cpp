@@ -34,7 +34,8 @@ GMFrameListener::GMFrameListener()
    mDisplayNewtonDebugger(false),
    mNewtonWorld(NULL),
    mFrameStartedCallback(-1),
-   mFrameEndedCallback(-1)
+   mFrameEndedCallback(-1),
+   mFrameQueuedCallback(-1)
 {
 }
 
@@ -113,6 +114,12 @@ void GMFrameListener::SetStartFrameCallback(int func)
 }
 
 
+void GMFrameListener::SetFrameQueuedCallback(int func)
+{
+   mFrameQueuedCallback = func;
+}
+
+
 void GMFrameListener::SetEndFrameCallback(int func)
 {
    mFrameEndedCallback = func;
@@ -150,6 +157,21 @@ bool GMFrameListener::frameStarted(const Ogre::FrameEvent& evt)
 }
 
 
+bool GMFrameListener::frameRenderingQueued(const Ogre::FrameEvent& evt)
+{
+   // Call our GM script to handle this callback
+   if (mFrameQueuedCallback >= 0)
+   {
+      gm::CGMVariable args[1];
+      args[0].Set(evt.timeSinceLastFrame);
+
+      gm::script_execute(mFrameQueuedCallback, args, 1);  
+   }
+
+   return true;
+}
+
+
 bool GMFrameListener::frameEnded(const Ogre::FrameEvent& evt)
 {
    if (mDisplayFPS)
@@ -166,12 +188,3 @@ bool GMFrameListener::frameEnded(const Ogre::FrameEvent& evt)
 
    return true;
 }
-
-
-/*
-bool GMFrameListener::processUnbufferedMouseInput(const Ogre::FrameEvent& evt)
-{
-   
-   return true;
-}
-*/

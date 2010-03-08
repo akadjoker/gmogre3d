@@ -125,6 +125,27 @@ GMFN double CreateTextureViewport(char *name)
 }
 
 
+GMFN double GetTextureViewport(char *name, double index)
+{
+   Ogre::TexturePtr tex = Ogre::TextureManager::getSingleton().getByName(name);
+
+   if (tex.isNull())
+      return NULL;
+
+   Ogre::RenderTexture *render_tex = tex->getBuffer()->getRenderTarget();
+
+   if (render_tex == NULL)
+      return NULL;
+
+   Ogre::Viewport *view = render_tex->getViewport(index);
+
+   if (view == NULL)
+      return NULL;
+
+   return ConvertToGMPointer(view);
+}
+
+
 GMFN double GetTextureWidth(char *name)
 {
    Ogre::TexturePtr tex = Ogre::TextureManager::getSingleton().getByName(name);

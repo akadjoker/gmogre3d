@@ -228,6 +228,21 @@ GMFN double GetSceneNodeScale(double scene_node_ptr)
 }
 
 
+GMFN double GetSceneNodeDerivedScale(double scene_node_ptr)
+{
+   Ogre::SceneNode *scene_node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
+
+   if (scene_node == NULL)
+      return FALSE;
+
+   Ogre::Vector3 vec = scene_node->_getDerivedScale();
+
+   SetGMVectorGlobals(vec);
+
+   return TRUE;
+}
+
+
 GMFN double SetSceneNodePosition(double scene_node_ptr, double x, double z, double y)
 {
    Ogre::SceneNode *scene_node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
@@ -236,6 +251,24 @@ GMFN double SetSceneNodePosition(double scene_node_ptr, double x, double z, doub
       return FALSE;
 
    scene_node->setPosition(ConvertFromGMAxis(x, y, z));
+
+   return TRUE;
+}
+
+
+GMFN double SetSceneNodeDerivedPosition(double scene_node_ptr, double x, double z, double y)
+{
+   Ogre::SceneNode *scene_node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
+
+   if (scene_node == NULL)
+      return FALSE;
+
+   //scene_node->setPosition(ConvertFromGMAxis(x, y, z));
+   
+   // This bit of trickery can be replaced with a simple _setDerivedPosition call once
+   // OGRE 1.7 is released and merged into GMOgre.
+   scene_node->setPosition(scene_node->getParent()->_getDerivedOrientation().Inverse() * (ConvertFromGMAxis(x, y, z) - scene_node->getParent()->_getDerivedPosition()) / scene_node->getParent()->_getDerivedScale());
+   //scene_node->_setDerivedPosition(ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -312,7 +345,6 @@ GMFN double SetSceneNodeInitalState(double scene_node_ptr)
 
 GMFN double SetSceneNodeDerivedOrientation(double scene_node_ptr, double yaw, double pitch, double roll)
 {
-   //DisplayError("cool1");
    Ogre::SceneNode *scene_node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
 
    if (scene_node == NULL)
@@ -320,7 +352,6 @@ GMFN double SetSceneNodeDerivedOrientation(double scene_node_ptr, double yaw, do
 
    // This bit of trickery can be replaced with a simple _setDerivedOrientation call once
    // OGRE 1.7 is released and merged into GMOgre.
-   //DisplayError("Old: " + Ogre::StringConverter::toString((floag)yaw) + ", New: " + Ogre::StringConverter::toString(Ogre::Degree(ConvertFromGMYaw(yaw)).valueDegrees()));
    scene_node->setOrientation(scene_node->getParent()->_getDerivedOrientation().Inverse() * Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)));
    //scene_node->_setDerivedOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)));
 
@@ -624,6 +655,29 @@ GMFN double MoveSceneNodeDown(double scene_node_ptr, double delta)
 }
 
 
+GMFN double EnableSceneNodeAutoTracking(double scene_node_ptr, double enable, double track_scene_node_ptr, double x, double z, double y)
+{
+   Ogre::SceneNode *node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
+
+   if (node == NULL)
+      return FALSE;
+
+   if (enable != 0)
+   {
+      Ogre::SceneNode *track_node = ConvertFromGMPointer<Ogre::SceneNode*>(track_scene_node_ptr);
+
+      if (track_node == NULL)
+         return FALSE;
+
+      node->setAutoTracking(true, track_node, ConvertFromGMAxis(x, y, z));
+   }
+   else
+      node->setAutoTracking(false);
+
+   return TRUE;
+}
+
+
 GMFN double GetSceneNodeBoundingBoxSize(double scene_node_ptr)
 {
    Ogre::SceneNode *scene_node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
@@ -666,7 +720,7 @@ GMFN double AttachSceneNodeToGMInstance(double scene_node_ptr, double gm_instanc
    gminst.mLastX = gminst.mGMInstancePtr->x;
    gminst.mLastY = gminst.mGMInstancePtr->y;
 	gminst.mLastZ = *gminst.pZ;
-   gminst.mLastYaw = gminst.mGMInstancePtr->direction;
+   gminst.mLastYaw = *gminst.pYaw;
 	gminst.mLastPitch = *gminst.pPitch;
 	gminst.mLastRoll = *gminst.pRoll;
 	gminst.mLastScaleX = *gminst.pScaleX;
@@ -676,15 +730,18 @@ GMFN double AttachSceneNodeToGMInstance(double scene_node_ptr, double gm_instanc
    mSceneNodeAttachments[scene_node] = gminst;
 
    // Snap to current position, orientation, and scale
-   scene_node->setPosition(ConvertFromGMAxis(gminst.mLastX, gminst.mLastZ, gminst.mLastY));
-   scene_node->setOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(gminst.mGMInstancePtr->direction)), Ogre::Degree(*gminst.pPitch), Ogre::Degree(*gminst.pRoll)));
-   scene_node->setScale(ConvertFromGMAxis(gminst.mLastScaleX, gminst.mLastScaleZ, gminst.mLastScaleY));
+   //scene_node->setPosition(ConvertFromGMAxis(gminst.mLastX, gminst.mLastZ, gminst.mLastY));
+   //scene_node->setOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(*gminst.pYaw)), Ogre::Degree(*gminst.pPitch), Ogre::Degree(*gminst.pRoll)));
+   //scene_node->setScale(ConvertFromGMAxis(gminst.mLastScaleX, gminst.mLastScaleZ, gminst.mLastScaleY));
+   SetSceneNodePosition(ConvertToGMPointer(scene_node), gminst.mLastX, gminst.mLastY, gminst.mLastZ);
+   SetSceneNodeOrientation(ConvertToGMPointer(scene_node), *gminst.pYaw, *gminst.pPitch, *gminst.pRoll);
+   SetSceneNodeScale(ConvertToGMPointer(scene_node), gminst.mLastScaleX, gminst.mLastScaleY, gminst.mLastScaleZ);
 
    if (gminst.BodyAttached && gminst.mBody != NULL)
    {
       // Snap to current position/orientation
       SetNewtonBodyPosition(ConvertToGMPointer(gminst.mBody), gminst.mGMInstancePtr->x, gminst.mGMInstancePtr->y, *gminst.pZ);
-      SetNewtonBodyOrientation(ConvertToGMPointer(gminst.mBody), gminst.mGMInstancePtr->direction, *gminst.pPitch, *gminst.pRoll);
+      SetNewtonBodyOrientation(ConvertToGMPointer(gminst.mBody), *gminst.pYaw, *gminst.pPitch, *gminst.pRoll);
    }
 
    return TRUE;

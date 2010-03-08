@@ -48,6 +48,13 @@ GMFN double CreateCompositor(char *name, char *group = const_cast<char*>(Ogre::R
 
 GMFN double DestroyCompositor(char *name)
 {
+   CompositorListenerMap::iterator iter = mCompositorListener.find(name);
+   if (iter != mCompositorListener.end())
+   {
+      delete iter->second;
+      mCompositorListener.erase(iter);
+   }
+
    Ogre::CompositorManager::getSingleton().remove(name);
 
    return TRUE;
@@ -155,6 +162,54 @@ GMFN double GetNumCompositorTechniques(char *name)
       return 0;
 
    return com->getNumTechniques();
+}
+
+
+GMFN double SetCompositorMaterialSetupCallback(char *name, double func)
+{
+   Ogre::CompositorPtr com = Ogre::CompositorManager::getSingleton().getByName(name);
+   
+   if (com.isNull())
+      return 0;
+
+   GMCompositorListener *cl = NULL;
+
+   CompositorListenerMap::iterator iter = mCompositorListener.find(name);
+   if (iter != mCompositorListener.end())
+      cl = iter->second;
+   else
+   {
+      GMCompositorListener *cl = new GMCompositorListener;
+      mCompositorListener[name] = cl;
+   }
+
+   cl->SetNotifyMaterialSetupCallback(func);
+
+   return TRUE;
+}
+
+
+GMFN double SetCompositorMaterialRenderCallback(char *name, double func)
+{
+   Ogre::CompositorPtr com = Ogre::CompositorManager::getSingleton().getByName(name);
+   
+   if (com.isNull())
+      return 0;
+
+   GMCompositorListener *cl = NULL;
+
+   CompositorListenerMap::iterator iter = mCompositorListener.find(name);
+   if (iter != mCompositorListener.end())
+      cl = iter->second;
+   else
+   {
+      GMCompositorListener *cl = new GMCompositorListener;
+      mCompositorListener[name] = cl;
+   }
+
+   cl->SetNotifyMaterialRenderCallback(func);
+
+   return TRUE;
 }
 
 #endif

@@ -40,9 +40,6 @@ GMFN double CreateCamera(double aspect, double znear, double zfar, double fov)
       if (cam == NULL)
          return FALSE;
 
-      if (mCamera == NULL)
-         mCamera = cam;
-
       cam->setNearClipDistance(znear);
       cam->setFarClipDistance(zfar);
       cam->setAspectRatio(Ogre::Real(aspect));
@@ -94,6 +91,20 @@ GMFN double SetCameraAspect(double camera_ptr, double aspect)
 
    cam->setAspectRatio(Ogre::Real(aspect));
    
+   return TRUE;
+}
+
+
+GMFN double SetCameraClipDistances(double camera_ptr, double znear, double zfar)
+{
+   Ogre::Camera *cam = ConvertFromGMPointer<Ogre::Camera*>(camera_ptr);
+
+   if (cam == NULL)
+      return FALSE;
+
+   cam->setNearClipDistance(znear);
+   cam->setFarClipDistance(zfar);
+
    return TRUE;
 }
 
@@ -232,6 +243,21 @@ GMFN double GetCameraPosition(double camera_ptr)
 }
 
 
+GMFN double GetCameraDerivedPosition(double camera_ptr)
+{
+   Ogre::Camera *cam = ConvertFromGMPointer<Ogre::Camera*>(camera_ptr);
+
+   if (cam == NULL)
+      return FALSE;
+
+   Ogre::Vector3 vec = cam->getDerivedPosition();
+
+   SetGMVectorGlobals(vec);
+
+   return TRUE;
+}
+
+
 GMFN double SetCameraLookAt(double camera_ptr, double x, double z, double y)
 {
    Ogre::Camera *cam = ConvertFromGMPointer<Ogre::Camera*>(camera_ptr);
@@ -266,6 +292,27 @@ GMFN double GetCameraOrientation(double cam_ptr)
       return FALSE;
 
    Ogre::Quaternion quat = cam->getOrientation();
+
+   AcquireGMEulerGlobals();
+   if (mEulerYaw != NULL)
+   {
+      *mEulerYaw = ConvertToGMYaw(quat.getYaw().valueDegrees());
+      *mEulerPitch = quat.getPitch().valueDegrees();
+      *mEulerRoll = quat.getRoll().valueDegrees();
+   }
+
+   return TRUE;
+}
+
+
+GMFN double GetCameraDerivedOrientation(double cam_ptr)
+{
+   Ogre::Camera *cam = ConvertFromGMPointer<Ogre::Camera*>(cam_ptr);
+
+   if (cam == NULL)
+      return FALSE;
+
+   Ogre::Quaternion quat = cam->getDerivedOrientation();
 
    AcquireGMEulerGlobals();
    if (mEulerYaw != NULL)
@@ -436,13 +483,15 @@ GMFN double EnableCameraAutoTracking(double camera_ptr, double enable, double sc
    if (cam == NULL)
       return FALSE;
 
-   Ogre::SceneNode *node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
-
-   if (node == NULL)
-      return FALSE;
-
    if (enable != 0)
+   {
+      Ogre::SceneNode *node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
+
+      if (node == NULL)
+         return FALSE;
+
       cam->setAutoTracking(true, node, ConvertFromGMAxis(x, y, z));
+   }
    else
       cam->setAutoTracking(false);
 
@@ -497,8 +546,110 @@ GMFN double GetCameraToViewportRay(double cam_ptr, double x, double y)
    Ogre::Ray *ray = new Ogre::Ray;
    cam->getCameraToViewportRay(realitive_x, realitive_y, ray);
 
-   return ConvertToGMPointer(ray);;
+   return ConvertToGMPointer(ray);
 } 
+
+
+GMFN double GetCameraProjectionMatrix(double cam_ptr)
+{
+   Ogre::Camera *cam = ConvertFromGMPointer<Ogre::Camera*>(cam_ptr);
+
+   if (cam == NULL)
+      return FALSE;
+
+   Ogre::Matrix4 mat = cam->getProjectionMatrix();
+
+   AcquireGMMatrixGlobals();
+   if (mEulerYaw != NULL)
+   {
+      *mMatrix00 = mat[0][0];
+      *mMatrix01 = mat[0][1];
+      *mMatrix02 = mat[0][2];
+      *mMatrix03 = mat[0][3];
+      *mMatrix10 = mat[1][0];
+      *mMatrix11 = mat[1][1];
+      *mMatrix12 = mat[1][2];
+      *mMatrix13 = mat[1][3];
+      *mMatrix20 = mat[2][0];
+      *mMatrix21 = mat[2][1];
+      *mMatrix22 = mat[2][2];
+      *mMatrix23 = mat[2][3];
+      *mMatrix30 = mat[3][0];
+      *mMatrix31 = mat[3][1];
+      *mMatrix32 = mat[3][2];
+      *mMatrix33 = mat[3][3];
+   }
+
+   return TRUE;
+}
+
+
+GMFN double GetCameraProjectionMatrixRS(double cam_ptr)
+{
+   Ogre::Camera *cam = ConvertFromGMPointer<Ogre::Camera*>(cam_ptr);
+
+   if (cam == NULL)
+      return FALSE;
+
+   Ogre::Matrix4 mat = cam->getProjectionMatrixRS();
+
+   AcquireGMMatrixGlobals();
+   if (mEulerYaw != NULL)
+   {
+      *mMatrix00 = mat[0][0];
+      *mMatrix01 = mat[0][1];
+      *mMatrix02 = mat[0][2];
+      *mMatrix03 = mat[0][3];
+      *mMatrix10 = mat[1][0];
+      *mMatrix11 = mat[1][1];
+      *mMatrix12 = mat[1][2];
+      *mMatrix13 = mat[1][3];
+      *mMatrix20 = mat[2][0];
+      *mMatrix21 = mat[2][1];
+      *mMatrix22 = mat[2][2];
+      *mMatrix23 = mat[2][3];
+      *mMatrix30 = mat[3][0];
+      *mMatrix31 = mat[3][1];
+      *mMatrix32 = mat[3][2];
+      *mMatrix33 = mat[3][3];
+   }
+
+   return TRUE;
+}
+
+
+GMFN double GetCameraProjectionMatrixWithRSDepth(double cam_ptr)
+{
+   Ogre::Camera *cam = ConvertFromGMPointer<Ogre::Camera*>(cam_ptr);
+
+   if (cam == NULL)
+      return FALSE;
+
+   Ogre::Matrix4 mat = cam->getProjectionMatrixWithRSDepth();
+
+   AcquireGMMatrixGlobals();
+   if (mEulerYaw != NULL)
+   {
+      *mMatrix00 = mat[0][0];
+      *mMatrix01 = mat[0][1];
+      *mMatrix02 = mat[0][2];
+      *mMatrix03 = mat[0][3];
+      *mMatrix10 = mat[1][0];
+      *mMatrix11 = mat[1][1];
+      *mMatrix12 = mat[1][2];
+      *mMatrix13 = mat[1][3];
+      *mMatrix20 = mat[2][0];
+      *mMatrix21 = mat[2][1];
+      *mMatrix22 = mat[2][2];
+      *mMatrix23 = mat[2][3];
+      *mMatrix30 = mat[3][0];
+      *mMatrix31 = mat[3][1];
+      *mMatrix32 = mat[3][2];
+      *mMatrix33 = mat[3][3];
+   }
+
+   return TRUE;
+}
 
 
 GMFN double AttachCameraToSceneNode(double cam_ptr, double scene_node_ptr)

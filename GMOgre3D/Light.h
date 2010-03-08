@@ -110,6 +110,17 @@ GMFN double SetLightAttenuation(double light_ptr, double range, double constant,
 }
 
 
+GMFN double GetLightAttenuationRange(double light_ptr)
+{
+   Ogre::Light *light = ConvertFromGMPointer<Ogre::Light*>(light_ptr);
+
+   if (light == NULL)
+      return 0;
+
+   return light->getAttenuationRange();
+}
+
+
 GMFN double SetLightDiffuseColor(double light_ptr, double color)
 {
    Ogre::Light *light = ConvertFromGMPointer<Ogre::Light*>(light_ptr);
@@ -155,12 +166,12 @@ GMFN double AttachLightToSceneNode(double light_ptr, double scene_node_ptr)
 
    if (light == NULL)
       return FALSE;
-   
+
    Ogre::SceneNode *node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
-   
+
    if (node == NULL)
       return FALSE;
-   
+
    node->attachObject(light);
 
    return TRUE;

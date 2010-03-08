@@ -26,7 +26,6 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "GMOgre3D.h"
 
-
 static Ogre::String scene_mgr_mat_name;
 static double scene_mgr_enable;
 
@@ -50,6 +49,10 @@ GMFN double CreateSceneManager(double type)
       fl->Create2DManager(mSceneMgr);
       mSceneListener[scene_mgr] = fl;
 
+      GMSceneManagerListener *sml = new GMSceneManagerListener;
+      scene_mgr->addListener(sml);
+      mSceneManagerListener[scene_mgr] = sml;
+
       MOC::CollisionTools *ct = new MOC::CollisionTools(scene_mgr);
       mSceneCollisionMap[scene_mgr] = ct;
    CATCH("CreateSceneManager")
@@ -68,18 +71,25 @@ GMFN double DestroySceneManager(double scene_mgr_ptr)
    if (mRoot == NULL)
       return FALSE;
 
-   // Delete frame listener
-   GMFrameListener *fl = mSceneListener[scene_mgr];
-   mRoot->removeFrameListener(fl);
-   delete fl;
-   mSceneListener.erase(scene_mgr);
+   TRY
+      // Delete frame listener
+      GMFrameListener *fl = mSceneListener[scene_mgr];
+      mRoot->removeFrameListener(fl);
+      delete fl;
+      mSceneListener.erase(scene_mgr);
 
-   // Delete collision tools
-   MOC::CollisionTools *ct = mSceneCollisionMap[scene_mgr];
-   delete ct;
-   mSceneCollisionMap.erase(scene_mgr);
+      GMSceneManagerListener *sml = mSceneManagerListener[scene_mgr];
+      scene_mgr->removeListener(sml);
+      delete sml;
+      mSceneManagerListener.erase(scene_mgr);
 
-   mRoot->destroySceneManager(scene_mgr);
+      // Delete collision tools
+      MOC::CollisionTools *ct = mSceneCollisionMap[scene_mgr];
+      delete ct;
+      mSceneCollisionMap.erase(scene_mgr);
+
+      mRoot->destroySceneManager(scene_mgr);
+   CATCH("DestroySceneManager")
 
    return TRUE;
 }
@@ -92,7 +102,9 @@ GMFN double SetCurrentSceneManager(double scene_mgr_ptr)
    if (scene_mgr == NULL)
       return FALSE;
 
-   mSceneMgr = scene_mgr;
+   TRY
+      mSceneMgr = scene_mgr;
+   CATCH("SetCurrentSceneManager")
 
    return TRUE;
 }
@@ -111,21 +123,16 @@ GMFN double ClearScene()
 
 GMFN double SetWorldGeometry(char *filename)
 {
-   try
-   {   
-      if (mSceneMgr == NULL)
-         return FALSE;
-
-      mSceneMgr->setWorldGeometry(filename);
-   }
-   catch(Ogre::Exception& e)
-   {
-      LogError(e.what());
+   if (mSceneMgr == NULL)
       return FALSE;
-   }
+
+   TRY
+      mSceneMgr->setWorldGeometry(filename);
+   CATCH("SetCurrentSceneManager")
 
    return TRUE;
 }
+
 
 GMFN double SetVisibilityMask(double mask)
 {
@@ -133,6 +140,22 @@ GMFN double SetVisibilityMask(double mask)
       return FALSE;
 
    mSceneMgr->setVisibilityMask(mask);
+
+   return TRUE;
+}
+
+
+GMFN double SetShadowTextureCasterPreViewProjCallback(double func)
+{
+   if (mSceneMgr == NULL)
+      return FALSE;
+
+   GMSceneManagerListener *sml = mSceneManagerListener[mSceneMgr];
+   
+   if (sml == NULL)
+      return false;
+
+   sml->SetShadowTextureCasterPreViewProjCallback(func);
 
    return TRUE;
 }
@@ -149,6 +172,22 @@ GMFN double SetStartFrameCallback(double func)
       return false;
 
    fl->SetStartFrameCallback(func);
+
+   return TRUE;
+}
+
+
+GMFN double SetFrameQueuedCallback(double func)
+{
+   if (mSceneMgr == NULL)
+      return FALSE;
+
+   GMFrameListener *fl = mSceneListener[mSceneMgr];
+   
+   if (fl == NULL)
+      return false;
+
+   fl->SetFrameQueuedCallback(func);
 
    return TRUE;
 }
@@ -314,6 +353,28 @@ GMFN double SetShadowTextureFade(double fade_start, double fade_end)
 }
 
 
+GMFN double SetShadowDirLightTextureOffset(double offset)
+{
+   if (mSceneMgr == NULL)
+      return FALSE;
+
+   mSceneMgr->setShadowDirLightTextureOffset(offset);
+
+   return TRUE;
+}
+
+
+GMFN char *GetShadowTexture(double shadow_index)
+{
+   if (mSceneMgr == NULL)
+      return FALSE;
+
+   Ogre::TexturePtr tex = mSceneMgr->getShadowTexture(shadow_index);
+
+   return const_cast<char*>(tex->getName().c_str());
+}
+
+
 GMFN double EnableShadowInfiniteFarPlane(double enable)
 {
    if (mSceneMgr == NULL)
@@ -375,6 +436,22 @@ GMFN double EnableShadowCasterRenderBackFaces(double enable)
       return FALSE;
 
    mSceneMgr->setShadowCasterRenderBackFaces((enable != 0));
+
+   return TRUE;
+}
+
+
+GMFN double SetShadowCameraSetup(double pssm_shadow_camera_setup_ptr)
+{
+   if (mSceneMgr == NULL)
+      return FALSE;
+
+   Ogre::PSSMShadowCameraSetup *pssm_shadow_camera_setup = ConvertFromGMPointer<Ogre::PSSMShadowCameraSetup*>(pssm_shadow_camera_setup_ptr);
+
+   if (pssm_shadow_camera_setup == NULL)
+      return FALSE;
+
+   mSceneMgr->setShadowCameraSetup(Ogre::ShadowCameraSetupPtr(pssm_shadow_camera_setup));
 
    return TRUE;
 }

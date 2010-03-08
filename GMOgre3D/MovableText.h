@@ -111,7 +111,22 @@ GMFN double SetMovableTextAlignment(double text_ptr, double horiz_align, double 
    if (text == NULL)
       return FALSE;
 
-   text->setTextAlignment(static_cast<MovableText::HorizontalAlignment>((int)horiz_align), static_cast<MovableText::VerticalAlignment>((int)vert_align));
+   MovableText::VerticalAlignment vert;
+   MovableText::HorizontalAlignment horiz;
+
+   if (horiz_align == 0)
+      horiz = MovableText::H_LEFT;
+   else if (horiz_align == 2)
+      horiz = MovableText::H_CENTER;
+
+   if (vert_align == 0)
+      vert = MovableText::V_BELOW;
+   else if (vert_align == 1)
+      vert = MovableText::V_ABOVE;
+   else
+      vert = MovableText::V_CENTER;
+
+   text->setTextAlignment(horiz, vert);
 
    return TRUE;
 }

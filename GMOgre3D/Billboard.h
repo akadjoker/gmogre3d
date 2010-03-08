@@ -27,6 +27,19 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "GMOgre3D.h"
 
 
+GMFN double SetBillboardRotation(double bb_ptr, double degrees)
+{
+   Ogre::Billboard *bb = ConvertFromGMPointer<Ogre::Billboard *>(bb_ptr);
+
+   if (bb == NULL)
+      return FALSE;
+   
+   bb->setRotation(Ogre::Degree(degrees));
+
+   return TRUE;
+}
+
+
 GMFN double SetBillboardPosition(double bb_ptr, double x, double z, double y)
 {
    Ogre::Billboard *bb = ConvertFromGMPointer<Ogre::Billboard *>(bb_ptr);

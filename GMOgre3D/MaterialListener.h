@@ -21,40 +21,21 @@ http://www.gnu.org/copyleft/lesser.txt.
 --------------------------------------------------------------------------------
 */
 
-#ifndef GMOGRE_FRAMELISTENER_H
-#define GMOGRE_FRAMELISTENER_H
-
-#include "OgreNewt_World.h"
+#ifndef GMOGRE_MATERIALLISTENER_H
+#define GMOGRE_MATERIALLISTENER_H
 
 
-class GMFrameListener: public Ogre::FrameListener
+class GMMaterialListener: public Ogre::MaterialManager::Listener
 {
-private:
-   void UpdateFPSStats(void);
-
 public:
-   GMFrameListener();
+   GMMaterialListener();
 
-   void Create2DManager(Ogre::SceneManager *scene_mgr);
-   void DisplayFPS(bool enable);
-   void DisplayNewtonDebugger(OgreNewt::World *world, bool enable);
+   Ogre::Technique* handleSchemeNotFound(unsigned short schemeIndex, const Ogre::String &schemeName, Ogre::Material *originalMaterial,	unsigned short lodIndex, const Ogre::Renderable *rend);
 
-   bool frameStarted(const Ogre::FrameEvent& evt);
-   bool frameRenderingQueued(const Ogre::FrameEvent& evt);
-   bool frameEnded(const Ogre::FrameEvent& evt);
-
-   void SetStartFrameCallback(int func);
-   void SetFrameQueuedCallback(int func);
-   void SetEndFrameCallback(int func);
+   void SetSchemeNotFoundCallback(int func);
 
 protected:
-   //Ogre2dManager *mOgre2DManager;
-   bool mDisplayFPS;
-   bool mDisplayNewtonDebugger;
-   OgreNewt::World *mNewtonWorld;
-   int mFrameStartedCallback;
-   int mFrameEndedCallback;
-   int mFrameQueuedCallback;
+   int mHandleSchemeNotFoundCallback;
 };
 
 #endif

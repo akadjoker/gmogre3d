@@ -21,40 +21,24 @@ http://www.gnu.org/copyleft/lesser.txt.
 --------------------------------------------------------------------------------
 */
 
-#ifndef GMOGRE_FRAMELISTENER_H
-#define GMOGRE_FRAMELISTENER_H
-
-#include "OgreNewt_World.h"
+#ifndef GMOGRE_COMPOSITORLISTENER_H
+#define GMOGRE_COMPOSITORLISTENER_H
 
 
-class GMFrameListener: public Ogre::FrameListener
+class GMCompositorListener: public Ogre::CompositorInstance::Listener
 {
-private:
-   void UpdateFPSStats(void);
-
 public:
-   GMFrameListener();
+   GMCompositorListener();
 
-   void Create2DManager(Ogre::SceneManager *scene_mgr);
-   void DisplayFPS(bool enable);
-   void DisplayNewtonDebugger(OgreNewt::World *world, bool enable);
+   virtual void notifyMaterialSetup(Ogre::uint32 pass_id, Ogre::MaterialPtr &mat);
+   virtual void notifyMaterialRender(Ogre::uint32 pass_id, Ogre::MaterialPtr &mat);
 
-   bool frameStarted(const Ogre::FrameEvent& evt);
-   bool frameRenderingQueued(const Ogre::FrameEvent& evt);
-   bool frameEnded(const Ogre::FrameEvent& evt);
-
-   void SetStartFrameCallback(int func);
-   void SetFrameQueuedCallback(int func);
-   void SetEndFrameCallback(int func);
+   void SetNotifyMaterialSetupCallback(int func);
+   void SetNotifyMaterialRenderCallback(int func);
 
 protected:
-   //Ogre2dManager *mOgre2DManager;
-   bool mDisplayFPS;
-   bool mDisplayNewtonDebugger;
-   OgreNewt::World *mNewtonWorld;
-   int mFrameStartedCallback;
-   int mFrameEndedCallback;
-   int mFrameQueuedCallback;
+   int mNotifyMaterialSetupCallback;
+   int mNotifyMaterialRenderCallback;
 };
 
 #endif

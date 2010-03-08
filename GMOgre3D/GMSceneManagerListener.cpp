@@ -3,7 +3,7 @@
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
 Copyright (C) 2010 Robert Geiman
-                   <robgeiman@gmail.com>
+<robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU Lesser General Public License as published by the Free Software
@@ -21,40 +21,40 @@ http://www.gnu.org/copyleft/lesser.txt.
 --------------------------------------------------------------------------------
 */
 
-#ifndef GMOGRE_FRAMELISTENER_H
-#define GMOGRE_FRAMELISTENER_H
+#include "stdafx.h"
+#include "GMSceneManagerListener.h"
+#include "GMAPI.h"
 
-#include "OgreNewt_World.h"
 
-
-class GMFrameListener: public Ogre::FrameListener
+template<typename T>
+double ConvertToGMPointer3(T ptr)
 {
-private:
-   void UpdateFPSStats(void);
+   return static_cast<double>(reinterpret_cast<intptr_t>(ptr));
+}
 
-public:
-   GMFrameListener();
+GMSceneManagerListener::GMSceneManagerListener()
+:  mShadowTextureCasterPreViewProjCallback(-1)
+{
+}
 
-   void Create2DManager(Ogre::SceneManager *scene_mgr);
-   void DisplayFPS(bool enable);
-   void DisplayNewtonDebugger(OgreNewt::World *world, bool enable);
 
-   bool frameStarted(const Ogre::FrameEvent& evt);
-   bool frameRenderingQueued(const Ogre::FrameEvent& evt);
-   bool frameEnded(const Ogre::FrameEvent& evt);
+void GMSceneManagerListener::shadowTextureCasterPreViewProj(Ogre::Light *light, Ogre::Camera *cam, size_t iterations)
+{
+   // Call our GM script to handle this callback
+   if (mShadowTextureCasterPreViewProjCallback >= 0)
+   {
+      gm::CGMVariable args[3];
+      args[0].Set(ConvertToGMPointer3(light));
+      args[1].Set(ConvertToGMPointer3(cam));
+      args[2].Set(iterations);
 
-   void SetStartFrameCallback(int func);
-   void SetFrameQueuedCallback(int func);
-   void SetEndFrameCallback(int func);
+      gm::script_execute(mShadowTextureCasterPreViewProjCallback, args, 3);  
+   }
+}
 
-protected:
-   //Ogre2dManager *mOgre2DManager;
-   bool mDisplayFPS;
-   bool mDisplayNewtonDebugger;
-   OgreNewt::World *mNewtonWorld;
-   int mFrameStartedCallback;
-   int mFrameEndedCallback;
-   int mFrameQueuedCallback;
-};
 
-#endif
+void GMSceneManagerListener::SetShadowTextureCasterPreViewProjCallback(int func)
+{
+   mShadowTextureCasterPreViewProjCallback = func;
+}
+

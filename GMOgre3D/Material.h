@@ -25,6 +25,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define GMOGRE_MATERIAL_H
 
 #include "GMOgre3D.h"
+#include "MaterialListener.h"
 
 
 GMFN char *GetMaterialByName(char *name)
@@ -182,6 +183,19 @@ GMFN double GetMaterialReceiveShadows(char *name)
 }
 
 
+GMFN double EnableMaterialTransparencyCastsShadows(char *name, double enable)
+{
+   Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().getByName(name);
+   
+   if (mat.isNull())
+      return FALSE;
+
+   mat->setTransparencyCastsShadows((enable != 0));
+
+   return TRUE;
+}
+
+
 GMFN double SetMaterialLODLevels1(char *name, double lod1, double lod2, double lod3)
 {
    Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().getByName(name);
@@ -282,6 +296,17 @@ GMFN double GetMaterialTechnique(char *name, double technique_index)
 }
 
 
+GMFN double GetMaterialBestTechnique(char *name)
+{
+   Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().getByName(name);
+   
+   if (mat.isNull())
+      return 0;
+
+   return ConvertToGMPointer(mat->getBestTechnique());
+}
+
+
 GMFN double GetNumMaterialTechniques(char *name)
 {
    Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().getByName(name);
@@ -304,6 +329,20 @@ GMFN double SetDefaultMaterialTextureFiltering(double type)
 GMFN double SetDefaultMaterialAnisotropy(double anisotropy)
 {
    Ogre::MaterialManager::getSingleton().setDefaultAnisotropy(anisotropy);
+
+   return TRUE;
+}
+
+
+GMFN double SetDefaultMaterialSchemeNotFoundCallback(double func)
+{
+   if (mMaterialListener == NULL)
+   {
+      mMaterialListener = new GMMaterialListener;
+      Ogre::MaterialManager::getSingleton().addListener(mMaterialListener);
+   }
+
+   mMaterialListener->SetSchemeNotFoundCallback(func);
 
    return TRUE;
 }

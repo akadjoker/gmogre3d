@@ -189,6 +189,45 @@ GMFN double SetTextureUnitStateTextureBorderColor(double tex_unit_ptr, double co
 }
 
 
+GMFN double SetTextureUnitStateTextureScroll(double tex_unit_ptr, double uscroll, double vscroll)
+{
+   Ogre::TextureUnitState *tex_unit = ConvertFromGMPointer<Ogre::TextureUnitState *>(tex_unit_ptr);
+
+   if (tex_unit == NULL)
+      return FALSE;
+
+   tex_unit->setTextureScroll(uscroll, vscroll);
+
+   return TRUE;
+}
+
+
+GMFN double SetTextureUnitStateTextureScale(double tex_unit_ptr, double uscale, double vscale)
+{
+   Ogre::TextureUnitState *tex_unit = ConvertFromGMPointer<Ogre::TextureUnitState *>(tex_unit_ptr);
+
+   if (tex_unit == NULL)
+      return FALSE;
+
+   tex_unit->setTextureScale(uscale, vscale);
+
+   return TRUE;
+}
+
+
+GMFN double SetTextureUnitStateTextureRotate(double tex_unit_ptr, double degrees)
+{
+   Ogre::TextureUnitState *tex_unit = ConvertFromGMPointer<Ogre::TextureUnitState *>(tex_unit_ptr);
+
+   if (tex_unit == NULL)
+      return FALSE;
+
+   tex_unit->setTextureRotate(Ogre::Degree(degrees));
+
+   return TRUE;
+}
+
+
 GMFN double SetTextureUnitStateTextureFiltering(double tex_unit_ptr, double type)
 {
    Ogre::TextureUnitState *tex_unit = ConvertFromGMPointer<Ogre::TextureUnitState *>(tex_unit_ptr);

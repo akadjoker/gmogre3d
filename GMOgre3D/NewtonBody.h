@@ -470,8 +470,6 @@ GMFN double AttachNewtonBodyToSceneNode(double newton_body_ptr, double scene_nod
    if (!node)
       return FALSE;
 
-   newton_body->attachNode(node);
-
    LockMutex lm(gMutex);
 
    GMInstance gminst;
@@ -492,9 +490,15 @@ GMFN double AttachNewtonBodyToSceneNode(double newton_body_ptr, double scene_nod
       gminst.mGMInstancePtr = mGMAPI->GetInstancePtr(gminst.mGMInstanceID);
       AcquireGMLocalVariablePointers(&gminst);
 
+      Ogre::Vector3 pos = node->_getDerivedPosition();
+      Ogre::Quaternion quat = node->_getDerivedOrientation();
+      
       // Snap to current position/orientation
-      newton_body->setPositionOrientation(Ogre::Vector3(gminst.mGMInstancePtr->x, gminst.mGMInstancePtr->y, *gminst.pZ), Euler(Ogre::Degree(ConvertFromGMYaw(gminst.mGMInstancePtr->direction)), Ogre::Degree(*gminst.pPitch), Ogre::Degree(*gminst.pRoll)));
+      //newton_body->setPositionOrientation(Ogre::Vector3(gminst.mGMInstancePtr->x, gminst.mGMInstancePtr->y, *gminst.pZ), Euler(Ogre::Degree(ConvertFromGMYaw(*gminst.pYaw)), Ogre::Degree(*gminst.pPitch), Ogre::Degree(*gminst.pRoll)));
+      newton_body->setPositionOrientation(pos, quat);
    }
+
+   newton_body->attachNode(node);
 
    return TRUE;
 }

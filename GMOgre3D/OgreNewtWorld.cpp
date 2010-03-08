@@ -54,7 +54,7 @@ void OgreNewtWorld::update( Ogre::Real t_step )
          // Call our GM script to handle this leave world callback
          gm::CGMVariable args[1];
          args[0].Set(static_cast<double>(reinterpret_cast<intptr_t>(*body_iter)));
-         gm::script_execute(m_gm_leave_world_func, args, 1);  
+         gm::script_execute(m_gm_leave_world_func, args, 1);
 
          body_iter++;
       }

@@ -220,6 +220,50 @@ GMFN double CreateNewtonTreeCollisionFromEntity(double newton_world_ptr, double 
 }
 
 
+GMFN double CreateNewtonTreeCollisionFromTerrain(double newton_world_ptr, char *terrain, double optimize, double id = 0)
+{
+   OgreNewt::World *world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr)->getOgreNewtWorld();
+
+   if (!world)
+      return 0;
+
+   if (!mSceneMgr)
+      return 0;
+
+   OgreNewt::CollisionPtr col;
+
+   TRY
+      GMTerrainPageSourceListener *terrain_listener = new GMTerrainPageSourceListener;
+
+      mSceneMgr->setWorldGeometry(terrain);
+
+      OgreNewt::CollisionPrimitives::TreeCollision *terrain_coll = new OgreNewt::CollisionPrimitives::TreeCollision(world);
+      terrain_coll->start(id);
+
+      std::vector<Ogre::Vector3> &polys = terrain_listener->GetPolys();
+
+      for (int x = 0; x < polys.size(); x+=3)
+      {
+         Ogre::Vector3 va[3];
+
+         va[0] = polys[x];
+         va[1] = polys[x+1];
+         va[2] = polys[x+2];
+
+         terrain_coll->addPoly(va, 0);
+      }
+      terrain_coll->finish((optimize != 0));
+
+      delete terrain_listener;
+
+      col.reset(terrain_coll);
+      mNewtonCollisionMap[col.get()] = col;
+   CATCH("CreateNewtonTreeCollisionFromTerrain")
+
+   return ConvertToGMPointer(col.get());
+}
+
+
 GMFN double CreateNewtonCollisionFromFile(double newton_world_ptr, char *filename)
 {
    OgreNewt::World *world = ConvertFromGMPointer<OgreNewtWorld*>(newton_world_ptr)->getOgreNewtWorld();

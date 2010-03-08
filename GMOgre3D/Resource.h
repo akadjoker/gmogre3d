@@ -32,7 +32,9 @@ GMFN double AddResourceLocation(char *name, char *type, char *group)
    if (mRoot == NULL)
       return FALSE;
 
-   Ogre::ResourceGroupManager::getSingleton().addResourceLocation(name, type, group);
+   TRY
+      Ogre::ResourceGroupManager::getSingleton().addResourceLocation(name, type, group);
+   CATCH("AddResourceLocation")
 
    return TRUE;
 }
@@ -43,7 +45,9 @@ GMFN double RemoveResourceLocation(char *name, char *group)
    if (mRoot == NULL)
       return FALSE;
 
-   Ogre::ResourceGroupManager::getSingleton().removeResourceLocation(name, group);
+   TRY
+      Ogre::ResourceGroupManager::getSingleton().removeResourceLocation(name, group);
+   CATCH("RemoveResourceLocation")
 
    return TRUE;
 }
@@ -51,28 +55,12 @@ GMFN double RemoveResourceLocation(char *name, char *group)
 
 GMFN double InitializeAllResourceGroups()
 {
-   try
-   {
-      if (mRoot == NULL)
-         return FALSE;
+   if (mRoot == NULL)
+      return FALSE;
 
+   TRY
       Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
-   }
-   catch(Ogre::Exception& e)
-   {
-      LogError(e.what());
-      return FALSE;
-   }
-   catch(std::exception &e)
-   {
-      LogError(e.what());
-      return FALSE;
-   }
-   catch(...)
-   {
-      LogError("An unknown error has occurred starting the Ogre3D engine!");
-      return FALSE;
-   }
+   CATCH("InitializeAllResourceGroups")
 
    return TRUE;
 }
@@ -83,7 +71,9 @@ GMFN double LoadResourceGroup(char *group)
    if (mRoot == NULL)
       return FALSE;
 
-   Ogre::ResourceGroupManager::getSingleton().loadResourceGroup(group);
+   TRY
+      Ogre::ResourceGroupManager::getSingleton().loadResourceGroup(group);
+   CATCH("LoadResourceGroup")
 
    return TRUE;
 }
@@ -94,8 +84,10 @@ GMFN double UnloadResourceGroup(char *group)
    if (mRoot == NULL)
       return FALSE;
 
-   Ogre::ResourceGroupManager::getSingleton().unloadResourceGroup(group, true);
-   Ogre::ResourceGroupManager::getSingleton().unloadUnreferencedResourcesInGroup(group, true);
+   TRY
+      Ogre::ResourceGroupManager::getSingleton().unloadResourceGroup(group, true);
+      Ogre::ResourceGroupManager::getSingleton().unloadUnreferencedResourcesInGroup(group, true);
+   CATCH("UnloadResourceGroup")
 
    return TRUE;
 }
@@ -106,7 +98,9 @@ GMFN double DestroyResourceGroup(char *group)
    if (mRoot == NULL)
       return FALSE;
 
-   Ogre::ResourceGroupManager::getSingleton().destroyResourceGroup(group);
+   TRY
+      Ogre::ResourceGroupManager::getSingleton().destroyResourceGroup(group);
+   CATCH("DestroyResourceGroup")
 
    return TRUE;
 }

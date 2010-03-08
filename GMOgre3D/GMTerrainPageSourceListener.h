@@ -3,7 +3,7 @@
 GMOgre3D - Wrapper of the OGRE 3D library for Game Maker
 
 Copyright (C) 2010 Robert Geiman
-                   <robgeiman@gmail.com>
+<robgeiman@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU Lesser General Public License as published by the Free Software
@@ -21,40 +21,24 @@ http://www.gnu.org/copyleft/lesser.txt.
 --------------------------------------------------------------------------------
 */
 
-#ifndef GMOGRE_FRAMELISTENER_H
-#define GMOGRE_FRAMELISTENER_H
+#ifndef GMOGRE_TERRAINPAGESOURCELISTENER_H
+#define GMOGRE_TERRAINPAGESOURCELISTENER_H
 
-#include "OgreNewt_World.h"
+#include "OgreTerrainPageSource.h"
 
 
-class GMFrameListener: public Ogre::FrameListener
+class GMTerrainPageSourceListener : public Ogre::TerrainPageSourceListener
 {
-private:
-   void UpdateFPSStats(void);
-
 public:
-   GMFrameListener();
+   GMTerrainPageSourceListener();
+   ~GMTerrainPageSourceListener();
 
-   void Create2DManager(Ogre::SceneManager *scene_mgr);
-   void DisplayFPS(bool enable);
-   void DisplayNewtonDebugger(OgreNewt::World *world, bool enable);
-
-   bool frameStarted(const Ogre::FrameEvent& evt);
-   bool frameRenderingQueued(const Ogre::FrameEvent& evt);
-   bool frameEnded(const Ogre::FrameEvent& evt);
-
-   void SetStartFrameCallback(int func);
-   void SetFrameQueuedCallback(int func);
-   void SetEndFrameCallback(int func);
+   virtual void pageConstructed(Ogre::TerrainSceneManager* manager, size_t pagex, size_t pagez, Ogre::Real* heightData);
+   
+   std::vector<Ogre::Vector3> &GetPolys();
 
 protected:
-   //Ogre2dManager *mOgre2DManager;
-   bool mDisplayFPS;
-   bool mDisplayNewtonDebugger;
-   OgreNewt::World *mNewtonWorld;
-   int mFrameStartedCallback;
-   int mFrameEndedCallback;
-   int mFrameQueuedCallback;
+   std::vector<Ogre::Vector3> m_polys;
 };
 
 #endif

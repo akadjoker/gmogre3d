@@ -225,6 +225,72 @@ GMFN double SetPassSceneBlendingType(double pass_ptr, double type)
 }
 
 
+GMFN double GetPassVertexProgramParameters(double pass_ptr)
+{
+   Ogre::Pass *pass = ConvertFromGMPointer<Ogre::Pass *>(pass_ptr);
+
+   if (pass == NULL)
+      return 0;
+
+   return ConvertToGMPointer(pass->getVertexProgramParameters().get());
+}
+
+
+GMFN double GetPassShadowCasterVertexProgramParameters(double pass_ptr)
+{
+   Ogre::Pass *pass = ConvertFromGMPointer<Ogre::Pass *>(pass_ptr);
+
+   if (pass == NULL)
+      return 0;
+
+   return ConvertToGMPointer(pass->getShadowCasterVertexProgramParameters().get());
+}
+
+
+GMFN double GetPassShadowReceiverVertexProgramParameters(double pass_ptr)
+{
+   Ogre::Pass *pass = ConvertFromGMPointer<Ogre::Pass *>(pass_ptr);
+
+   if (pass == NULL)
+      return 0;
+
+   return ConvertToGMPointer(pass->getShadowReceiverVertexProgramParameters().get());
+}
+
+
+GMFN double GetPassShadowReceiverFragmentProgramParameters(double pass_ptr)
+{
+   Ogre::Pass *pass = ConvertFromGMPointer<Ogre::Pass *>(pass_ptr);
+
+   if (pass == NULL)
+      return 0;
+
+   return ConvertToGMPointer(pass->getShadowReceiverFragmentProgramParameters().get());
+}
+
+
+GMFN double GetPassFragmentProgramParameters(double pass_ptr)
+{
+   Ogre::Pass *pass = ConvertFromGMPointer<Ogre::Pass *>(pass_ptr);
+
+   if (pass == NULL)
+      return 0;
+
+   return ConvertToGMPointer(pass->getFragmentProgramParameters().get());
+}
+
+
+GMFN double GetPassGeometryProgramParameters(double pass_ptr)
+{
+   Ogre::Pass *pass = ConvertFromGMPointer<Ogre::Pass *>(pass_ptr);
+
+   if (pass == NULL)
+      return 0;
+
+   return ConvertToGMPointer(pass->getGeometryProgramParameters().get());
+}
+
+
 GMFN double CreatePassTextureUnitState(double pass_ptr)
 {
    Ogre::Pass *pass = ConvertFromGMPointer<Ogre::Pass *>(pass_ptr);

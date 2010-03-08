@@ -21,40 +21,25 @@ http://www.gnu.org/copyleft/lesser.txt.
 --------------------------------------------------------------------------------
 */
 
-#ifndef GMOGRE_FRAMELISTENER_H
-#define GMOGRE_FRAMELISTENER_H
-
-#include "OgreNewt_World.h"
+#ifndef GMOGRE_SCENEMANAGERLISTENER_H
+#define GMOGRE_SCENEMANAGERLISTENER_H
 
 
-class GMFrameListener: public Ogre::FrameListener
+class GMSceneManagerListener: public Ogre::SceneManager::Listener
 {
-private:
-   void UpdateFPSStats(void);
-
 public:
-   GMFrameListener();
+   GMSceneManagerListener();
 
-   void Create2DManager(Ogre::SceneManager *scene_mgr);
-   void DisplayFPS(bool enable);
-   void DisplayNewtonDebugger(OgreNewt::World *world, bool enable);
+   void shadowTextureCasterPreViewProj(Ogre::Light *light, Ogre::Camera *cam, size_t);
+   void shadowTexturesUpdated(size_t) {}
+   void shadowTextureReceiverPreViewProj(Ogre::Light*, Ogre::Frustum*) {}
+   void preFindVisibleObjects(Ogre::SceneManager*, Ogre::SceneManager::IlluminationRenderStage, Ogre::Viewport*) {}
+   void postFindVisibleObjects(Ogre::SceneManager*, Ogre::SceneManager::IlluminationRenderStage, Ogre::Viewport*) {}
 
-   bool frameStarted(const Ogre::FrameEvent& evt);
-   bool frameRenderingQueued(const Ogre::FrameEvent& evt);
-   bool frameEnded(const Ogre::FrameEvent& evt);
-
-   void SetStartFrameCallback(int func);
-   void SetFrameQueuedCallback(int func);
-   void SetEndFrameCallback(int func);
+   void GMSceneManagerListener::SetShadowTextureCasterPreViewProjCallback(int func);
 
 protected:
-   //Ogre2dManager *mOgre2DManager;
-   bool mDisplayFPS;
-   bool mDisplayNewtonDebugger;
-   OgreNewt::World *mNewtonWorld;
-   int mFrameStartedCallback;
-   int mFrameEndedCallback;
-   int mFrameQueuedCallback;
+   int mShadowTextureCasterPreViewProjCallback;
 };
 
 #endif

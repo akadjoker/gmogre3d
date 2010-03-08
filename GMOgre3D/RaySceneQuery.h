@@ -30,11 +30,15 @@ http://www.gnu.org/copyleft/lesser.txt.
 GMFN double CreateRaySceneQuery()
 {
    if (mSceneMgr == NULL)
-      return FALSE;
+      return 0;
 
-   mSceneMgr->createRayQuery(Ogre::Ray());
+   Ogre::RaySceneQuery *ray_query = NULL;
 
-   return TRUE;
+   TRY
+      ray_query = mSceneMgr->createRayQuery(Ogre::Ray());
+   CATCH("CreateRaySceneQuery")
+
+   return ConvertToGMPointer(ray_query);
 }
 
 

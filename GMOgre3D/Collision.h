@@ -27,6 +27,24 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "GMOgre3D.h"
 
 
+   class MyRaySceneQueryListener: public Ogre::RaySceneQueryListener
+	{
+	public:
+		inline bool queryResult(Ogre::SceneQuery::WorldFragment *fragment, Ogre::Real distance)
+		{
+			resultDistance = fragment->singleIntersection.y;
+			return false;
+		}
+		inline bool queryResult(Ogre::MovableObject *obj, Ogre::Real distance)
+		{
+			resultDistance = distance;
+			return false;
+		}
+
+		float resultDistance;
+	};
+
+
 GMFN double FindEntityFromCameraPosition(double camera_ptr, double x, double y, double mask = 0xFFFFFFFF)
 {
    MOC::CollisionTools *ct = mSceneCollisionMap[mSceneMgr];
@@ -50,6 +68,49 @@ GMFN double FindEntityFromCameraPosition(double camera_ptr, double x, double y, 
 	}
 
    return 0;
+}
+
+
+GMFN double FindTerrainFromCameraPosition(double camera_ptr, double x, double y)
+{
+   Ogre::Camera *cam = ConvertFromGMPointer<Ogre::Camera*>(camera_ptr);
+
+   if (cam == NULL)
+      return FALSE;
+
+   if (mSceneMgr == NULL)
+      return FALSE;
+
+   Ogre::Real realitive_x = x / cam->getViewport()->getActualWidth();
+   Ogre::Real realitive_y = y / cam->getViewport()->getActualHeight();
+
+   static Ogre::Ray ray;
+   cam->getCameraToViewportRay(realitive_x, realitive_y, &ray);
+
+   static Ogre::RaySceneQuery *ray_query = NULL;
+
+   if (ray_query == NULL)
+      ray_query = mSceneMgr->createRayQuery(ray);
+
+   ray_query->setSortByDistance(true);
+   ray_query->setRay(ray);
+   
+   Ogre::RaySceneQueryResult& qryResult = ray_query->execute();
+
+   Ogre::RaySceneQueryResult::iterator i = qryResult.begin();
+   while (i != qryResult.end())
+   {
+      if (i->worldFragment)
+      {
+         Ogre::Vector3 result = i->worldFragment->singleIntersection;
+         SetGMVectorGlobals(result);
+		   return TRUE;
+      }
+
+      i++;
+   }
+
+   return FALSE;
 }
 
 
@@ -119,7 +180,7 @@ GMFN double GetTerrainHeight(double x, double z)
    if (ct == NULL)
       return -999999;
 
-   return ct->getTSMHeightAt(x, z);
+   return ct->getTSMHeightAt(x, z);	
 }
 
 #endif

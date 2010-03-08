@@ -47,7 +47,9 @@ GMFN double DestroyNewtonWorld(double newton_world_ptr)
    if (!newton_world)
       return FALSE;
 
-   delete newton_world;
+   TRY
+      delete newton_world;
+   CATCH("DestroyNewtonWorld")
 
    return TRUE;
 }
@@ -60,17 +62,19 @@ GMFN double EnableNewtonWorldDebugger(double newton_world_ptr, double enable)
    if (!newton_world)
       return FALSE;
 
-   GMFrameListener *fl = mSceneListener[mSceneMgr];
+   TRY
+      GMFrameListener *fl = mSceneListener[mSceneMgr];
 
-   if (fl == NULL)
-      return FALSE;
+      if (fl == NULL)
+         return FALSE;
 
-   if (enable != 0)
-      newton_world->getDebugger().init(mSceneMgr);
-   else
-      newton_world->getDebugger().deInit();
+      if (enable != 0)
+         newton_world->getDebugger().init(mSceneMgr);
+      else
+         newton_world->getDebugger().deInit();
 
-   fl->DisplayNewtonDebugger(newton_world->getOgreNewtWorld(), (enable != 0));
+      fl->DisplayNewtonDebugger(newton_world->getOgreNewtWorld(), (enable != 0));
+   CATCH("EnableNewtonWorldDebugger")
 
    return TRUE;
 }
@@ -96,7 +100,9 @@ GMFN double DestroyAllNewtonWorldBodies(double newton_world_ptr)
    if (!newton_world)
       return FALSE;
    
-   newton_world->destroyAllBodies();
+   TRY
+      newton_world->destroyAllBodies();
+   CATCH("DestroyAllNewtonWorldBodies")
 
    return TRUE;
 }

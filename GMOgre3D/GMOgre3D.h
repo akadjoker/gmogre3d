@@ -43,6 +43,11 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreNewt_Body.h"
 #include "OgreNewt_Collision.h"
 #include "FrameListener.h"
+#include "GMSceneManagerListener.h"
+#include "MaterialListener.h"
+#include "GMCompositorListener.h"
+#include "GMTerrainPageSourceListener.h"
+#include "RendererModules/Ogre/CEGUIOgreRenderer.h"
 #include "Axes.h"
 #include <GMAPI.h>
 #include <OgreAny.h>
@@ -89,6 +94,7 @@ struct GMInstance
 	gm::GMVARIABLE *pX;
 	gm::GMVARIABLE *pY;
 	gm::GMVARIABLE *pZ;
+   gm::GMVARIABLE *pYaw;
 	gm::GMVARIABLE *pPitch;
 	gm::GMVARIABLE *pRoll;
 	gm::GMVARIABLE *pScaleX;
@@ -146,11 +152,13 @@ Ogre::CgPlugin *mCGPlugin = NULL;
 
 Ogre::Root *mRoot = NULL;
 Ogre::SceneManager *mSceneMgr = NULL;
-Ogre::Camera *mCamera = NULL;
 Ogre::Viewport* mViewPort = NULL;
 Ogre::RenderWindow* mRenderWindow = NULL;
 SkyX::SkyX* mSkyX = NULL;
 //GMFrameListener* mFrameListener = NULL;
+GMMaterialListener* mMaterialListener = NULL;
+
+CEGUI::OgreRenderer *mGUIRenderer = NULL;
 
 gm::CGMAPI *mGMAPI = NULL;
 gm::GMVARIABLE *mVectorX = NULL;
@@ -159,6 +167,22 @@ gm::GMVARIABLE *mVectorZ = NULL;
 gm::GMVARIABLE *mEulerYaw = NULL;
 gm::GMVARIABLE *mEulerPitch = NULL;
 gm::GMVARIABLE *mEulerRoll = NULL;
+gm::GMVARIABLE *mMatrix00 = NULL;
+gm::GMVARIABLE *mMatrix01 = NULL;
+gm::GMVARIABLE *mMatrix02 = NULL;
+gm::GMVARIABLE *mMatrix03 = NULL;
+gm::GMVARIABLE *mMatrix10 = NULL;
+gm::GMVARIABLE *mMatrix11 = NULL;
+gm::GMVARIABLE *mMatrix12 = NULL;
+gm::GMVARIABLE *mMatrix13 = NULL;
+gm::GMVARIABLE *mMatrix20 = NULL;
+gm::GMVARIABLE *mMatrix21 = NULL;
+gm::GMVARIABLE *mMatrix22 = NULL;
+gm::GMVARIABLE *mMatrix23 = NULL;
+gm::GMVARIABLE *mMatrix30 = NULL;
+gm::GMVARIABLE *mMatrix31 = NULL;
+gm::GMVARIABLE *mMatrix32 = NULL;
+gm::GMVARIABLE *mMatrix33 = NULL;
 int xsymbol = 0;
 
 HANDLE gMutex = NULL;
@@ -176,6 +200,9 @@ SceneNodeMap mSceneNodeAttachments;
 typedef std::map<Ogre::SceneManager *, GMFrameListener*> SceneFrameListenerMap;
 SceneFrameListenerMap mSceneListener;
 
+typedef std::map<Ogre::SceneManager *, GMSceneManagerListener*> SceneManagerListenerMap;
+SceneManagerListenerMap mSceneManagerListener;
+
 typedef std::map<Ogre::SceneManager *, MOC::CollisionTools*> SceneCollisionToolsMap;
 SceneCollisionToolsMap mSceneCollisionMap;
 
@@ -184,6 +211,9 @@ NewtonCollisionMap mNewtonCollisionMap;
 
 //typedef std::map<std::pair<OgreNewt::MaterialID *, GMCallback> NewtonMaterialMap;
 //NewtonMaterialMap mNewtonMaterialMap;
+
+typedef std::map<Ogre::String, GMCompositorListener*> CompositorListenerMap;
+CompositorListenerMap mCompositorListener;
 
 
 // Helper functions
@@ -341,6 +371,123 @@ void AcquireGMEulerGlobals()
    }
 }
 
+void AcquireGMMatrixGlobals()
+{
+   if (!mGMAPI)
+      return;
+
+   static int symbolMatrix00 = mGMAPI->GetSymbolID("matrix_00");
+   static int symbolMatrix01 = mGMAPI->GetSymbolID("matrix_01");
+   static int symbolMatrix02 = mGMAPI->GetSymbolID("matrix_02");
+   static int symbolMatrix03 = mGMAPI->GetSymbolID("matrix_03");
+
+   static int symbolMatrix10 = mGMAPI->GetSymbolID("matrix_10");
+   static int symbolMatrix11 = mGMAPI->GetSymbolID("matrix_11");
+   static int symbolMatrix12 = mGMAPI->GetSymbolID("matrix_12");
+   static int symbolMatrix13 = mGMAPI->GetSymbolID("matrix_13");
+
+   static int symbolMatrix20 = mGMAPI->GetSymbolID("matrix_20");
+   static int symbolMatrix21 = mGMAPI->GetSymbolID("matrix_21");
+   static int symbolMatrix22 = mGMAPI->GetSymbolID("matrix_22");
+   static int symbolMatrix23 = mGMAPI->GetSymbolID("matrix_23");
+
+   static int symbolMatrix30 = mGMAPI->GetSymbolID("matrix_30");
+   static int symbolMatrix31 = mGMAPI->GetSymbolID("matrix_31");
+   static int symbolMatrix32 = mGMAPI->GetSymbolID("matrix_32");
+   static int symbolMatrix33 = mGMAPI->GetSymbolID("matrix_33");
+
+   gm::GMVARIABLE* varArray = (gm::GMVARIABLE*) mGMAPI->GetGlobalVariableListPtr()->variables;
+   int varCount = mGMAPI->GetGlobalVariableListPtr()->count;
+   int acquiredCount = 0;
+      
+   for (int i = 0; i < varCount; i++)
+   {
+      if (varArray[i].symbolId == symbolMatrix00)
+      {
+         mMatrix00 = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolMatrix01)
+      {
+         mMatrix01 = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolMatrix02)
+      {
+         mMatrix02 = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolMatrix03)
+      {
+         mMatrix03 = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolMatrix10)
+      {
+         mMatrix10 = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolMatrix11)
+      {
+         mMatrix11 = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolMatrix12)
+      {
+         mMatrix12 = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolMatrix13)
+      {
+         mMatrix13 = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolMatrix20)
+      {
+         mMatrix20 = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolMatrix21)
+      {
+         mMatrix21 = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolMatrix22)
+      {
+         mMatrix22 = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolMatrix23)
+      {
+         mMatrix23 = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolMatrix30)
+      {
+         mMatrix30 = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolMatrix31)
+      {
+         mMatrix31 = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolMatrix32)
+      {
+         mMatrix32 = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolMatrix33)
+      {
+         mMatrix33 = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+
+      if (acquiredCount >= 16)
+         break;
+   }
+}
+
 void AcquireGMLocalVariablePointers(GMInstance *gminst)
 {
    if (!mGMAPI)
@@ -351,6 +498,7 @@ void AcquireGMLocalVariablePointers(GMInstance *gminst)
    //   1) Previously acquired pointers are NOT guaranteed to be valid each frame
    //   2) Manually calling GetLocalVariablePtr for each variable is SLOW!
    static int symbolZ = mGMAPI->GetSymbolID("z");
+   static int symbolYaw = mGMAPI->GetSymbolID("yaw");
    static int symbolPitch = mGMAPI->GetSymbolID("pitch");
    static int symbolRoll = mGMAPI->GetSymbolID("roll");
    static int symbolScaleX = mGMAPI->GetSymbolID("scalex");
@@ -366,6 +514,11 @@ void AcquireGMLocalVariablePointers(GMInstance *gminst)
       if (varArray[i].symbolId == symbolZ)
       {
          gminst->pZ = (gm::PGMVARIABLE)(varArray + i);
+         acquiredCount++;
+      }
+      else if (varArray[i].symbolId == symbolYaw)
+      {
+         gminst->pYaw = (gm::PGMVARIABLE)(varArray + i);
          acquiredCount++;
       }
       else if (varArray[i].symbolId == symbolPitch)
@@ -394,7 +547,7 @@ void AcquireGMLocalVariablePointers(GMInstance *gminst)
          acquiredCount++;
       }
 
-      if (acquiredCount >= 6)
+      if (acquiredCount >= 7)
          break;
    }
 }
