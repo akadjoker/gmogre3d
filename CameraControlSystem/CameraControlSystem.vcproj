@@ -86,7 +86,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="xcopy $(OutDir)\$(TargetName)$(TargetExt) $(OGRE_HOME)\bin\$(ConfigurationName) /y&#x0D;&#x0A;"
+				CommandLine=""
 			/>
 		</Configuration>
 		<Configuration
@@ -155,7 +155,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="xcopy $(OutDir)\$(TargetName)$(TargetExt) $(OGRE_HOME)\bin\$(ConfigurationName) /y&#x0D;&#x0A;"
+				CommandLine=""
 			/>
 		</Configuration>
 	</Configurations>
