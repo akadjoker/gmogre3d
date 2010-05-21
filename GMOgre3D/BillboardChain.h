@@ -26,6 +26,10 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "GMOgre3D.h"
 
+static Ogre::String bb_chain_entity_bone_name;
+static double bb_chain_id;
+static double bb_chain_entity_id;
+
 
 GMFN double CreateBillboardChain()
 {
@@ -270,6 +274,52 @@ GMFN double DetachBillboardChainFromSceneNode(double bb_chain_ptr, double scene_
       return FALSE;
    
    node->detachObject(bb_chain);
+
+   return TRUE;
+}
+
+
+GMFN double AttachBillboardChainToEntityBone1(double bb_chain_ptr, double entity_ptr, char *bone_name)
+{
+   bb_chain_id = bb_chain_ptr;
+   bb_chain_entity_id = entity_ptr;
+   bb_chain_entity_bone_name = bone_name;
+
+   return TRUE;
+}
+
+
+GMFN double AttachBillboardChainToEntityBone2(double x, double y, double z, double yaw, double pitch, double roll)
+{
+   Ogre::BillboardChain *bb_chain = ConvertFromGMPointer<Ogre::BillboardChain*>(bb_chain_id);
+
+   if (bb_chain == NULL)
+      return FALSE;
+
+   Ogre::Entity *entity = ConvertFromGMPointer<Ogre::Entity*>(bb_chain_entity_id);
+
+   if (entity == NULL)
+      return FALSE;
+
+   entity->attachObjectToBone(bb_chain_entity_bone_name, bb_chain, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree(pitch), Ogre::Degree(roll)), ConvertFromGMAxis(x, y, z));
+
+   return TRUE;
+}
+
+
+GMFN double DetachBillboardChainFromEntityBone(double bb_chain_ptr, double entity_ptr)
+{
+   Ogre::BillboardChain *bb_chain = ConvertFromGMPointer<Ogre::BillboardChain*>(bb_chain_ptr);
+
+   if (bb_chain == NULL)
+      return FALSE;
+   
+   Ogre::Entity *entity = ConvertFromGMPointer<Ogre::Entity*>(entity_ptr);
+
+   if (entity == NULL)
+      return FALSE;
+   
+   entity->detachObjectFromBone(bb_chain->getName());
 
    return TRUE;
 }

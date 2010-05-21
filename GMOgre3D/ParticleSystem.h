@@ -26,6 +26,10 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "GMOgre3D.h"
 
+static Ogre::String part_sys_entity_bone_name;
+static double part_sys_id;
+static double part_sys_entity_id;
+
 
 GMFN double CreateParticleSystem(char *name)
 {
@@ -266,6 +270,51 @@ GMFN double DetachParticleSystemFromSceneNode(double part_sys_ptr, double scene_
    return TRUE;
 }
 
+
+GMFN double AttachParticleSystemToEntityBone1(double part_sys_ptr, double entity_ptr, char *bone_name)
+{
+   part_sys_id = part_sys_ptr;
+   part_sys_entity_id = entity_ptr;
+   part_sys_entity_bone_name = bone_name;
+
+   return TRUE;
+}
+
+
+GMFN double AttachParticleSystemToEntityBone2(double x, double y, double z, double yaw, double pitch, double roll)
+{
+   Ogre::ParticleSystem *part_sys = ConvertFromGMPointer<Ogre::ParticleSystem*>(part_sys_id);
+
+   if (part_sys == NULL)
+      return FALSE;
+
+   Ogre::Entity *entity = ConvertFromGMPointer<Ogre::Entity*>(part_sys_entity_id);
+
+   if (entity == NULL)
+      return FALSE;
+
+   entity->attachObjectToBone(part_sys_entity_bone_name, part_sys, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree(pitch), Ogre::Degree(roll)), ConvertFromGMAxis(x, y, z));
+
+   return TRUE;
+}
+
+
+GMFN double DetachParticleSystemFromEntityBone(double part_sys_ptr, double entity_ptr)
+{
+   Ogre::ParticleSystem *part_sys = ConvertFromGMPointer<Ogre::ParticleSystem*>(part_sys_ptr);
+
+   if (part_sys == NULL)
+      return FALSE;
+   
+   Ogre::Entity *entity = ConvertFromGMPointer<Ogre::Entity*>(entity_ptr);
+
+   if (entity == NULL)
+      return FALSE;
+   
+   entity->detachObjectFromBone(part_sys->getName());
+
+   return TRUE;
+}
 
 
 GMFN double AddParticleSystemEmitter(double part_sys_ptr, double type)

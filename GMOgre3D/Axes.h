@@ -64,11 +64,11 @@ Ogre::Vector3 ConvertToGMAxis(double x, double z, double y)
    else if (mRotationMode == ZXY_ROTATION)
       return Ogre::Vector3(z, x, y);
    else if (mRotationMode == ZYX_ROTATION)
-      return Ogre::Vector3(z, y, x);
+      return Ogre::Vector3(y, x, z);
    else if (mRotationMode == YZX_ROTATION)
       return Ogre::Vector3(y, z, x);
    else
-      return Ogre::Vector3(y, x, z);
+      return Ogre::Vector3(z, y, x);
 }
 
 

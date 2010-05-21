@@ -25,8 +25,13 @@ OgreSprite::OgreSprite()
    // Users can change metrics, but we default to pixels
    m_panel->setMetricsMode(Ogre::GMM_PIXELS);
 
+   m_width = 1.0;
+   m_height = 1.0;
+   m_scalex = 1.0;
+   m_scaley = 1.0;
+
    m_panel->setPosition(0, 0);
-   m_panel->setDimensions(1.0f, 1.0f);
+   m_panel->setDimensions(m_width, m_height);
 
    m_overlay = m_overlay_mgr->create(GenerateUniqueSpriteName());
    m_overlay->add2D(m_panel);
@@ -55,7 +60,10 @@ void OgreSprite::SetMetrics(double type)
 
 void OgreSprite::SetDimensions(double width, double height)
 {
-   m_panel->setDimensions(width, height);
+   m_width = width;
+   m_height = height;
+
+   m_panel->setDimensions(m_width * m_scalex, m_height * m_scaley);
 }
 
 
@@ -73,7 +81,11 @@ void OgreSprite::Rotate(double degrees)
 
 void OgreSprite::SetScale(double x, double y)
 {
-   m_overlay->setScale(x, y);
+   m_scalex = x;
+   m_scaley = y;
+
+   SetDimensions(m_width, m_height);
+   //m_overlay->setScale(x, y);
 }
 
 

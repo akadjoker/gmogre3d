@@ -26,6 +26,10 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "GMOgre3D.h"
 
+static Ogre::String bb_set_entity_bone_name;
+static double bb_set_id;
+static double bb_set_entity_id;
+
 
 GMFN double CreateBillboardSet(double size = 20.0)
 {
@@ -231,6 +235,52 @@ GMFN double DetachBillboardSetFromSceneNode(double bb_set_ptr, double scene_node
       return FALSE;
    
    node->detachObject(bb_set);
+
+   return TRUE;
+}
+
+
+GMFN double AttachBillboardSetToEntityBone1(double bb_set_ptr, double entity_ptr, char *bone_name)
+{
+   bb_set_id = bb_set_ptr;
+   bb_set_entity_id = entity_ptr;
+   bb_set_entity_bone_name = bone_name;
+
+   return TRUE;
+}
+
+
+GMFN double AttachBillboardSetToEntityBone2(double x, double y, double z, double yaw, double pitch, double roll)
+{
+   Ogre::BillboardSet *bb_set = ConvertFromGMPointer<Ogre::BillboardSet*>(bb_set_id);
+
+   if (bb_set == NULL)
+      return FALSE;
+
+   Ogre::Entity *entity = ConvertFromGMPointer<Ogre::Entity*>(bb_set_entity_id);
+
+   if (entity == NULL)
+      return FALSE;
+
+   entity->attachObjectToBone(bb_set_entity_bone_name, bb_set, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree(pitch), Ogre::Degree(roll)), ConvertFromGMAxis(x, y, z));
+
+   return TRUE;
+}
+
+
+GMFN double DetachBillboardSetFromEntityBone(double bb_set_ptr, double entity_ptr)
+{
+   Ogre::BillboardSet *bb_set = ConvertFromGMPointer<Ogre::BillboardSet*>(bb_set_ptr);
+
+   if (bb_set == NULL)
+      return FALSE;
+   
+   Ogre::Entity *entity = ConvertFromGMPointer<Ogre::Entity*>(entity_ptr);
+
+   if (entity == NULL)
+      return FALSE;
+   
+   entity->detachObjectFromBone(bb_set->getName());
 
    return TRUE;
 }

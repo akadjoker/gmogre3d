@@ -5,6 +5,21 @@
 
 unsigned int OgreText::m_initialized = 0;
 
+Ogre::UTFString ConvertToUTF(Ogre::String String)
+{
+   Ogre::UTFString UTFString;
+   int i;
+   Ogre::UTFString::code_point cp;
+   for (i=0; i<(int)String.size(); ++i)
+   {
+      cp = String[i];
+      cp &= 0xFF;
+      UTFString.append(1, cp);
+   }
+   return UTFString;
+}
+
+
 OgreText::OgreText()
 {
    m_overlay_mgr = Ogre::OverlayManager::getSingletonPtr();
@@ -68,13 +83,13 @@ void OgreText::SetFont(Ogre::String font_name, Ogre::Real height)
 
 void OgreText::SetCaption(char *txt)
 {
-   m_text_area->setCaption(txt);
+   m_text_area->setCaption(ConvertToUTF(Ogre::String(txt)));
 }
 	
 	
 void OgreText::SetCaption(Ogre::String txt)
 {
-   m_text_area->setCaption(txt);
+   m_text_area->setCaption(ConvertToUTF(txt));
 }
 
 

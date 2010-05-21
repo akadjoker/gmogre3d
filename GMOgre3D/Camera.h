@@ -26,6 +26,9 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "GMOgre3D.h"
 
+static double camera_id;
+static double camera_entity_id;
+static Ogre::String camera_entity_bone_name;
 
 GMFN double CreateCamera(double aspect, double znear, double zfar, double fov)
 {
@@ -683,6 +686,52 @@ GMFN double DetachCameraFromSceneNode(double cam_ptr, double scene_node_ptr)
       return FALSE;
    
    node->detachObject(cam);
+
+   return TRUE;
+}
+
+
+GMFN double AttachCameraToEntityBone1(double cam_ptr, double entity_ptr, char *bone_name)
+{
+   camera_id = cam_ptr;
+   camera_entity_id = entity_ptr;
+   camera_entity_bone_name = bone_name;
+
+   return TRUE;
+}
+
+
+GMFN double AttachCameraToEntityBone2(double x, double y, double z, double yaw, double pitch, double roll)
+{
+   Ogre::Camera *cam = ConvertFromGMPointer<Ogre::Camera*>(camera_id);
+
+   if (cam == NULL)
+      return FALSE;
+
+   Ogre::Entity *entity = ConvertFromGMPointer<Ogre::Entity*>(camera_entity_id);
+
+   if (entity == NULL)
+      return FALSE;
+
+   entity->attachObjectToBone(camera_entity_bone_name, cam, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree(pitch), Ogre::Degree(roll)), ConvertFromGMAxis(x, y, z));
+
+   return TRUE;
+}
+
+
+GMFN double DetachCameraFromEntityBone(double cam_ptr, double entity_ptr)
+{
+   Ogre::Camera *cam = ConvertFromGMPointer<Ogre::Camera*>(cam_ptr);
+
+   if (cam == NULL)
+      return FALSE;
+   
+   Ogre::Entity *entity = ConvertFromGMPointer<Ogre::Entity*>(entity_ptr);
+
+   if (entity == NULL)
+      return FALSE;
+   
+   entity->detachObjectFromBone(cam->getName());
 
    return TRUE;
 }

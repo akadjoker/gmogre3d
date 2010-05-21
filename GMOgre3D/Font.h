@@ -46,6 +46,7 @@ GMFN char *CreateGMFont(char *name, char *group = const_cast<char*>(Ogre::Resour
       font->setParameter("source", font_source);
       font->setParameter("size", Ogre::StringConverter::toString((Ogre::Real)size));
       font->setParameter("resolution", "96");
+      font->setParameter("code_points", "33-255");
    CATCH("CreateFont")
 
    return name;

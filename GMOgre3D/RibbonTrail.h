@@ -26,6 +26,11 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "GMOgre3D.h"
 
+static Ogre::String ribbon_trail_entity_bone_name;
+static double ribbon_trail_id;
+static double ribbon_trail_entity_id;
+
+
 GMFN double CreateRibbonTrail()
 {
    if (mSceneMgr == NULL)
@@ -380,6 +385,32 @@ GMFN double SetRibbonTrailMaterial(double ribbon_trail_ptr, char *name)
 }
 
 
+GMFN double ShowRibbonTrail(double ribbon_trail_ptr)
+{
+   Ogre::RibbonTrail *ribbon_trail = ConvertFromGMPointer<Ogre::RibbonTrail*>(ribbon_trail_ptr);
+
+   if (ribbon_trail == NULL)
+      return FALSE;
+
+   ribbon_trail->setVisible(true);
+
+   return TRUE;
+}
+
+
+GMFN double HideRibbonTrail(double ribbon_trail_ptr)
+{
+   Ogre::RibbonTrail *ribbon_trail = ConvertFromGMPointer<Ogre::RibbonTrail*>(ribbon_trail_ptr);
+
+   if (ribbon_trail == NULL)
+      return FALSE;
+
+   ribbon_trail->setVisible(false);
+
+   return TRUE;
+}
+
+
 GMFN double AttachRibbonTrailToSceneNode(double ribbon_trail_ptr, double scene_node_ptr)
 {
    Ogre::RibbonTrail *ribbon_trail = ConvertFromGMPointer<Ogre::RibbonTrail*>(ribbon_trail_ptr);
@@ -411,6 +442,52 @@ GMFN double DetachRibbonTrailFromSceneNode(double ribbon_trail_ptr, double scene
       return FALSE;
    
    node->detachObject(ribbon_trail);
+
+   return TRUE;
+}
+
+
+GMFN double AttachRibbonTrailToEntityBone1(double ribbon_trail_ptr, double entity_ptr, char *bone_name)
+{
+   ribbon_trail_id = ribbon_trail_ptr;
+   ribbon_trail_entity_id = entity_ptr;
+   ribbon_trail_entity_bone_name = bone_name;
+
+   return TRUE;
+}
+
+
+GMFN double AttachRibbonTrailToEntityBone2(double x, double y, double z, double yaw, double pitch, double roll)
+{
+   Ogre::RibbonTrail *ribbon_trail = ConvertFromGMPointer<Ogre::RibbonTrail*>(ribbon_trail_id);
+
+   if (ribbon_trail == NULL)
+      return FALSE;
+
+   Ogre::Entity *entity = ConvertFromGMPointer<Ogre::Entity*>(ribbon_trail_entity_id);
+
+   if (entity == NULL)
+      return FALSE;
+
+   entity->attachObjectToBone(ribbon_trail_entity_bone_name, ribbon_trail, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree(pitch), Ogre::Degree(roll)), ConvertFromGMAxis(x, y, z));
+
+   return TRUE;
+}
+
+
+GMFN double DetachRibbonTrailFromEntityBone(double ribbon_trail_ptr, double entity_ptr)
+{
+   Ogre::RibbonTrail *ribbon_trail = ConvertFromGMPointer<Ogre::RibbonTrail*>(ribbon_trail_ptr);
+
+   if (ribbon_trail == NULL)
+      return FALSE;
+   
+   Ogre::Entity *entity = ConvertFromGMPointer<Ogre::Entity*>(entity_ptr);
+
+   if (entity == NULL)
+      return FALSE;
+   
+   entity->detachObjectFromBone(ribbon_trail->getName());
 
    return TRUE;
 }

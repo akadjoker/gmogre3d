@@ -467,4 +467,18 @@ GMFN double SetFog(double type, double color, double density, double start, doub
    return TRUE;
 }
 
+
+GMFN double GetNumberOfEntities()
+{
+   if (mSceneMgr == NULL)
+      return FALSE;
+
+   double num = 0;
+
+   for (Ogre::SceneManager::MovableObjectIterator iter = mSceneMgr->getMovableObjectIterator("Entity"); iter.hasMoreElements();)
+	   num++;
+
+   return num;
+}
+
 #endif

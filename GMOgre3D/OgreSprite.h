@@ -49,6 +49,12 @@ protected:
    Ogre::OverlayManager *m_overlay_mgr;
 	Ogre::OverlayContainer *m_panel;
 	Ogre::Overlay *m_overlay;
+
+   double m_scalex;
+   double m_scaley;
+
+   double m_width;
+   double m_height;
 };
 
 #endif

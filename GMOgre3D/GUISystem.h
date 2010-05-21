@@ -249,6 +249,16 @@ GMFN double CreateGUIFont(char *filename)
 }
 
 
+GMFN char *CreateGUITrueTypeFont(char *name, char *filename, double size, double anti_aliased = 1)
+{
+   TRY
+      CEGUI::FontManager::getSingleton().createFreeTypeFont(name, size, (anti_aliased != 0), filename);
+   CATCH("CreateGUITrueTypeFont")
+
+   return name;
+}
+
+
 GMFN double SetGUIDefaultFont(char *font_name)
 {
    CEGUI::System *system = CEGUI::System::getSingletonPtr();

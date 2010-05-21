@@ -30,6 +30,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 static Ogre::String sGPUProgramParameterName;
 static float iGPUProgramParameterValues[128];
 static unsigned int iTotalGPUProgramParameterValues = 0;
+static double iGPUProgParamsPtr = 0;
 
 
 GMFN double FindGPUProgramParametersNamedConstantDefinition(double gpu_prog_params_ptr, char *name)
@@ -76,15 +77,16 @@ GMFN double SetGPUProgramParametersNamedConstantReal1(double gpu_prog_params_ptr
    if (gpu_prog_params == NULL)
       return FALSE;
 
+   iGPUProgParamsPtr = gpu_prog_params_ptr;
    sGPUProgramParameterName = name;
 
    return TRUE;
 }
 
 
-GMFN double SetGPUProgramParametersNamedConstantReal2(double gpu_prog_params_ptr, double count, double val1, double val2, double val3, double val4, double val5, double val6, double val7, double val8)
+GMFN double SetGPUProgramParametersNamedConstantReal2(double count, double val1, double val2, double val3, double val4, double val5, double val6, double val7, double val8)
 {
-   Ogre::GpuProgramParameters *gpu_prog_params = ConvertFromGMPointer<Ogre::GpuProgramParameters *>(gpu_prog_params_ptr);
+   Ogre::GpuProgramParameters *gpu_prog_params = ConvertFromGMPointer<Ogre::GpuProgramParameters *>(iGPUProgParamsPtr);
 
    if (gpu_prog_params == NULL)
       return FALSE;

@@ -26,6 +26,10 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "GMOgre3D.h"
 
+static Ogre::String light_entity_bone_name;
+static double light_id;
+static double light_entity_id;
+
 
 GMFN double CreateLight()
 {
@@ -160,6 +164,19 @@ GMFN double SetLightSpotlightRange(double light_ptr, double inner_angle, double 
 }
 
 
+GMFN double EnableLightCastShadows(double light_ptr, double enable)
+{
+   Ogre::Light *light = ConvertFromGMPointer<Ogre::Light*>(light_ptr);
+
+   if (light == NULL)
+      return FALSE;
+
+   light->setCastShadows((enable != 0));
+
+   return TRUE;
+}
+
+
 GMFN double AttachLightToSceneNode(double light_ptr, double scene_node_ptr)
 {
    Ogre::Light *light = ConvertFromGMPointer<Ogre::Light*>(light_ptr);
@@ -191,6 +208,52 @@ GMFN double DetachLightFromSceneNode(double light_ptr, double scene_node_ptr)
       return FALSE;
    
    node->detachObject(light);
+
+   return TRUE;
+}
+
+
+GMFN double AttachLightToEntityBone1(double light_ptr, double entity_ptr, char *bone_name)
+{
+   light_id = light_ptr;
+   light_entity_id = entity_ptr;
+   light_entity_bone_name = bone_name;
+
+   return TRUE;
+}
+
+
+GMFN double AttachLightToEntityBone2(double x, double y, double z, double yaw, double pitch, double roll)
+{
+   Ogre::Light *light = ConvertFromGMPointer<Ogre::Light*>(light_id);
+
+   if (light == NULL)
+      return FALSE;
+
+   Ogre::Entity *entity = ConvertFromGMPointer<Ogre::Entity*>(light_entity_id);
+
+   if (entity == NULL)
+      return FALSE;
+
+   entity->attachObjectToBone(light_entity_bone_name, light, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree(pitch), Ogre::Degree(roll)), ConvertFromGMAxis(x, y, z));
+
+   return TRUE;
+}
+
+
+GMFN double DetachLightFromEntityBone(double light_ptr, double entity_ptr)
+{
+   Ogre::Light *light = ConvertFromGMPointer<Ogre::Light*>(light_ptr);
+
+   if (light == NULL)
+      return FALSE;
+   
+   Ogre::Entity *entity = ConvertFromGMPointer<Ogre::Entity*>(entity_ptr);
+
+   if (entity == NULL)
+      return FALSE;
+   
+   entity->detachObjectFromBone(light->getName());
 
    return TRUE;
 }

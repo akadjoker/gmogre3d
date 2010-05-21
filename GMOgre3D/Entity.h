@@ -30,6 +30,10 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 
 static Ogre::String anim_names;
+static Ogre::String entity_entity_bone_name;
+static double entity_id;
+static double entity_entity_id;
+
 
 GMFN double CreateEntity(char *mesh_name)
 {
@@ -326,6 +330,65 @@ GMFN double DetachEntityFromSceneNode(double ent_ptr, double scene_node_ptr)
 }
 
 
+GMFN double AttachEntityToEntityBone1(double ent_ptr, double ent_ptr2, char *bone_name)
+{
+   entity_id = ent_ptr;
+   entity_entity_id = ent_ptr2;
+   entity_entity_bone_name = bone_name;
+
+   return TRUE;
+}
+
+
+GMFN double AttachEntityToEntityBone2(double x, double y, double z, double yaw, double pitch, double roll)
+{
+   Ogre::Entity *entity = ConvertFromGMPointer<Ogre::Entity*>(entity_id);
+
+   if (entity == NULL)
+      return FALSE;
+
+   Ogre::Entity *entity2 = ConvertFromGMPointer<Ogre::Entity*>(entity_entity_id);
+
+   if (entity2 == NULL)
+      return FALSE;
+
+   entity2->attachObjectToBone(entity_entity_bone_name, entity, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree(pitch), Ogre::Degree(roll)), ConvertFromGMAxis(x, y, z));
+
+   return TRUE;
+}
+
+
+GMFN double DetachEntityFromEntityBone(double entity_ptr, double entity_ptr2)
+{
+   Ogre::Entity *entity = ConvertFromGMPointer<Ogre::Entity*>(entity_ptr);
+
+   if (entity == NULL)
+      return FALSE;
+   
+   Ogre::Entity *entity2 = ConvertFromGMPointer<Ogre::Entity*>(entity_ptr2);
+
+   if (entity2 == NULL)
+      return FALSE;
+   
+   entity->detachObjectFromBone(entity2->getName());
+
+   return TRUE;
+}
+
+
+GMFN double DetachEntitiesFromEntityBones(double entity_ptr)
+{
+   Ogre::Entity *entity = ConvertFromGMPointer<Ogre::Entity*>(entity_ptr);
+
+   if (entity == NULL)
+      return FALSE;
+
+   entity->detachAllObjectsFromBone();
+
+   return TRUE;
+}
+
+
 GMFN double GetEntityParentSceneNode(double ent_ptr)
 {
    Ogre::Entity *ent = ConvertFromGMPointer<Ogre::Entity*>(ent_ptr);
@@ -334,6 +397,19 @@ GMFN double GetEntityParentSceneNode(double ent_ptr)
       return FALSE;
 
    Ogre::SceneNode *node = ent->getParentSceneNode();
+
+   return ConvertToGMPointer(node);
+}
+
+
+GMFN double GetEntityParentNode(double ent_ptr)
+{
+   Ogre::Entity *ent = ConvertFromGMPointer<Ogre::Entity*>(ent_ptr);
+
+   if (ent == NULL)
+      return FALSE;
+
+   Ogre::Node *node = ent->getParentNode();
 
    return ConvertToGMPointer(node);
 }

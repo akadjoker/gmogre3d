@@ -37,6 +37,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "OgreOctreeSceneManager.h"
 #include "OgreSceneManager.h"
 
+
 GMFN double GetMovableObjectType(double movable_object_ptr)
 {
    Ogre::MovableObject *mo = ConvertFromGMPointer<Ogre::Entity*>(movable_object_ptr);

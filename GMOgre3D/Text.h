@@ -43,8 +43,8 @@ GMFN double CreateText2(double x, double y, double color, double alpha)
 {
    OgreText *text = NULL;
       
-    TRY
-       text = new OgreText;
+   TRY
+      text = new OgreText;
 
       text->SetFont(text_font_name, GetFontSize(const_cast<char*>(text_font_name.c_str())));
       text->SetCaption(text_txt);

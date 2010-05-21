@@ -27,6 +27,10 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "GMOgre3D.h"
 
 
+static Ogre::String manual_object_entity_bone_name;
+static double manual_object_id;
+static double manual_object_entity_id;
+
 GMFN double CreateManualObject()
 {
    if (mSceneMgr == NULL)
@@ -393,6 +397,52 @@ GMFN double DetachManualObjectFromSceneNode(double man_obj_ptr, double scene_nod
       return FALSE;
    
    node->detachObject(man_obj);
+
+   return TRUE;
+}
+
+
+GMFN double AttachManualObjectToEntityBone1(double man_obj_ptr, double entity_ptr, char *bone_name)
+{
+   manual_object_id = man_obj_ptr;
+   manual_object_entity_id = entity_ptr;
+   manual_object_entity_bone_name = bone_name;
+
+   return TRUE;
+}
+
+
+GMFN double AttachManualObjectToEntityBone2(double x, double y, double z, double yaw, double pitch, double roll)
+{
+   Ogre::ManualObject *man_obj = ConvertFromGMPointer<Ogre::ManualObject*>(manual_object_id);
+
+   if (man_obj == NULL)
+      return FALSE;
+
+   Ogre::Entity *entity = ConvertFromGMPointer<Ogre::Entity*>(manual_object_entity_id);
+
+   if (entity == NULL)
+      return FALSE;
+
+   entity->attachObjectToBone(manual_object_entity_bone_name, man_obj, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree(pitch), Ogre::Degree(roll)), ConvertFromGMAxis(x, y, z));
+
+   return TRUE;
+}
+
+
+GMFN double DetachManualObjectFromEntityBone(double man_obj_ptr, double entity_ptr)
+{
+   Ogre::ManualObject *man_obj = ConvertFromGMPointer<Ogre::ManualObject*>(man_obj_ptr);
+
+   if (man_obj == NULL)
+      return FALSE;
+   
+   Ogre::Entity *entity = ConvertFromGMPointer<Ogre::Entity*>(entity_ptr);
+
+   if (entity == NULL)
+      return FALSE;
+   
+   entity->detachObjectFromBone(man_obj->getName());
 
    return TRUE;
 }

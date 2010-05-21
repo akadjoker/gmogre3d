@@ -119,7 +119,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\Dependencies\include\CEGUI;..\OgreMain\include;..\GL\include;..\GL\src\GLSL\include;..\Direct3D9\include;..\OctreeSceneManager\include;..\ParticleFX\include;..\CgProgramManager\include;..\SkyX;..\GMAPI\include;..\Dependencies\include;..\GMNewton;..\GMNewton\common;..\Newton\sdk\dContainers;..\Newton\sdk\dMath;..\Newton\sdk\dCustomJoints;..\Newton\sdk\dAnimation;..\Newton\sdk\;..\CameraControlSystem\include;&quot;$(BOOST_HOME)&quot;;.\inc"
+				AdditionalIncludeDirectories="..\CEGUI\cegui\include;..\OgreMain\include;..\Direct3D9\include;..\GL\include;..\GL\src\GLSL\include;..\OctreeSceneManager\include;..\ParticleFX\include;..\CgProgramManager\include;..\SkyX;..\GMAPI\GMAPI;..\Dependencies\include;;..\GMNewton;..\GMNewton\common;..\Newton\sdk\dContainers;..\Newton\sdk\dMath;..\Newton\sdk\dCustomJoints;..\Newton\sdk\dAnimation;..\Newton\sdk\;..\OgreNewt\inc;..\CameraControlSystem\include;&quot;$(BOOST_HOME)&quot;;.\inc;..\CEGUI\dependencies\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GMOGRE3D_EXPORTS;OGRE_STATIC_LIB;OGRENEWT_NO_OGRE_ANY;CCS_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -139,10 +139,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="CEGUIBase_d.lib Newton.lib dAnimation.lib dContainers.lib dMath.lib JointLibrary.lib"
+				AdditionalDependencies="WINMM.LIB expat.lib pcre.lib devil.lib CEGUIBase_Static.lib CEGUIOgreRenderer_Static.lib Newton.lib dAnimation.lib dContainers.lib dMath.lib JointLibrary.lib OgreNewt.lib OgreMainStatic.lib"
 				OutputFile="$(OutDir)\$(ProjectName)Static.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\lib;..\Dependencies\lib\Debug"
+				AdditionalLibraryDirectories="..\lib;..\Dependencies\lib\Release;..\CEGUI\dependencies\lib\static"
+				DelayLoadDLLs="d3dx9_41.dll"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -314,7 +315,7 @@
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\lib;..\Dependencies\lib\Release;..\CEGUI\dependencies\lib\static"
 				ModuleDefinitionFile=""
-				DelayLoadDLLs="d3dx9_40.dll"
+				DelayLoadDLLs="d3dx9_41.dll"
 				GenerateDebugInformation="false"
 				SubSystem="2"
 				OptimizeReferences="2"

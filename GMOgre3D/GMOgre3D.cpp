@@ -192,7 +192,7 @@ GMFN double StartEngine(double render_engine, double hwnd, double window_width, 
          // Verify a later version of DX is installed and if not display a nice
          // error message.  Otherwise the DX renderer cannot load and the game
          // will crash!
-         HMODULE hmod = LoadLibraryA("D3DX9_40.dll");
+         HMODULE hmod = LoadLibraryA("D3DX9_41.dll");
          if (!hmod)
          {
             DisplayError("Unable to find a recent version of DirectX 9. Please visit Microsoft's website and update your DirectX 9 version.");
@@ -298,29 +298,73 @@ GMFN double StartEngine(double render_engine, double hwnd, double window_width, 
 }
 
 
-GMFN double ShutdownEngine()
+GMFN double EnableRenderWindow(double enable)
 {
-   if (mGUIRenderer != NULL)
+   if (enable != 0)
    {
-      //delete mGUIRenderer;
-      mGUIRenderer = NULL;
+      // Attach to existing GM window
+      Ogre::NameValuePairList opts;
+      opts["externalWindowHandle"] = Ogre::StringConverter::toString((size_t)mHWnd);
+      opts["left"] = "0";
+      opts["top"] = "0";
+      if (mUseVSync)
+         opts["vsync"] = "true";
+      opts["FSAA"] = Ogre::StringConverter::toString(mFSAALevel);
+      opts["FSAAQuality"] = Ogre::StringConverter::toString(mFSAAQuality);
+
+      mRenderWindow->create("GMOGRE 3D Window", mWindowWidth, mWindowHeight, mFullscreen, &opts);
+   }
+   else
+   {
+      mRenderWindow->destroy();
    }
 
-   if (mRoot != NULL)
+   mRenderWindow->setActive((enable != 0));
+   mRenderWindow->setAutoUpdated((enable != 0));
+
+   return TRUE;
+}
+
+
+GMFN double ShutdownEngine()
+{
+   try
    {
-      delete mRoot;
+      if (mGUIRenderer != NULL)
+      {
+         //delete mGUIRenderer;
+         mGUIRenderer = NULL;
+      }
 
-      //if (mFrameListener != NULL)
-         //delete mFrameListener;
+      if (mRoot != NULL)
+      {
+         delete mRoot;
 
-      mRoot = NULL;
-      //mFrameListener = NULL;
-      mSceneMgr = NULL;
-      mRenderWindow = NULL;
+         //if (mFrameListener != NULL)
+            //delete mFrameListener;
 
-      if (gMutex)
-         CloseHandle(gMutex);
-   }    
+         mRoot = NULL;
+         //mFrameListener = NULL;
+         mSceneMgr = NULL;
+         mRenderWindow = NULL;
+
+         if (gMutex)
+            CloseHandle(gMutex);
+      }    
+
+   }
+   catch(Ogre::Exception& e)
+   {
+      DisplayError(e.what());
+      LogError(e.what());
+      return FALSE;
+   }
+   catch(...)
+   {
+      DisplayError("An unknown error has occurred starting the Ogre3D engine!");
+      LogError("An unknown error has occurred starting the Ogre3D engine!");
+      return FALSE;
+   }
 
    return TRUE;
 }
@@ -331,9 +375,13 @@ GMFN double RenderFrame()
    if (mRoot == NULL)
       return FALSE;
 
+   if (mRenderWindow == NULL)
+      return FALSE;
+
    UpdateSceneNodeAttachments();
 
-   mRoot->renderOneFrame();
+   if (mRenderWindow->isActive())
+      mRoot->renderOneFrame();
 
    return TRUE;
 }
@@ -422,7 +470,7 @@ GMFN double SaveScreenshot(char *filename)
 
 GMFN char *GetOgre3DVersion()
 {
-   return "GMOgre3D v1.00";
+   return "GMOgre3D v1.1";
 }
 
 GMFN double SetRotationMode(double mode)

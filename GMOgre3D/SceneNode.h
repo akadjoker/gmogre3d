@@ -401,6 +401,27 @@ GMFN double GetSceneNodeOrientation(double scene_node_ptr)
 }
 
 
+GMFN double GetSceneNodeDerivedOrientation(double scene_node_ptr)
+{
+   Ogre::SceneNode *scene_node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
+
+   if (scene_node == NULL)
+      return FALSE;
+
+   Ogre::Quaternion quat = scene_node->_getDerivedOrientation();
+
+   AcquireGMEulerGlobals();
+   if (mEulerYaw != NULL)
+   {
+      *mEulerYaw = ConvertToGMYaw(quat.getYaw().valueDegrees());
+      *mEulerPitch = quat.getPitch().valueDegrees();
+      *mEulerRoll = quat.getRoll().valueDegrees();
+   }
+
+   return TRUE;
+}
+
+
 GMFN double SetSceneNodeRoll(double scene_node_ptr, double degrees, double relative_type = 0.0)
 {
    Ogre::SceneNode *scene_node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
