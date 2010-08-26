@@ -13,6 +13,9 @@
 #include "dPoseGenerator.h"
 #include "dAnimationClip.h"
 
+
+dInitRtti(dPoseGenerator);
+
 dPoseGenerator::dPoseGenerator(dAnimationClip* clip)
 {
 	m_clip = NULL;
@@ -21,6 +24,8 @@ dPoseGenerator::dPoseGenerator(dAnimationClip* clip)
 
 dPoseGenerator::dPoseGenerator(const char* clipFileName)
 {
+	_ASSERTE (0);
+/*
 	dAnimationClip* clip;
 	m_clip = NULL;
 
@@ -28,11 +33,11 @@ dPoseGenerator::dPoseGenerator(const char* clipFileName)
 	clip->Load (clipFileName);
 	SetAnimationClip(clip);
 	clip->Release();
+*/
 }
 
 dPoseGenerator::~dPoseGenerator(void)
 {
-//	m_clip->Release();
 	SetAnimationClip(NULL);
 }
 

@@ -28,10 +28,22 @@
 #include <windows.h>
 #include <crtdbg.h> 
 	#pragma warning (disable: 4996) // for 2005 users declared deprecated
-	#pragma warning (disable: 4100) //unreferenced formal parameter
+	#pragma warning (disable: 4100) // unreferenced formal parameter
+	#pragma warning (disable: 4505) // unreferenced local function has been removed
 #endif
 
 
+#include <dCRC.h>
+#include <dList.h>
+#include <dTree.h>
+#include <dRefCounter.h>
+#include <dMathDefines.h>
+#include <dVector.h>
+#include <dMatrix.h>
+#include <dQuaternion.h>
+#include <Newton.h>
+#include <dBaseHierarchy.h>
 
+//#define D_LOAD_SAVE_XML
 
 #endif

@@ -141,6 +141,11 @@ extern "C" {
 	JOINTLIBRARY_API int DGRaycastVehicleGetTiresCount(NewtonUserJoint *car);
 	JOINTLIBRARY_API void* DGRaycastVehicleGetTiresUserData(NewtonUserJoint *car, int tireIndex);
     JOINTLIBRARY_API void DGRaycastVehicleGetTireMatrix(NewtonUserJoint *car, int tireIndex, dFloat* tireMatrix);
+
+	JOINTLIBRARY_API void DGRaycastVehicleInitNormalizeTireLateralForce(NewtonUserJoint *car, int pointsCount, dFloat* const piceSizeStepAxis, dFloat* const normalizedForceValue);
+	JOINTLIBRARY_API void DGRaycastVehicleInitNormalizeTireLongitudinalForce(NewtonUserJoint *car, int pointsCount, dFloat* const piceSizeStepAxis, dFloat* const normalizedForceValue);
+
+
 //	JOINTLIBRARY_API void DGRayCarGetChassisMatrixLocal(NewtonUserJoint *car, dFloat* chassisMatrix);
 //	JOINTLIBRARY_API void DGRayCarTireMatrix(NewtonUserJoint *car, int tire, dFloat* tireMatrix);
 //	JOINTLIBRARY_API void DGRayCarSuspensionMatrix(NewtonUserJoint *car, int tire, dFloat param, dFloat* SuspensionMatrix);	

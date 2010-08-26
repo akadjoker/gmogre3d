@@ -108,7 +108,7 @@ GMFN double SetLightAttenuation(double light_ptr, double range, double constant,
    if (light == NULL)
       return FALSE;
 
-   light->setAttenuation(range, constant, linear, quadratic);
+   light->setAttenuation((Ogre::Real)range, (Ogre::Real)constant, (Ogre::Real)linear, (Ogre::Real)quadratic);
 
    return TRUE;
 }
@@ -158,7 +158,7 @@ GMFN double SetLightSpotlightRange(double light_ptr, double inner_angle, double 
    if (light == NULL)
       return FALSE;
 
-   light->setSpotlightRange(Ogre::Degree(inner_angle), Ogre::Degree(outer_angle), falloff);
+   light->setSpotlightRange(Ogre::Degree((Ogre::Real)inner_angle), Ogre::Degree((Ogre::Real)outer_angle), (Ogre::Real)falloff);
 
    return TRUE;
 }
@@ -235,7 +235,7 @@ GMFN double AttachLightToEntityBone2(double x, double y, double z, double yaw, d
    if (entity == NULL)
       return FALSE;
 
-   entity->attachObjectToBone(light_entity_bone_name, light, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree(pitch), Ogre::Degree(roll)), ConvertFromGMAxis(x, y, z));
+   entity->attachObjectToBone(light_entity_bone_name, light, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)), ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -272,6 +272,32 @@ GMFN double SetLightQueryFlags(double light_ptr, double flags)
 }
 
 
+GMFN double SetLightMask(double light_ptr, double flags)
+{
+   Ogre::Light *light = ConvertFromGMPointer<Ogre::Light*>(light_ptr);
+
+   if (light == NULL)
+      return FALSE;
+
+   light->setLightMask((Ogre::uint)flags);
+
+   return TRUE;
+}
+
+
+GMFN double SetLightVisibilityFlags(double light_ptr, double flags)
+{
+   Ogre::Light *light = ConvertFromGMPointer<Ogre::Light*>(light_ptr);
+
+   if (light == NULL)
+      return FALSE;
+
+   light->setVisibilityFlags((Ogre::uint)flags);
+
+   return TRUE;
+}
+
+
 GMFN double SetLightRenderQueueGroup(double light_ptr, double type)
 {
    Ogre::Light *light = ConvertFromGMPointer<Ogre::Light*>(light_ptr);
@@ -282,6 +308,36 @@ GMFN double SetLightRenderQueueGroup(double light_ptr, double type)
    light->setRenderQueueGroup(static_cast<Ogre::RenderQueueGroupID>((int)type));
 
    return TRUE;
+}
+
+
+GMFN double SetLightUserData(double light_ptr, char *key, double data)
+{
+   Ogre::Light *light = ConvertFromGMPointer<Ogre::Light*>(light_ptr);
+
+   if (light == NULL)
+      return FALSE;
+
+   if (key == NULL)
+      light->getUserObjectBindings().setUserAny(Ogre::Any(data));
+   else
+      light->getUserObjectBindings().setUserAny(key, Ogre::Any(data));
+
+   return TRUE;
+}
+
+
+GMFN double GetLightUserData(double light_ptr, char *key)
+{
+   Ogre::Light *light = ConvertFromGMPointer<Ogre::Light*>(light_ptr);
+
+   if (light == NULL)
+      return FALSE;
+
+   if (key == NULL)
+      return Ogre::any_cast<double>(light->getUserObjectBindings().getUserAny());
+   else
+      return Ogre::any_cast<double>(light->getUserObjectBindings().getUserAny(key));
 }
 
 #endif

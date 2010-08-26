@@ -47,7 +47,7 @@ GMFN double SetPassDiffuseColor(double pass_ptr, double color, double alpha)
    if (pass == NULL)
       return FALSE;
 
-   pass->setDiffuse(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), alpha);
+   pass->setDiffuse(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), (Ogre::Real)alpha);
 
    return TRUE;
 }
@@ -60,7 +60,7 @@ GMFN double SetPassSpecularColor(double pass_ptr, double color, double alpha)
    if (pass == NULL)
       return FALSE;
 
-   pass->setSpecular(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), alpha);
+   pass->setSpecular(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), (Ogre::Real)alpha);
 
    return TRUE;
 }
@@ -86,7 +86,7 @@ GMFN double SetPassShininess(double pass_ptr, double shininess)
    if (pass == NULL)
       return FALSE;
 
-   pass->setShininess(shininess);
+   pass->setShininess((Ogre::Real)shininess);
 
    return TRUE;
 }
@@ -165,7 +165,7 @@ GMFN double EnablePassPointSizeAttenuation(double pass_ptr, double enable, doubl
       return FALSE;
 
    if (enable != 0)
-      pass->setPointAttenuation(true, constant, linear, quadratic);
+      pass->setPointAttenuation(true, (Ogre::Real)constant, (Ogre::Real)linear, (Ogre::Real)quadratic);
    else
       pass->setPointAttenuation(false);
 
@@ -180,7 +180,7 @@ GMFN double SetPassMinPointSize(double pass_ptr, double size)
    if (pass == NULL)
       return FALSE;
 
-   pass->setPointMinSize(size);
+   pass->setPointMinSize((Ogre::Real)size);
 
    return TRUE;
 }
@@ -193,7 +193,7 @@ GMFN double SetPassMaxPointSize(double pass_ptr, double size)
    if (pass == NULL)
       return FALSE;
 
-   pass->setPointMaxSize(size);
+   pass->setPointMaxSize((Ogre::Real)size);
 
    return TRUE;
 }
@@ -206,7 +206,7 @@ GMFN double SetPassPointSize(double pass_ptr, double size)
    if (pass == NULL)
       return FALSE;
 
-   pass->setPointSize(size);
+   pass->setPointSize((Ogre::Real)size);
 
    return TRUE;
 }
@@ -315,7 +315,7 @@ GMFN double GetPassTextureUnitState(double pass_ptr, double tex_unit_index)
    if (pass == NULL)
       return 0;
 
-   return ConvertToGMPointer(pass->getTextureUnitState(tex_unit_index));
+   return ConvertToGMPointer(pass->getTextureUnitState((unsigned short)tex_unit_index));
 }
 
 

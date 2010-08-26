@@ -4,26 +4,25 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.s
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.s
 -----------------------------------------------------------------------------
 */
 
@@ -54,7 +53,10 @@ Torus Knot Software Ltd.s
 
 // Convenience macro from ARB_vertex_buffer_object spec
 #define VBO_BUFFER_OFFSET(i) ((char *)NULL + (i))
+
+#if OGRE_THREAD_SUPPORT != 1
 GLenum glewContextInit (Ogre::GLSupport *glSupport);
+#endif
 
 namespace Ogre {
 
@@ -100,7 +102,8 @@ namespace Ogre {
 		: mDepthWrite(true), mStencilMask(0xFFFFFFFF), mHardwareBufferManager(0),
 		mGpuProgramManager(0),
 		mGLSLProgramFactory(0),
-		mRTTManager(0)
+		mRTTManager(0),
+		mActiveTextureUnit(0)
 	{
 		size_t i;
 
@@ -123,10 +126,6 @@ namespace Ogre {
 		{
 			// Dummy value
 			mTextureCoordIndex[i] = 99;
-		}
-
-		for (i = 0; i < OGRE_MAX_TEXTURE_LAYERS; i++)
-		{
 			mTextureTypes[i] = 0;
 		}
 
@@ -134,7 +133,7 @@ namespace Ogre {
 		mCurrentContext = 0;
 		mMainContext = 0;
 
-		mGLInitialized = false;
+		mGLInitialised = false;
 
 		mCurrentLights = 0;
 		mMinFilter = FO_LINEAR;
@@ -524,7 +523,7 @@ namespace Ogre {
 		// UBYTE4 always supported
 		rsc->setCapability(RSC_VERTEX_FORMAT_UBYTE4);
 
-		// Inifinite far plane always supported
+		// Infinite far plane always supported
 		rsc->setCapability(RSC_INFINITE_FAR_PLANE);
 
 		// Check for non-power-of-2 texture support
@@ -583,9 +582,9 @@ namespace Ogre {
 		// Point size
 		if (GLEW_VERSION_1_4)
 		{
-			float ps;
-			glGetFloatv(GL_POINT_SIZE_MAX, &ps);
-			rsc->setMaxPointSize(ps);
+		float ps;
+		glGetFloatv(GL_POINT_SIZE_MAX, &ps);
+		rsc->setMaxPointSize(ps);
 		}
 		else
 		{
@@ -597,15 +596,15 @@ namespace Ogre {
 		// Vertex texture fetching
 		if (mGLSupport->checkExtension("GL_ARB_vertex_shader"))
 		{
-			GLint vUnits;
-			glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB, &vUnits);
-			rsc->setNumVertexTextureUnits(static_cast<ushort>(vUnits));
-			if (vUnits > 0)
-			{
-				rsc->setCapability(RSC_VERTEX_TEXTURE_FETCH);
-			}
-			// GL always shares vertex and fragment texture units (for now?)
-			rsc->setVertexTextureUnitsShared(true);
+		GLint vUnits;
+		glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB, &vUnits);
+		rsc->setNumVertexTextureUnits(static_cast<ushort>(vUnits));
+		if (vUnits > 0)
+		{
+			rsc->setCapability(RSC_VERTEX_TEXTURE_FETCH);
+		}
+		// GL always shares vertex and fragment texture units (for now?)
+		rsc->setVertexTextureUnitsShared(true);
 		}
 
 		// Mipmap LOD biasing?
@@ -620,6 +619,12 @@ namespace Ogre {
 			// Alpha to coverage always 'supported' when MSAA is available
 			// although card may ignore it if it doesn't specifically support A2C
 			rsc->setCapability(RSC_ALPHA_TO_COVERAGE);
+		}
+
+		// Advanced blending operations
+		if(GLEW_VERSION_2_0)
+		{
+			rsc->setCapability(RSC_ADVANCED_BLEND_OPERATIONS);
 		}
 
 		return rsc;
@@ -822,9 +827,9 @@ namespace Ogre {
 		{
 			// Before GL version 2.0, we need to get one of the extensions
 			if(caps->hasCapability(RSC_FBO_ARB))
-				__glewDrawBuffers = glDrawBuffersARB;
+				GLEW_GET_FUN(__glewDrawBuffers) = glDrawBuffersARB;
 			else if(caps->hasCapability(RSC_FBO_ATI))
-				__glewDrawBuffers = glDrawBuffersATI;
+				GLEW_GET_FUN(__glewDrawBuffers) = glDrawBuffersATI;
 
 			if(caps->hasCapability(RSC_HWRENDER_TO_TEXTURE))
 			{
@@ -868,7 +873,7 @@ namespace Ogre {
 		/// Create the texture manager        
 		mTextureManager = new GLTextureManager(*mGLSupport); 
 
-		mGLInitialized = true;
+		mGLInitialised = true;
 	}
 
 	void GLRenderSystem::reinitialise(void)
@@ -905,7 +910,11 @@ namespace Ogre {
 		for (GLContextList::iterator i = mBackgroundContextList.begin(); 
 			i != mBackgroundContextList.end(); ++i)
 		{
-			delete *i;
+			GLContext* pCurContext = *i;
+
+			pCurContext->releaseContext();
+
+			delete pCurContext;
 		}
 		mBackgroundContextList.clear();
 
@@ -918,7 +927,7 @@ namespace Ogre {
 		// There will be a new initial window and so forth, thus any call to test
 		//  some params will access an invalid pointer, so it is best to reset
 		//  the whole state.
-		mGLInitialized = 0;
+		mGLInitialised = 0;
 	}
 
 	void GLRenderSystem::setAmbientLight(float r, float g, float b)
@@ -940,6 +949,32 @@ namespace Ogre {
 		}
 	}
 
+	//---------------------------------------------------------------------
+	bool GLRenderSystem::_createRenderWindows(const RenderWindowDescriptionList& renderWindowDescriptions, 
+		RenderWindowList& createdWindows)
+	{		
+		// Call base render system method.
+		if (false == RenderSystem::_createRenderWindows(renderWindowDescriptions, createdWindows))
+			return false;
+
+		// Simply call _createRenderWindow in a loop.
+		for (size_t i = 0; i < renderWindowDescriptions.size(); ++i)
+		{
+			const RenderWindowDescription& curRenderWindowDescription = renderWindowDescriptions[i];			
+			RenderWindow* curWindow = NULL;
+
+			curWindow = _createRenderWindow(curRenderWindowDescription.name, 
+				curRenderWindowDescription.width, 
+				curRenderWindowDescription.height, 
+				curRenderWindowDescription.useFullScreen, 
+				&curRenderWindowDescription.miscParams);
+
+			createdWindows.push_back(curWindow);											
+		}
+								
+		return true;
+	}
+	//---------------------------------------------------------------------
 	RenderWindow* GLRenderSystem::_createRenderWindow(const String &name, 
 		unsigned int width, unsigned int height, bool fullScreen,
 		const NameValuePairList *miscParams)
@@ -952,7 +987,7 @@ namespace Ogre {
 				"GLRenderSystem::_createRenderWindow" );
 		}
 		// Log a message
-		std::stringstream ss;
+		StringStream ss;
 		ss << "GLRenderSystem::_createRenderWindow \"" << name << "\", " <<
 			width << "x" << height << " ";
 		if(fullScreen)
@@ -976,7 +1011,7 @@ namespace Ogre {
 
 		attachRenderTarget( *win );
 
-		if (!mGLInitialized) 
+		if (!mGLInitialised) 
 		{                
 
 			// set up glew and GLSupport
@@ -1031,7 +1066,9 @@ namespace Ogre {
 		LogManager::getSingleton().logMessage("***************************");
 
 		// Get extension function pointers
+#if OGRE_THREAD_SUPPORT != 1
 		glewContextInit(mGLSupport);
+#endif
 	}
 
 
@@ -1428,7 +1465,7 @@ namespace Ogre {
 				glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 			}
 			// bind zero texture
-			glBindTexture (GL_TEXTURE_2D, 0); 
+			glBindTexture(GL_TEXTURE_2D, 0); 
 		}
 
 		activateGLTextureUnit(0);
@@ -1624,9 +1661,9 @@ namespace Ogre {
 		GLfloat border[4] = { colour.r, colour.g, colour.b, colour.a };
 		if (activateGLTextureUnit(stage))
 		{
-			glTexParameterfv( mTextureTypes[stage], GL_TEXTURE_BORDER_COLOR, border);
+		glTexParameterfv( mTextureTypes[stage], GL_TEXTURE_BORDER_COLOR, border);
 			activateGLTextureUnit(0);
-		}
+	}
 	}
 	//-----------------------------------------------------------------------------
 	void GLRenderSystem::_setTextureMipmapBias(size_t stage, float bias)
@@ -1635,9 +1672,9 @@ namespace Ogre {
 		{
 			if (activateGLTextureUnit(stage))
 			{
-				glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT, GL_TEXTURE_LOD_BIAS_EXT, bias);
+			glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT, GL_TEXTURE_LOD_BIAS_EXT, bias);
 				activateGLTextureUnit(0);
-			}
+		}
 		}
 
 	}
@@ -1699,7 +1736,7 @@ namespace Ogre {
 		return GL_ONE;
 	}
 
-	void GLRenderSystem::_setSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor)
+	void GLRenderSystem::_setSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendOperation op )
 	{
 		GLint sourceBlend = getBlendMode(sourceFactor);
 		GLint destBlend = getBlendMode(destFactor);
@@ -1712,11 +1749,41 @@ namespace Ogre {
 			glEnable(GL_BLEND);
 			glBlendFunc(sourceBlend, destBlend);
 		}
+
+		GLint func = GL_FUNC_ADD;
+		switch(op)
+		{
+		case SBO_ADD:
+			func = GL_FUNC_ADD;
+			break;
+		case SBO_SUBTRACT:
+			func = GL_FUNC_SUBTRACT;
+			break;
+		case SBO_REVERSE_SUBTRACT:
+			func = GL_FUNC_REVERSE_SUBTRACT;
+			break;
+		case SBO_MIN:
+			func = GL_MIN;
+			break;
+		case SBO_MAX:
+			func = GL_MAX;
+			break;
+		}
+
+		if(GLEW_VERSION_1_4 || GLEW_ARB_imaging)
+        {
+			glBlendEquation(func);
+		}
+		else if(GLEW_EXT_blend_minmax && (func == GL_MIN || func == GL_MAX))
+        {
+			glBlendEquationEXT(func);
+		}
 	}
 	//-----------------------------------------------------------------------------
 	void GLRenderSystem::_setSeparateSceneBlending(
 		SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, 
-		SceneBlendFactor sourceFactorAlpha, SceneBlendFactor destFactorAlpha)
+		SceneBlendFactor sourceFactorAlpha, SceneBlendFactor destFactorAlpha,
+		SceneBlendOperation op, SceneBlendOperation alphaOp )
 	{
 		GLint sourceBlend = getBlendMode(sourceFactor);
 		GLint destBlend = getBlendMode(destFactor);
@@ -1732,6 +1799,53 @@ namespace Ogre {
 		{
 			glEnable(GL_BLEND);
 			glBlendFuncSeparate(sourceBlend, destBlend, sourceBlendAlpha, destBlendAlpha);
+		}
+
+		GLint func = GL_FUNC_ADD, alphaFunc = GL_FUNC_ADD;
+
+		switch(op)
+		{
+		case SBO_ADD:
+			func = GL_FUNC_ADD;
+			break;
+		case SBO_SUBTRACT:
+			func = GL_FUNC_SUBTRACT;
+			break;
+		case SBO_REVERSE_SUBTRACT:
+			func = GL_FUNC_REVERSE_SUBTRACT;
+			break;
+		case SBO_MIN:
+			func = GL_MIN;
+			break;
+		case SBO_MAX:
+			func = GL_MAX;
+			break;
+		}
+
+		switch(alphaOp)
+		{
+		case SBO_ADD:
+			alphaFunc = GL_FUNC_ADD;
+			break;
+		case SBO_SUBTRACT:
+			alphaFunc = GL_FUNC_SUBTRACT;
+			break;
+		case SBO_REVERSE_SUBTRACT:
+			alphaFunc = GL_FUNC_REVERSE_SUBTRACT;
+			break;
+		case SBO_MIN:
+			alphaFunc = GL_MIN;
+			break;
+		case SBO_MAX:
+			alphaFunc = GL_MAX;
+			break;
+		}
+
+		if(GLEW_VERSION_2_0) {
+			glBlendEquationSeparate(func, alphaFunc);
+		}
+		else if(GLEW_EXT_blend_equation_separate) {
+			glBlendEquationSeparateEXT(func, alphaFunc);
 		}
 	}
 	//-----------------------------------------------------------------------------
@@ -1995,7 +2109,7 @@ namespace Ogre {
 	void GLRenderSystem::_convertProjectionMatrix(const Matrix4& matrix,
 		Matrix4& dest, bool forGpuProgram)
 	{
-		// no any convertion request for OpenGL
+		// no any conversion request for OpenGL
 		dest = matrix;
 	}
 
@@ -2607,7 +2721,7 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
             op.vertexData->vertexDeclaration->getElements();
         VertexDeclaration::VertexElementList::const_iterator elem, elemEnd;
         elemEnd = decl.end();
-		std::vector<GLuint> attribsBound;
+		vector<GLuint>::type attribsBound;
 
 		for (elem = decl.begin(); elem != elemEnd; ++elem)
 		{
@@ -2644,11 +2758,28 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
  			if (isCustomAttrib)
  			{
  				GLint attrib = mCurrentVertexProgram->getAttributeIndex(sem, elem->getIndex());
+				unsigned short typeCount = VertexElement::getTypeCount(elem->getType());
+				GLboolean normalised = GL_FALSE;
+				switch(elem->getType())
+				{
+				case VET_COLOUR:
+				case VET_COLOUR_ABGR:
+				case VET_COLOUR_ARGB:
+					// Because GL takes these as a sequence of single unsigned bytes, count needs to be 4
+					// VertexElement::getTypeCount treats them as 1 (RGBA)
+					// Also need to normalise the fixed-point data
+					typeCount = 4;
+					normalised = GL_TRUE;
+					break;
+				default:
+					break;
+				};
+
  				glVertexAttribPointerARB(
  					attrib,
- 					VertexElement::getTypeCount(elem->getType()), 
+ 					typeCount, 
   					GLHardwareBufferManager::getGLType(elem->getType()), 
- 					GL_FALSE, // normalisation disabled
+ 					normalised, 
   					static_cast<GLsizei>(vertexBuffer->getVertexSize()), 
   					pBufferData);
  				glEnableVertexAttribArrayARB(attrib);
@@ -2697,7 +2828,7 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
  					if (mCurrentVertexProgram)
  					{
  						// Programmable pipeline - direct UV assignment
-						glClientActiveTextureARB(GL_TEXTURE0 + elem->getIndex());
+ 						glClientActiveTextureARB(GL_TEXTURE0 + elem->getIndex());
  						glTexCoordPointer(
  							VertexElement::getTypeCount(elem->getType()), 
  							GLHardwareBufferManager::getGLType(elem->getType()),
@@ -2715,7 +2846,7 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
  							if (mTextureCoordIndex[i] == elem->getIndex() && i < mFixedFunctionTextureUnits)
  							{
 								if (multitexturing)
- 									glClientActiveTextureARB(GL_TEXTURE0 + i);
+ 								glClientActiveTextureARB(GL_TEXTURE0 + i);
  								glTexCoordPointer(
  									VertexElement::getTypeCount(elem->getType()), 
  									GLHardwareBufferManager::getGLType(elem->getType()),
@@ -2734,7 +2865,7 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
         }
 
 		if (multitexturing)
-			glClientActiveTextureARB(GL_TEXTURE0);
+		glClientActiveTextureARB(GL_TEXTURE0);
 
 		// Find the correct type to render
 		GLint primType;
@@ -2812,20 +2943,20 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 		}
 
         glDisableClientState( GL_VERTEX_ARRAY );
-		// only valid up to GL_MAX_TEXTURE_COORDS, which is recorded in mFixedFunctionTextureUnits
+		// only valid up to GL_MAX_TEXTURE_UNITS, which is recorded in mFixedFunctionTextureUnits
 		if (multitexturing)
-		{
+        {
 			for (int i = 0; i < mFixedFunctionTextureUnits; i++)
 			{
-				glClientActiveTextureARB(GL_TEXTURE0 + i);
+            glClientActiveTextureARB(GL_TEXTURE0 + i);
 				glDisableClientState( GL_TEXTURE_COORD_ARRAY );
 			}
 			glClientActiveTextureARB(GL_TEXTURE0);
 		}
 		else
 		{
-			glDisableClientState( GL_TEXTURE_COORD_ARRAY );
-		}
+            glDisableClientState( GL_TEXTURE_COORD_ARRAY );
+        }
         glDisableClientState( GL_NORMAL_ARRAY );
         glDisableClientState( GL_COLOR_ARRAY );
 		if (GLEW_EXT_secondary_color)
@@ -2833,7 +2964,7 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 			glDisableClientState( GL_SECONDARY_COLOR_ARRAY );
 		}
  		// unbind any custom attributes
-		for (std::vector<GLuint>::iterator ai = attribsBound.begin(); ai != attribsBound.end(); ++ai)
+		for (vector<GLuint>::type::iterator ai = attribsBound.begin(); ai != attribsBound.end(); ++ai)
  		{
  			glDisableVertexAttribArrayARB(*ai); 
  
@@ -2937,21 +3068,29 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 
 	}
 	//---------------------------------------------------------------------
-	void GLRenderSystem::bindGpuProgramParameters(GpuProgramType gptype, GpuProgramParametersSharedPtr params)
+	void GLRenderSystem::bindGpuProgramParameters(GpuProgramType gptype, GpuProgramParametersSharedPtr params, uint16 mask)
 	{
+		if (mask & (uint16)GPV_GLOBAL)
+		{
+			// We could maybe use GL_EXT_bindable_uniform here to produce Dx10-style
+			// shared constant buffers, but GPU support seems fairly weak?
+			// for now, just copy
+			params->_copySharedParams();
+		}
+
 		switch (gptype)
 		{
 		case GPT_VERTEX_PROGRAM:
 			mActiveVertexGpuProgramParameters = params;
-			mCurrentVertexProgram->bindProgramParameters(params);
+			mCurrentVertexProgram->bindProgramParameters(params, mask);
 			break;
 		case GPT_GEOMETRY_PROGRAM:
 			mActiveGeometryGpuProgramParameters = params;
-			mCurrentGeometryProgram->bindProgramParameters(params);
+			mCurrentGeometryProgram->bindProgramParameters(params, mask);
 			break;
 		case GPT_FRAGMENT_PROGRAM:
 			mActiveFragmentGpuProgramParameters = params;
-			mCurrentFragmentProgram->bindProgramParameters(params);
+			mCurrentFragmentProgram->bindProgramParameters(params, mask);
 			break;
 		}
 	}
@@ -3228,14 +3367,14 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 	{
 		if (GLEW_VERSION_1_2)
 		{
-			// Set nicer lighting model -- d3d9 has this by default
-			glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
-			glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, 1);        
+		// Set nicer lighting model -- d3d9 has this by default
+		glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
+		glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, 1);        
 		}
 		if (GLEW_VERSION_1_4)
 		{
-			glEnable(GL_COLOR_SUM);
-			glDisable(GL_DITHER);
+		glEnable(GL_COLOR_SUM);
+		glDisable(GL_DITHER);
 		}
 
 		// Check for FSAA
@@ -3275,7 +3414,7 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 		// Disable textures
 		_disableTextureUnitsFrom(0);
 
-		// It's ready to switching
+		// It's ready for switching
 		if (mCurrentContext)
 			mCurrentContext->endCurrent();
 		mCurrentContext = context;
@@ -3326,20 +3465,20 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 
 		if (GLEW_EXT_framebuffer_sRGB)
 		{
-			// Enable / disable sRGB states
-			if (target->isHardwareGammaEnabled())
-			{
-				glEnable(GL_FRAMEBUFFER_SRGB_EXT);
-				
-				// Note: could test GL_FRAMEBUFFER_SRGB_CAPABLE_EXT here before
-				// enabling, but GL spec says incapable surfaces ignore the setting
-				// anyway. We test the capability to enable isHardwareGammaEnabled.
-			}
-			else
-			{
-				glDisable(GL_FRAMEBUFFER_SRGB_EXT);
-			}
+		// Enable / disable sRGB states
+		if (target->isHardwareGammaEnabled())
+		{
+			glEnable(GL_FRAMEBUFFER_SRGB_EXT);
+			
+			// Note: could test GL_FRAMEBUFFER_SRGB_CAPABLE_EXT here before
+			// enabling, but GL spec says incapable surfaces ignore the setting
+			// anyway. We test the capability to enable isHardwareGammaEnabled.
 		}
+		else
+		{
+			glDisable(GL_FRAMEBUFFER_SRGB_EXT);
+		}
+	}
 	}
 	//---------------------------------------------------------------------
 	void GLRenderSystem::_unregisterContext(GLContext *context)
@@ -3373,6 +3512,7 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 	//---------------------------------------------------------------------
 	void GLRenderSystem::registerThread()
 	{
+		OGRE_LOCK_MUTEX(mThreadInitMutex)
 		// This is only valid once we've created the main context
 		if (!mMainContext)
 		{
@@ -3408,32 +3548,48 @@ GL_RGB_SCALE : GL_ALPHA_SCALE, 1);
 	//---------------------------------------------------------------------
 	void GLRenderSystem::preExtraThreadsStarted()
 	{
+		OGRE_LOCK_MUTEX(mThreadInitMutex)
 		// free context, we'll need this to share lists
 		mCurrentContext->endCurrent();
 	}
 	//---------------------------------------------------------------------
 	void GLRenderSystem::postExtraThreadsStarted()
 	{
+		OGRE_LOCK_MUTEX(mThreadInitMutex)
 		// reacquire context
 		mCurrentContext->setCurrent();
 	}
 	//---------------------------------------------------------------------
 	bool GLRenderSystem::activateGLTextureUnit(size_t unit)
 	{
-		if (GLEW_VERSION_1_2 && unit < getCapabilities()->getNumTextureUnits())
+		if (mActiveTextureUnit != unit)
 		{
-			glActiveTextureARB(GL_TEXTURE0 + unit);
-			return true;
-		}
-		else if (!unit)
-		{
-			// always ok to use the first unit
-			return true;
+			if (GLEW_VERSION_1_2 && unit < getCapabilities()->getNumTextureUnits())
+			{
+				glActiveTextureARB(GL_TEXTURE0 + unit);
+				mActiveTextureUnit = unit;
+				return true;
+			}
+			else if (!unit)
+			{
+				// always ok to use the first unit
+				return true;
+			}
+			else
+			{
+				return false;
+			}
 		}
 		else
 		{
-			return false;
+			return true;
 		}
+	}
+
+	//---------------------------------------------------------------------
+	unsigned int GLRenderSystem::getDisplayMonitorCount() const
+	{
+		return mGLSupport->getDisplayMonitorCount();
 	}
 
 

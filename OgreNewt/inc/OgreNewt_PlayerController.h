@@ -31,7 +31,7 @@ namespace OgreNewt
 		/*!
 		* \param localFrame this is the player frame in global Space (x: side, y: up, -z forward)
 		*/
-         PlayerController(OgreNewt::Body* child, Ogre::Real stairHeight, Ogre::Real max_slope = 30.0f, Ogre::Real kinematicCushion = 1.0f/64.0f);
+		PlayerController(OgreNewt::Body* child, Ogre::Real stairHeight, Ogre::Real max_slope = 30.0f, Ogre::Real kinematicCushion = 1.0f/64.0f);
 		virtual ~PlayerController();
 
 		//! get currently set velocity
@@ -42,6 +42,11 @@ namespace OgreNewt
 
 		//! get the Player height
 		Ogre::Real getPlayerHeight() const; 
+
+      void setStairHeight(Ogre::Real height);
+      void setPlayerState(Ogre::uint32 state);
+      Ogre::uint32 getPlayerState();
+      void addImpulse(Ogre::Real xdelta, Ogre::Real ydelta, Ogre::Real zdelta, bool jump);
 
 		protected:
 		//! show joint visual debugging data

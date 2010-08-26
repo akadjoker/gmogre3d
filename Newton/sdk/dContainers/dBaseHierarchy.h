@@ -15,7 +15,7 @@
 
 #include "dCRC.h"
 
-#define D_NAME_STRING_LENGTH 128
+#define D_NAME_STRING_LENGTH 64
 
 #if (_MSC_VER >= 1400)
 	#pragma warning (disable: 4996) // for 2005 users declared deprecated

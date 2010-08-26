@@ -40,7 +40,7 @@ GMFN double CreateNewtonBoxCollision(double newton_world_ptr, double x, double z
    OgreNewt::CollisionPtr col;
 
    TRY
-      col = OgreNewt::CollisionPtr(new OgreNewt::CollisionPrimitives::Box(world, ConvertFromGMAxis(x, y, z), id));
+      col = OgreNewt::CollisionPtr(OGRE_NEW OgreNewt::CollisionPrimitives::Box(world, ConvertFromGMAxis(x, y, z), id));
       mNewtonCollisionMap[col.get()] = col;
    CATCH("CreateNewtonBoxCollision")
 
@@ -58,7 +58,7 @@ GMFN double CreateNewtonCapsuleCollision(double newton_world_ptr, double radius,
    OgreNewt::CollisionPtr col;
 
    TRY
-      col.reset(new OgreNewt::CollisionPrimitives::Capsule(world, radius, height, id));
+      col.reset(OGRE_NEW OgreNewt::CollisionPrimitives::Capsule(world, radius, height, id));
       mNewtonCollisionMap[col.get()] = col;
    CATCH("CreateNewtonCapsuleCollision")
 
@@ -76,7 +76,7 @@ GMFN double CreateNewtonChamferCylinderCollision(double newton_world_ptr, double
    OgreNewt::CollisionPtr col;
 
    TRY
-      col.reset(new OgreNewt::CollisionPrimitives::ChamferCylinder(world, radius, height, id));
+      col.reset(OGRE_NEW OgreNewt::CollisionPrimitives::ChamferCylinder(world, radius, height, id));
       mNewtonCollisionMap[col.get()] = col;
    CATCH("CreateNewtonChamferCylinderCollision")
 
@@ -94,7 +94,7 @@ GMFN double CreateNewtonCylinderCollision(double newton_world_ptr, double radius
    OgreNewt::CollisionPtr col;
 
    TRY
-      col.reset(new OgreNewt::CollisionPrimitives::Cylinder(world, radius, height, id));
+      col.reset(OGRE_NEW OgreNewt::CollisionPrimitives::Cylinder(world, radius, height, id));
       mNewtonCollisionMap[col.get()] = col;
    CATCH("CreateNewtonCylinderCollision")
 
@@ -112,7 +112,7 @@ GMFN double CreateNewtonConeCollision(double newton_world_ptr, double radius, do
    OgreNewt::CollisionPtr col;
 
    TRY
-      col.reset(new OgreNewt::CollisionPrimitives::Cone(world, radius, height, id));
+      col.reset(OGRE_NEW OgreNewt::CollisionPrimitives::Cone(world, radius, height, id));
       mNewtonCollisionMap[col.get()] = col;
    CATCH("CreateNewtonConeCollision")
 
@@ -135,7 +135,7 @@ GMFN double CreateNewtonConvexHullCollisionFromEntity(double newton_world_ptr, d
    OgreNewt::CollisionPtr col;
 
    TRY
-      col.reset(new OgreNewt::CollisionPrimitives::ConvexHull(world, entity, id));
+      col.reset(OGRE_NEW OgreNewt::CollisionPrimitives::ConvexHull(world, entity, id));
       mNewtonCollisionMap[col.get()] = col;
    CATCH("CreateNewtonConvexHullCollisionFromEntity")
 
@@ -153,7 +153,7 @@ GMFN double CreateNewtonEllipsoidCollision(double newton_world_ptr, double x, do
    OgreNewt::CollisionPtr col;
 
    TRY
-      col.reset(new OgreNewt::CollisionPrimitives::Ellipsoid(world, ConvertFromGMAxis(x, y, z), id));
+      col.reset(OGRE_NEW OgreNewt::CollisionPrimitives::Ellipsoid(world, ConvertFromGMAxis(x, y, z), id));
       mNewtonCollisionMap[col.get()] = col;
    CATCH("CreateNewtonEllipsoidCollision")
 
@@ -171,7 +171,7 @@ GMFN double CreateNewtonPyramidCollision(double newton_world_ptr, double x, doub
    OgreNewt::CollisionPtr col;
 
    TRY
-      col.reset(new OgreNewt::CollisionPrimitives::Pyramid(world, ConvertFromGMAxis(x, y, z), id));
+      col.reset(OGRE_NEW OgreNewt::CollisionPrimitives::Pyramid(world, ConvertFromGMAxis(x, y, z), id));
       mNewtonCollisionMap[col.get()] = col;
    CATCH("CreateNewtonPyramidCollision")
 
@@ -189,7 +189,7 @@ GMFN double CreateNewtonTreeCollision(double newton_world_ptr)
    OgreNewt::CollisionPtr col;
 
    TRY
-      col.reset(new OgreNewt::CollisionPrimitives::TreeCollision(world));
+      col.reset(OGRE_NEW OgreNewt::CollisionPrimitives::TreeCollision(world));
       mNewtonCollisionMap[col.get()] = col;
    CATCH("CreateNewtonTreeCollision")
 
@@ -212,7 +212,7 @@ GMFN double CreateNewtonTreeCollisionFromEntity(double newton_world_ptr, double 
    OgreNewt::CollisionPtr col;
 
    TRY
-      col.reset(new OgreNewt::CollisionPrimitives::TreeCollision(world, entity, (optimize != 0), (int)id, static_cast<OgreNewt::CollisionPrimitives::FaceWinding>((int)face_winding)));
+      col.reset(OGRE_NEW OgreNewt::CollisionPrimitives::TreeCollision(world, entity, (optimize != 0), (int)id, static_cast<OgreNewt::CollisionPrimitives::FaceWinding>((int)face_winding)));
       mNewtonCollisionMap[col.get()] = col;
    CATCH("CreateNewtonTreeCollisionFromEntity")
 
@@ -233,16 +233,16 @@ GMFN double CreateNewtonTreeCollisionFromTerrain(double newton_world_ptr, char *
    OgreNewt::CollisionPtr col;
 
    TRY
-      GMTerrainPageSourceListener *terrain_listener = new GMTerrainPageSourceListener;
+      GMTerrainPageSourceListener *terrain_listener = OGRE_NEW GMTerrainPageSourceListener;
 
       mSceneMgr->setWorldGeometry(terrain);
 
-      OgreNewt::CollisionPrimitives::TreeCollision *terrain_coll = new OgreNewt::CollisionPrimitives::TreeCollision(world);
+      OgreNewt::CollisionPrimitives::TreeCollision *terrain_coll = OGRE_NEW OgreNewt::CollisionPrimitives::TreeCollision(world);
       terrain_coll->start(id);
 
       std::vector<Ogre::Vector3> &polys = terrain_listener->GetPolys();
 
-      for (int x = 0; x < polys.size(); x+=3)
+      for (size_t x = 0; x < polys.size(); x+=3)
       {
          Ogre::Vector3 va[3];
 

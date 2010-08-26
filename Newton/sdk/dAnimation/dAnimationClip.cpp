@@ -12,7 +12,10 @@
 #include <dAnimationStdAfx.h>
 #include <dAnimationClip.h>
 #include <dModel.h>
+
+#ifdef D_LOAD_SAVE_XML
 #include <tinyxml.h>
+#endif
 
 
 #if (_MSC_VER >= 1400)
@@ -20,6 +23,8 @@
 #pragma warning (disable: 4100) // unreferenced formal parameter
 #endif
 
+
+dInitRtti(dAnimationClip);
 
 int dKeyFrames::FindKey(float entry) const
 {
@@ -52,6 +57,7 @@ int dKeyFrames::FindKey(float entry) const
 
 dAnimationClip::dAnimationClip(void)
 {
+	m_name[0] = 0;
 	m_framesCount = 0;
 }
 
@@ -115,8 +121,9 @@ void dKeyFrames::AllocaFrames (int count)
 	}
 }
 
+#ifdef D_LOAD_SAVE_XML
 
-void dAnimationClip::Save (const char* fileName) const
+void dAnimationClip::SaveXML (const char* fileName) const
 {
 	TiXmlDocument doc;
 	TiXmlElement *mesh;
@@ -173,7 +180,7 @@ void dAnimationClip::Save (const char* fileName) const
 }
 
 
-void dAnimationClip::Load (const char* fileName)
+void dAnimationClip::LoadXML (const char* fileName)
 {
 	const TiXmlElement* root;
 	TiXmlDocument doc (fileName);
@@ -209,3 +216,4 @@ void dAnimationClip::Load (const char* fileName)
 	}
 }
 
+#endif

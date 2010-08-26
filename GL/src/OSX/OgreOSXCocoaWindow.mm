@@ -4,22 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2005 The OGRE Team
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
@@ -60,15 +63,14 @@ namespace Ogre {
 	void OSXCocoaWindow::create(const String& name, unsigned int width, unsigned int height,
 	            bool fullScreen, const NameValuePairList *miscParams)
     {
-		mIsFullScreen=fullScreen;
-		NSAutoreleasePool *arp = [[NSAutoreleasePool alloc] init];
+		NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 		NSApplicationLoad();
 		//OgreWindowDelegate *delegate = [[OgreWindowDelegate alloc] initWithGLOSXCocoaWindow:this];
 		//[window setDelegate:delegate];
 		/*
 ***Key: "title" Description: The title of the window that will appear in the title bar Values: string Default: RenderTarget name
 
-Key: "colourDepth" Description: Colour depth of the resulting rendering window; only applies if fullScreen is set. Values: 16 or 32 Default: desktop depth Notes: [W32 specific]
+***Key: "colourDepth" Description: Colour depth of the resulting rendering window; only applies if fullScreen is set. Values: 16 or 32 Default: desktop depth Notes: [W32 specific]
 
 ***Key: "left" Description: screen x coordinate from left Values: positive integers Default: 'center window on screen' Notes: Ignored in case of full screen
 
@@ -80,24 +82,24 @@ Key: "colourDepth" Description: Colour depth of the resulting rendering window; 
 
 ***Key: "FSAA" Description: Full screen antialiasing factor Values: 0,2,4,6,... Default: 0
 
-Key: "displayFrequency" Description: Display frequency rate, for fullscreen mode Values: 60...? Default: Desktop vsync rate
+***Key: "displayFrequency" Description: Display frequency rate, for fullscreen mode Values: 60...? Default: Desktop vsync rate
 
-Key: "vsync" Description: Synchronize buffer swaps to vsync Values: true, false Default: 0
+***Key: "vsync" Description: Synchronize buffer swaps to vsync Values: true, false Default: 0
 */
 
 		BOOL hasDepthBuffer = YES;
 		int fsaa_samples = 0;
-		NSString *windowTitle = [NSString stringWithCString:name.c_str()];
+		NSString *windowTitle = [NSString stringWithCString:name.c_str() encoding:NSASCIIStringEncoding];
 		int winx = 0, winy = 0;
 		int depth = 32;
 		
 		if(miscParams)
 		{
-			NameValuePairList::const_iterator opt = 0;
+			NameValuePairList::const_iterator opt(NULL);
 			
 			opt = miscParams->find("title");
 			if(opt != miscParams->end())
-				windowTitle = [NSString stringWithCString:opt->second.c_str()];
+				windowTitle = [NSString stringWithCString:opt->second.c_str() encoding:NSASCIIStringEncoding];
 				
 			opt = miscParams->find("left");
 			if(opt != miscParams->end())
@@ -122,7 +124,7 @@ Key: "vsync" Description: Synchronize buffer swaps to vsync Values: true, false 
 		}		
 		
 
-		NSOpenGLPixelFormat* openglFormat;
+		NSOpenGLPixelFormat* openglFormat = nil;
 		{
 			NSOpenGLPixelFormatAttribute attribs[30];
 			int i=0;
@@ -186,7 +188,7 @@ Key: "vsync" Description: Synchronize buffer swaps to vsync Values: true, false 
 				openglFormat = [[[NSOpenGLPixelFormat alloc] initWithAttributes: attribs] autorelease];
 			}
 			
-			NameValuePairList::const_iterator opt2 = 0;
+			NameValuePairList::const_iterator opt2(NULL);
 			if(miscParams)
 			{
 				opt2 = miscParams->find("pixelFormat");
@@ -199,15 +201,21 @@ Key: "vsync" Description: Synchronize buffer swaps to vsync Values: true, false 
 
 			glContext = [[NSOpenGLContext alloc] initWithFormat: openglFormat shareContext:shareContext];
 			
-			NameValuePairList::const_iterator opt = 0;
-			if(miscParams)
+			NameValuePairList::const_iterator opt(NULL);
+			NameValuePairList::const_iterator param_useNSView_pair(NULL);
+			if(miscParams) {
 				opt = miscParams->find("externalWindowHandle");
+				param_useNSView_pair = miscParams->find("macAPICocoaUseNSView") ;
+
+				
+			}
+			
 			if(!miscParams || opt == miscParams->end())
 			{
 				//Not sure why this should be but it is required for the window to work at fullscreen.
 				int styleMask = fullScreen? NSBorderlessWindowMask : NSResizableWindowMask;
 			
-				mWindow = [[OgreWindow alloc] initWithContentRect:NSMakeRect(winx, winy, width, height) styleMask:styleMask backing:NSBackingStoreBuffered defer:NO];
+				mWindow = [[NSWindow alloc] initWithContentRect:NSMakeRect(winx, winy, width, height) styleMask:styleMask backing:NSBackingStoreBuffered defer:NO];
 				[mWindow setTitle:windowTitle];
 				
 				if(winx == 0 && winy == 0) [mWindow center];
@@ -217,22 +225,41 @@ Key: "vsync" Description: Synchronize buffer swaps to vsync Values: true, false 
 			}
 			else
 			{
-				mView = (OgreView*)StringConverter::parseUnsignedLong(opt->second);
-				[mView setOgreWindow:this];
+				bool useNSView = false ;
+				if(param_useNSView_pair != miscParams->end())
+					if(param_useNSView_pair->second == "true")
+						useNSView = true ;
+
+				// If the macAPICocoaUseNSView parmeter was set, use the winhandler as pointer to an NSView
+				// Otherwise we assume the user created the inerface with Interface Builder and instantiated an OgreView.
 				
-				NSRect b = [mView bounds];
-				width = b.size.width;
-				height = b.size.height;
+				if(useNSView) {
+					LogManager::getSingleton().logMessage("Mac Cocoa Window: Rendering on an external plain NSView*") ;
+					NSView * nsview = (NSView*)StringConverter::parseUnsignedLong(opt->second);
+					mView = nsview ;					
+				} else {
+					OgreView * view = (OgreView*)StringConverter::parseUnsignedLong(opt->second);
+					[view setOgreWindow:this];
+					mView = view ;
+				
+					NSRect b = [mView bounds];
+					width = b.size.width;
+					height = b.size.height;
+				}
 			}
-			
+
+				
 			[glContext setView:mView];
 
 			mName = name;
 			mWidth = width;
 			mHeight = height;
-			
+            mColourDepth = depth;
+            mFSAA = fsaa_samples;
+            mIsFullScreen = fullScreen;
+
 			// Create register the context with the rendersystem and associate it with this window
-			mContext = new OSXCocoaContext(glContext);
+			mContext = new OSXCocoaContext(glContext, openglFormat);
 			/*rs->_registerContext(this, newContext);
 			
 			if (rs->_getMainContext() == 0)
@@ -242,11 +269,13 @@ Key: "vsync" Description: Synchronize buffer swaps to vsync Values: true, false 
 			if(mWindow)
 				[mWindow performSelectorOnMainThread:@selector(makeKeyAndOrderFront:) withObject:NULL waitUntilDone:NO];
 				
-			[arp release];
 		}
 		
 		// make active
 		mActive = true;
+        mClosed = false;
+
+        [pool drain];
     }
 
     void OSXCocoaWindow::destroy(void)
@@ -353,4 +382,30 @@ Key: "vsync" Description: Synchronize buffer swaps to vsync Values: true, false 
 			return;
 		} 
 	}
+
+    void OSXCocoaWindow::setFullscreen(bool fullScreen, unsigned int width, unsigned int height)
+    {
+        GLRenderSystem *rs = static_cast<GLRenderSystem*>(Root::getSingleton().getRenderSystem());
+        OSXContext *mainContext = (OSXContext*)rs->_getMainContext();
+		
+        CGLContextObj share = NULL;
+        if(mainContext == 0)
+        {
+            share = NULL;
+        }
+        else if(mainContext->getContextType() == "NSOpenGL")
+        {
+            OSXCocoaContext* cocoaContext = static_cast<OSXCocoaContext*>(mainContext);
+            NSOpenGLContext* nsShare = cocoaContext->getContext();
+            share = (CGLContextObj)[nsShare CGLContextObj];
+        }
+        else if(mainContext->getContextType() == "CGL")
+        {
+            OSXCGLContext* cglShare = static_cast<OSXCGLContext*>(mainContext);
+            share = cglShare->getContext();
+        }
+        
+        // create the context
+        createCGLFullscreen(width, height, getColourDepth(), getFSAA(), share);
+    }
 }

@@ -13,6 +13,7 @@ Permission is granted to anyone to use this software for any purpose, including 
 
 #include "PagedGeometry.h"
 #include "PropertyMaps.h"
+#include "RandomTable.h"
 
 #include "OgrePrerequisites.h"
 #include "OgreMaterial.h"
@@ -179,6 +180,9 @@ public:
 	/** INTERNAL FUNCTION - DO NOT USE */
 	void frameUpdate();
 
+	static float getRangeRandom(float start, float end);
+
+
 private:
 	friend class GrassLayer;
 
@@ -198,6 +202,9 @@ private:
 	PagedGeometry *geom;
 	Ogre::uint8 renderQueue;
 	float densityFactor;
+
+	// random table
+	RandomTable *rTable;
 
 	//Animation
 	Ogre::Timer windTimer;

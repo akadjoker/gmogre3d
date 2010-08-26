@@ -31,6 +31,10 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "CCSFreeCameraMode.h"
 
 
+static double ccs_pos_x = 0;
+static double ccs_pos_y = 0;
+static double ccs_pos_z = 0;
+
 GMFN double CreateCameraControlSystem(double cam_ptr)
 {
    if (mSceneMgr == NULL)
@@ -44,7 +48,7 @@ GMFN double CreateCameraControlSystem(double cam_ptr)
       cam = ConvertFromGMPointer<Ogre::Camera*>(cam_ptr);
 
    TRY
-      ccs = new CCS::CameraControlSystem(mSceneMgr, GenerateUniqueName(), cam);
+      ccs = OGRE_NEW CCS::CameraControlSystem(mSceneMgr, GenerateUniqueName(), cam);
    CATCH("CreateCameraControlSystem")
 
    return ConvertToGMPointer(ccs);
@@ -253,7 +257,7 @@ GMFN double CreateCameraControlSystemFixedCameraMode(double ccs_ptr, double axis
    CCS::FixedCameraMode *cam_mode = NULL;
 
    TRY
-      cam_mode = new CCS::FixedCameraMode(ccs, (axisx == 0 && axisy == 0 && axisz == 0) ? Ogre::Vector3(0, 1, 0) : ConvertFromGMAxis(axisx, axisy, axisz));
+      cam_mode = OGRE_NEW CCS::FixedCameraMode(ccs, (axisx == 0 && axisy == 0 && axisz == 0) ? Ogre::Vector3(0, 1, 0) : ConvertFromGMAxis(axisx, axisy, axisz));
       ccs->registerCameraMode(GenerateUniqueName(), cam_mode);
    CATCH("CreateCameraControlSystemFixedCameraMode")
 
@@ -271,7 +275,7 @@ GMFN double CreateCameraControlSystemChaseCameraMode(double ccs_ptr, double rela
    CCS::ChaseCameraMode *cam_mode = NULL;
 
    TRY
-      cam_mode = new CCS::ChaseCameraMode(ccs, ConvertFromGMAxis(relative_posx, relative_posy, relative_posz), (axisx == 0 && axisy == 0 && axisz == 0) ? Ogre::Vector3(0, 1, 0) : ConvertFromGMAxis(axisx, axisy, axisz));
+      cam_mode = OGRE_NEW CCS::ChaseCameraMode(ccs, ConvertFromGMAxis(relative_posx, relative_posy, relative_posz), (axisx == 0 && axisy == 0 && axisz == 0) ? Ogre::Vector3(0, 1, 0) : ConvertFromGMAxis(axisx, axisy, axisz));
       ccs->registerCameraMode(GenerateUniqueName(), cam_mode);
    CATCH("CreateCameraControlSystemChaseCameraMode")
 
@@ -289,7 +293,7 @@ GMFN double CreateCameraControlSystemAttachedCameraMode(double ccs_ptr, double r
    CCS::AttachedCameraMode *cam_mode = NULL;
 
    TRY
-      cam_mode = new CCS::AttachedCameraMode(ccs, ConvertFromGMAxis(relative_posx, relative_posy, relative_posz), Euler(Ogre::Degree(yaw * -1), Ogre::Degree(pitch), Ogre::Degree(roll)));
+      cam_mode = OGRE_NEW CCS::AttachedCameraMode(ccs, ConvertFromGMAxis(relative_posx, relative_posy, relative_posz), Euler(Ogre::Degree(yaw * -1), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)));
       ccs->registerCameraMode(GenerateUniqueName(), cam_mode);
    CATCH("CreateCameraControlSystemAttachedCameraMode")
 
@@ -312,7 +316,7 @@ GMFN double CreateCameraControlSystemPlaneBindedCameraMode(double ccs_ptr, doubl
    CCS::PlaneBindedCameraMode *cam_mode = NULL;
 
    TRY
-      cam_mode = new CCS::PlaneBindedCameraMode(ccs, *plane, (axisx == 0 && axisy == 0 && axisz == 0) ? Ogre::Vector3(0, 1, 0) : ConvertFromGMAxis(axisx, axisy, axisz));
+      cam_mode = OGRE_NEW CCS::PlaneBindedCameraMode(ccs, *plane, (axisx == 0 && axisy == 0 && axisz == 0) ? Ogre::Vector3(0, 1, 0) : ConvertFromGMAxis(axisx, axisy, axisz));
       ccs->registerCameraMode(GenerateUniqueName(), cam_mode);
    CATCH("CreateCameraControlSystemPlaneBindedCameraMode")
 
@@ -330,7 +334,7 @@ GMFN double CreateCameraControlSystemThroughTargetCameraMode(double ccs_ptr, dou
    CCS::ThroughTargetCameraMode *cam_mode = NULL;
 
    TRY
-      cam_mode = new CCS::ThroughTargetCameraMode(ccs, margin, (inverse != 0), ConvertFromGMAxis(focus_posx, focus_posy, focus_posz), (axisx == 0 && axisy == 0 && axisz == 0) ? Ogre::Vector3(0, 1, 0) : ConvertFromGMAxis(axisx, axisy, axisz));
+      cam_mode = OGRE_NEW CCS::ThroughTargetCameraMode(ccs, margin, (inverse != 0), ConvertFromGMAxis(focus_posx, focus_posy, focus_posz), (axisx == 0 && axisy == 0 && axisz == 0) ? Ogre::Vector3(0, 1, 0) : ConvertFromGMAxis(axisx, axisy, axisz));
       ccs->registerCameraMode(GenerateUniqueName(), cam_mode);
    CATCH("CreateCameraControlSystemThroughTargetCameraMode")
 
@@ -348,7 +352,7 @@ GMFN double CreateCameraControlSystemFixedDirectionCameraMode(double ccs_ptr, do
    CCS::FixedDirectionCameraMode *cam_mode = NULL;
 
    TRY
-      cam_mode = new CCS::FixedDirectionCameraMode(ccs, ConvertFromGMAxis(dirx, diry, dirz), distance, (axisx == 0 && axisy == 0 && axisz == 0) ? Ogre::Vector3(0, 1, 0) : ConvertFromGMAxis(axisx, axisy, axisz));
+      cam_mode = OGRE_NEW CCS::FixedDirectionCameraMode(ccs, ConvertFromGMAxis(dirx, diry, dirz), distance, (axisx == 0 && axisy == 0 && axisz == 0) ? Ogre::Vector3(0, 1, 0) : ConvertFromGMAxis(axisx, axisy, axisz));
       ccs->registerCameraMode(GenerateUniqueName(), cam_mode);
    CATCH("CreateCameraControlSystemFixedDirectionCameraMode")
 
@@ -366,7 +370,7 @@ GMFN double CreateCameraControlSystemFirstPersonCameraMode(double ccs_ptr, doubl
    CCS::FirstPersonCameraMode *cam_mode = NULL;
 
    TRY
-      cam_mode = new CCS::FirstPersonCameraMode(ccs, ConvertFromGMAxis(relative_posx, relative_posy, relative_posz), Euler(Ogre::Degree(yaw * -1), Ogre::Degree(pitch), Ogre::Degree(roll)));
+      cam_mode = OGRE_NEW CCS::FirstPersonCameraMode(ccs, ConvertFromGMAxis(relative_posx, relative_posy, relative_posz), Euler(Ogre::Degree(yaw * -1), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)));
       ccs->registerCameraMode(GenerateUniqueName(), cam_mode);
    CATCH("CreateCameraControlSystemFirstPersonCameraMode")
 
@@ -384,7 +388,7 @@ GMFN double CreateCameraControlSystemChaseFreeYawAxisCameraMode(double ccs_ptr, 
    CCS::ChaseFreeYawAxisCameraMode *cam_mode = NULL;
 
    TRY
-      cam_mode = new CCS::ChaseFreeYawAxisCameraMode(ccs, ConvertFromGMAxis(relative_posx, relative_posy, relative_posz), Euler(Ogre::Degree(yaw * -1), Ogre::Degree(pitch), Ogre::Degree(roll)));
+      cam_mode = OGRE_NEW CCS::ChaseFreeYawAxisCameraMode(ccs, ConvertFromGMAxis(relative_posx, relative_posy, relative_posz), Euler(Ogre::Degree(yaw * -1), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)));
       ccs->registerCameraMode(GenerateUniqueName(), cam_mode);
    CATCH("CreateCameraControlSystemChaseFreeYawAxisCameraMode")
 
@@ -402,7 +406,7 @@ GMFN double CreateCameraControlSystemOrbitalCameraMode(double ccs_ptr, double zo
    CCS::OrbitalCameraMode *cam_mode = NULL;
 
    TRY
-      cam_mode = new CCS::OrbitalCameraMode(ccs, zoom, Ogre::Degree((horiz_rotation * -1)), Ogre::Degree(vert_rotation));
+      cam_mode = OGRE_NEW CCS::OrbitalCameraMode(ccs, zoom, Ogre::Degree((horiz_rotation * -1)), Ogre::Degree(vert_rotation));
       ccs->registerCameraMode(GenerateUniqueName(), cam_mode);
    CATCH("CreateCameraControlSystemOrbitalCameraMode")
 
@@ -420,7 +424,7 @@ GMFN double CreateCameraControlSystemFixedTrackingCameraMode(double ccs_ptr, dou
    CCS::FixedTrackingCameraMode *cam_mode = NULL;
 
    TRY
-      cam_mode = new CCS::FixedTrackingCameraMode(ccs, (axisx == 0 && axisy == 0 && axisz == 0) ? Ogre::Vector3(0, 1, 0) : ConvertFromGMAxis(axisx, axisy, axisz));
+      cam_mode = OGRE_NEW CCS::FixedTrackingCameraMode(ccs, (axisx == 0 && axisy == 0 && axisz == 0) ? Ogre::Vector3(0, 1, 0) : ConvertFromGMAxis(axisx, axisy, axisz));
       ccs->registerCameraMode(GenerateUniqueName(), cam_mode);
    CATCH("CreateCameraControlSystemFixedTrackingCameraMode")
 
@@ -438,7 +442,7 @@ GMFN double CreateCameraControlSystemClosestToTargetCameraMode(double ccs_ptr, d
    CCS::ClosestToTargetCameraMode *cam_mode = NULL;
 
    TRY
-      cam_mode = new CCS::ClosestToTargetCameraMode(ccs, time_interval, (axisx == 0 && axisy == 0 && axisz == 0) ? Ogre::Vector3(0, 1, 0) : ConvertFromGMAxis(axisx, axisy, axisz));
+      cam_mode = OGRE_NEW CCS::ClosestToTargetCameraMode(ccs, time_interval, (axisx == 0 && axisy == 0 && axisz == 0) ? Ogre::Vector3(0, 1, 0) : ConvertFromGMAxis(axisx, axisy, axisz));
       ccs->registerCameraMode(GenerateUniqueName(), cam_mode);
    CATCH("CreateCameraControlSystemClosestToTargetCameraMode")
 
@@ -456,12 +460,44 @@ GMFN double CreateCameraControlSystemFreeCameraMode(double ccs_ptr)
    CCS::FreeCameraMode *cam_mode = NULL;
 
    TRY
-      cam_mode = new CCS::FreeCameraMode(ccs);
+      cam_mode = OGRE_NEW CCS::FreeCameraMode(ccs);
       ccs->registerCameraMode(GenerateUniqueName(), cam_mode);
    CATCH("CreateCameraControlSystemFreeCameraMode")
 
    return ConvertToGMPointer(cam_mode);
 }
 
-#endif
 
+GMFN double CreateCameraControlSystemRTSCameraMode1(double ccs_ptr, double posx, double posz, double posy)
+{
+   CCS::CameraControlSystem *ccs = ConvertFromGMPointer<CCS::CameraControlSystem*>(ccs_ptr);
+
+   if (ccs == NULL)
+      return FALSE;
+
+   ccs_pos_x = posx;
+   ccs_pos_y = posy;
+   ccs_pos_z = posz;
+
+   return TRUE;
+}
+
+
+GMFN double CreateCameraControlSystemRTSCameraMode2(double ccs_ptr, double upx, double upz, double upy, double leftx, double leftz, double lefty, double pitch, double min_zoom, double max_zoom)
+{
+   CCS::CameraControlSystem *ccs = ConvertFromGMPointer<CCS::CameraControlSystem*>(ccs_ptr);
+
+   if (ccs == NULL)
+      return FALSE;
+
+   CCS::RTSCameraMode *cam_mode = NULL;
+
+   TRY
+      cam_mode = OGRE_NEW CCS::RTSCameraMode(ccs, ConvertFromGMAxis(ccs_pos_x, ccs_pos_y, ccs_pos_z), ConvertFromGMAxis(upx, upy, upz), ConvertFromGMAxis(leftx, lefty, leftz), Ogre::Degree((Ogre::Real)pitch), min_zoom, max_zoom);
+      ccs->registerCameraMode(GenerateUniqueName(), cam_mode);
+   CATCH("CreateCameraControlSystemRTSCameraMode")
+
+   return ConvertToGMPointer(cam_mode);
+}
+
+#endif

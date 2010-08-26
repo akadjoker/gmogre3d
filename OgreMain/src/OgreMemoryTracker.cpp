@@ -4,33 +4,42 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2008 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd
----------------------------------------------------------------------------
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+-----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
+
+#include "OgrePlatform.h"
 #include "OgrePrerequisites.h"
 #include "OgreMemoryTracker.h"
 #include "OgreString.h"
 
+#if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
+#   include <windows.h>
+#	define Ogre_OutputCString(str) ::OutputDebugStringA(str)
+#	define Ogre_OutputWString(str) ::OutputDebugStringW(str)
+#else
+#	define Ogre_OutputCString(str) std::cerr << str
+#	define Ogre_OutputWString(str) std::cerr << str
+#endif
 
 namespace Ogre
 {
@@ -89,38 +98,44 @@ namespace Ogre
 	}
 	//--------------------------------------------------------------------------
 	void MemoryTracker::reportLeaks()
-	{
+	{		
 		StringUtil::StrStreamType os;
-		
+
 		if (mAllocations.empty())
-			os << "No leaks!";
-		else
 		{
-			size_t totalMem = 0;
-			os << "Leaks detected:" << std::endl << std::endl;
+			os << "Ogre Memory: No memory leaks" << std::endl;
+		}
+		else
+		{			
+			os << "Ogre Memory: Detected memory leaks !!! " << std::endl;
+			os << "Ogre Memory: (" << mAllocations.size() << ") Allocation(s) with total " << mTotalAllocations << " bytes." << std::endl;
+			os << "Ogre Memory: Dumping allocations -> " << std::endl;
+
+
 			for (AllocationMap::const_iterator i = mAllocations.begin(); i != mAllocations.end(); ++i)
 			{
 				const Alloc& alloc = i->second;
-				if (!alloc.filename.empty())
-					os << alloc.filename << "(" << alloc.line << ", " << alloc.function << "): ";
+				if (!alloc.filename.empty())				
+					os << alloc.filename;
 				else
-					os << "(unknown source): ";
-				os << alloc.bytes << " bytes";
-				os << std::endl;
-				totalMem += alloc.bytes;
-			}
-			
-			os << std::endl;
-			os << mAllocations.size() << " leaks detected, " << totalMem << " bytes total";
+					os << "(unknown source):";
+
+				os << "(" << alloc.line << ") : {" << alloc.bytes << " bytes}" << " function: " << alloc.function << std::endl; 				
+
+			}			
+			os << std::endl;			
 		}
-		
-		if (mDumpToStdOut)
-			std::cout << os.str();
-		
+
+		if (mDumpToStdOut)		
+			std::cout << os.str();		
+
+		std::cout << os.str();
 		std::ofstream of;
 		of.open(mLeakFileName.c_str());
 		of << os.str();
 		of.close();
+
+		Ogre_OutputCString(os.str().c_str());		
 	}
 #endif // OGRE_DEBUG_MODE	
 	

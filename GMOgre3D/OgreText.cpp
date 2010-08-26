@@ -101,7 +101,7 @@ void OgreText::SetMetrics(double type)
 
 void OgreText::SetPosition(double x, double y)
 {
-   m_text_area->setPosition(x, y);
+   m_text_area->setPosition((Ogre::Real)x, (Ogre::Real)y);
 }
 
 

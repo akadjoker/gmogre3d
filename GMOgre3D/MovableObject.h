@@ -75,7 +75,7 @@ GMFN double DetachMovableObjectFromParentSceneNode(double movable_object_ptr)
    if (mo == NULL)
       return FALSE;
    
-   mo->detatchFromParent();
+   mo->detachFromParent();
 
    return TRUE;
 }
@@ -117,6 +117,49 @@ GMFN double SetMovableObjectQueryFlags(double movable_object_ptr, double flags)
    mo->setQueryFlags((Ogre::uint)flags);
 
    return TRUE;
+}
+
+
+GMFN double SetMovableObjectVisibilityFlags(double movable_object_ptr, double flags)
+{
+   Ogre::MovableObject *mo = ConvertFromGMPointer<Ogre::MovableObject*>(movable_object_ptr);
+
+   if (mo == NULL)
+      return FALSE;
+
+   mo->setVisibilityFlags((Ogre::uint)flags);
+
+   return TRUE;
+}
+
+
+GMFN double SetMovableObjectUserData(double movable_object_ptr, char *key, double data)
+{
+   Ogre::MovableObject *mo = ConvertFromGMPointer<Ogre::MovableObject*>(movable_object_ptr);
+
+   if (mo == NULL)
+      return FALSE;
+
+   if (key == NULL)
+      mo->getUserObjectBindings().setUserAny(Ogre::Any(data));
+   else
+      mo->getUserObjectBindings().setUserAny(key, Ogre::Any(data));
+
+   return TRUE;
+}
+
+
+GMFN double GetMovableObjectUserData(double movable_object_ptr, char *key)
+{
+   Ogre::MovableObject *mo = ConvertFromGMPointer<Ogre::MovableObject*>(movable_object_ptr);
+
+   if (mo == NULL)
+      return FALSE;
+
+   if (key == NULL)
+      return Ogre::any_cast<double>(mo->getUserObjectBindings().getUserAny());
+   else
+      return Ogre::any_cast<double>(mo->getUserObjectBindings().getUserAny(key));
 }
 
 #endif

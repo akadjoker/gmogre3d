@@ -77,6 +77,7 @@
 #include "CCS_PlaneBindedCameraMode.h"
 #include "CCS_ChaseCameraMode.h"
 #include "CCS_FixedCameraMode.h"
+#include "CCS_RTSCameraMode.h"
 #include "GMApi.h"
 #include "LockMutex.h"
 #include "RibbonTrail.h"
@@ -102,6 +103,7 @@
 #include "GUISlider.h"
 #include "PSSMShadowCameraSetup.h"
 #include "GPUProgramParameters.h"
+#include "Rectangle2D.h"
 #include <OgreDynLib.h>
 #include <algorithm>
 
@@ -111,8 +113,10 @@ void UpdateSceneNodeAttachments();
 // We delay load DX9 so it's not required if running GL
 #ifdef _DEBUG
 #	pragma comment(lib, "d3dx9d.lib")
+#	pragma comment(lib, "cg.lib")
 #else
 #	pragma comment(lib, "d3dx9.lib")
+#	pragma comment(lib, "cg.lib")
 #endif
 
 
@@ -168,7 +172,7 @@ GMFN double StartEngine(double render_engine, double hwnd, double window_width, 
       else
          mRenderEngine = "Direct3D9";
 
-      mRoot = new Ogre::Root(mPluginsCfg, mOgreCfg, mLogFile);
+      mRoot = OGRE_NEW Ogre::Root(mPluginsCfg, mOgreCfg, mLogFile);
 
 
 #ifdef OGRE_STATIC_LIB
@@ -179,13 +183,21 @@ GMFN double StartEngine(double render_engine, double hwnd, double window_width, 
       static Ogre::CgPlugin *mCGPlugin = NULL;
 
       if (mOctreePlugin == NULL)
-         mOctreePlugin = new Ogre::OctreePlugin;
+         mOctreePlugin = OGRE_NEW Ogre::OctreePlugin;
 
       if (mParticleFXPlugin == NULL)
-         mParticleFXPlugin = new Ogre::ParticleFXPlugin;
+         mParticleFXPlugin = OGRE_NEW Ogre::ParticleFXPlugin;
 
       if (mCGPlugin == NULL)
-         mCGPlugin = new Ogre::CgPlugin;
+      {
+         // Only load our CG plugin if it exists!
+         HMODULE hmod = LoadLibraryA("cg.dll");
+         if (hmod)
+         {
+            FreeLibrary(hmod);
+            mCGPlugin = OGRE_NEW Ogre::CgPlugin;
+         }
+      }
 
       if (mD3D9Plugin == NULL && render_engine == 1)
       {
@@ -200,11 +212,11 @@ GMFN double StartEngine(double render_engine, double hwnd, double window_width, 
          }
          FreeLibrary(hmod);
 
-         mD3D9Plugin = new Ogre::D3D9Plugin;
+         mD3D9Plugin = OGRE_NEW Ogre::D3D9Plugin;
       }
 
       if (mGLPlugin == NULL && render_engine == 2)
-         mGLPlugin = new Ogre::GLPlugin;
+         mGLPlugin = OGRE_NEW Ogre::GLPlugin;
 
       if (mOctreePlugin != NULL)
          mRoot->installPlugin(mOctreePlugin);
@@ -220,12 +232,12 @@ GMFN double StartEngine(double render_engine, double hwnd, double window_width, 
 #endif
 
       // Load rendering system so we don't display Configuration Dialog
-      Ogre::RenderSystemList *rsList = mRoot->getAvailableRenderers();
-      Ogre::RenderSystemList::iterator it = rsList->begin();
+      Ogre::RenderSystemList rsList = mRoot->getAvailableRenderers();
+      Ogre::RenderSystemList::iterator it = rsList.begin();
       Ogre::RenderSystem *selectedRenderSystem=0;
       bool foundit = false;
 
-      while (it != rsList->end())
+      while (it != rsList.end())
       {
          selectedRenderSystem = *(it++);
          Ogre::String rname = selectedRenderSystem->getName();
@@ -261,7 +273,10 @@ GMFN double StartEngine(double render_engine, double hwnd, double window_width, 
       if (mUseVSync)
          opts["vsync"] = "true";
       opts["FSAA"] = Ogre::StringConverter::toString(mFSAALevel);
-      opts["FSAAQuality"] = Ogre::StringConverter::toString(mFSAAQuality);
+      if (mFSAAQuality == 0)
+         opts["FSAAQuality"] = "";
+      else if (mFSAAQuality == 1)
+         opts["FSAAQuality"] = "Quality";
 
       // Fullscreen causes issues with input... it may be that it's actually creating a
       // whole NEW window and not using GameMakers window.  Either way no keyboard input.
@@ -271,7 +286,7 @@ GMFN double StartEngine(double render_engine, double hwnd, double window_width, 
       mRenderWindow = mRoot->createRenderWindow("GMOGRE 3D Window", mWindowWidth, mWindowHeight, mFullscreen, &opts);
 
       //if (mFrameListener == NULL)
-      //   mFrameListener = new GMFrameListener;
+      //   mFrameListener = OGRE_NEW GMFrameListener;
       //mRoot->addFrameListener(mFrameListener);
 
       if (mGMAPI)
@@ -310,7 +325,10 @@ GMFN double EnableRenderWindow(double enable)
       if (mUseVSync)
          opts["vsync"] = "true";
       opts["FSAA"] = Ogre::StringConverter::toString(mFSAALevel);
-      opts["FSAAQuality"] = Ogre::StringConverter::toString(mFSAAQuality);
+      if (mFSAAQuality == 0)
+         opts["FSAAQuality"] = "";
+      else if (mFSAAQuality == 1)
+         opts["FSAAQuality"] = "Quality";
 
       mRenderWindow->create("GMOGRE 3D Window", mWindowWidth, mWindowHeight, mFullscreen, &opts);
    }
@@ -395,22 +413,10 @@ GMFN double EnableWaitForVSync(double enable)
 }
 
 
-GMFN double SetFSAA(double fsaa_level, double fsaa_quality)
+GMFN double SetFSAA(double fsaa_level, double fsaa_hint)
 {
    mFSAALevel = (int)fsaa_level;
-   mFSAAQuality = (int)fsaa_quality;
-
-   // Ensure the combinations are valid!
-   mFSAALevel = std::min(6, mFSAALevel);
-   if (mFSAALevel == 5)
-      mFSAALevel = 4;
-   else if (mFSAALevel == 3)
-      mFSAALevel = 2;
-
-   if (mFSAALevel > 2)
-      mFSAAQuality = 0;
-   else if (mFSAALevel == 1)
-      mFSAAQuality = std::min(2, mFSAAQuality);
+   mFSAAQuality = (int)fsaa_hint;
 
    return TRUE;
 }
@@ -470,7 +476,7 @@ GMFN double SaveScreenshot(char *filename)
 
 GMFN char *GetOgre3DVersion()
 {
-   return "GMOgre3D v1.1";
+   return "GMOgre3D v1.2";
 }
 
 GMFN double SetRotationMode(double mode)

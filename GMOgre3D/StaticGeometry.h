@@ -65,7 +65,7 @@ GMFN double SetStaticGeometryRegionRenderingDistance(double static_geo_ptr, doub
    if (static_geo == NULL)
       return FALSE;
 
-   static_geo->setRenderingDistance(distance);
+   static_geo->setRenderingDistance((Ogre::Real)distance);
 
    return TRUE;
 }
@@ -109,7 +109,7 @@ GMFN double AddStaticGeometryEntity(double static_geo_ptr, double entity_ptr, do
    if (ent == NULL)
       return FALSE;
 
-   static_geo->addEntity(ent, ConvertFromGMAxis(posx, posy, posz), Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)), ConvertFromGMAxis(scalex, scaley, scalez));
+   static_geo->addEntity(ent, ConvertFromGMAxis(posx, posy, posz), Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)), ConvertFromGMAxis(scalex, scaley, scalez));
 
    return TRUE;
 }
@@ -167,6 +167,19 @@ GMFN double EnableStaticGeometryCastShadows(double static_geo_ptr, double enable
       return FALSE;
 
    static_geo->setCastShadows((enable != 0));
+
+   return TRUE;
+}
+
+
+GMFN double SetStaticGeometryVisibilityFlags(double static_geo_ptr, double flags)
+{
+   Ogre::StaticGeometry *static_geo = ConvertFromGMPointer<Ogre::StaticGeometry*>(static_geo_ptr);
+
+   if (static_geo == NULL)
+      return FALSE;
+
+   static_geo->setVisibilityFlags((Ogre::uint)flags);
 
    return TRUE;
 }

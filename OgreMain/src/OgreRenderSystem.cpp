@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -59,6 +58,7 @@ namespace Ogre {
         // This makes it the same as OpenGL and other right-handed systems
         , mCullingMode(CULL_CLOCKWISE)
         , mVSync(true)
+		, mVSyncInterval(1)
 		, mWBuffer(false)
         , mInvertVertexWinding(false)
         , mDisabledTexUnitsFrom(0)
@@ -148,11 +148,71 @@ namespace Ogre {
         return 0;
     }
 
-		void RenderSystem::useCustomRenderSystemCapabilities(RenderSystemCapabilities* capabilities)
+	//---------------------------------------------------------------------------------------------
+	void RenderSystem::useCustomRenderSystemCapabilities(RenderSystemCapabilities* capabilities)
+	{
+		mCurrentCapabilities = capabilities;
+		mUseCustomCapabilities = true;
+	}
+
+	//---------------------------------------------------------------------------------------------
+	bool RenderSystem::_createRenderWindows(const RenderWindowDescriptionList& renderWindowDescriptions, 
+		RenderWindowList& createdWindows)
+	{
+		unsigned int fullscreenWindowsCount = 0;
+
+		// Grab some information and avoid duplicate render windows.
+		for (unsigned int nWindow=0; nWindow < renderWindowDescriptions.size(); ++nWindow)
 		{
-				mCurrentCapabilities = capabilities;
-				mUseCustomCapabilities = true;
+			const RenderWindowDescription* curDesc = &renderWindowDescriptions[nWindow];
+
+			// Count full screen windows.
+			if (curDesc->useFullScreen)			
+				fullscreenWindowsCount++;	
+
+			bool renderWindowFound = false;
+
+			if (mRenderTargets.find(curDesc->name) != mRenderTargets.end())
+				renderWindowFound = true;
+			else
+			{
+				for (unsigned int nSecWindow = nWindow + 1 ; nSecWindow < renderWindowDescriptions.size(); ++nSecWindow)
+				{
+					if (curDesc->name == renderWindowDescriptions[nSecWindow].name)
+					{
+						renderWindowFound = true;
+						break;
+					}					
+				}
+			}
+
+			// Make sure we don't already have a render target of the 
+			// same name as the one supplied
+			if(renderWindowFound)
+			{
+				String msg;
+
+				msg = "A render target of the same name '" + String(curDesc->name) + "' already "
+					"exists.  You cannot create a new window with this name.";
+				OGRE_EXCEPT( Exception::ERR_INTERNAL_ERROR, msg, "RenderSystem::createRenderWindow" );
+			}
 		}
+		
+		// Case we have to create some full screen rendering windows.
+		if (fullscreenWindowsCount > 0)
+		{
+			// Can not mix full screen and windowed rendering windows.
+			if (fullscreenWindowsCount != renderWindowDescriptions.size())
+			{
+				OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
+					"Can not create mix of full screen and windowed rendering windows",
+					"RenderSystem::createRenderWindows");
+			}					
+		}
+
+		return true;
+	}
+
     //---------------------------------------------------------------------------------------------
     void RenderSystem::destroyRenderWindow(const String& name)
     {
@@ -515,10 +575,20 @@ namespace Ogre {
 		}
     }
     //-----------------------------------------------------------------------
+	bool RenderSystem::getInvertVertexWinding(void)
+	{
+		return mInvertVertexWinding;
+	}
+    //-----------------------------------------------------------------------
     void RenderSystem::setInvertVertexWinding(bool invert)
     {
         mInvertVertexWinding = invert;
     }
+	//-----------------------------------------------------------------------
+	bool RenderSystem::getVertexWindingInverted(void) const
+	{
+		return mInvertVertexWinding;
+	}
 	//---------------------------------------------------------------------
 	void RenderSystem::addClipPlane (const Plane &p)
 	{
@@ -676,6 +746,18 @@ namespace Ogre {
 		mTexProjRelative = enabled;
 		mTexProjRelativeOrigin = pos;
 
+	}
+	//---------------------------------------------------------------------
+	RenderSystem::RenderSystemContext* RenderSystem::_pauseFrame(void)
+	{
+		_endFrame();
+		return new RenderSystem::RenderSystemContext;
+	}
+	//---------------------------------------------------------------------
+	void RenderSystem::_resumeFrame(RenderSystemContext* context)
+	{
+		_beginFrame();
+		delete context;
 	}
 
 }

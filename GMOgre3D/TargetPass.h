@@ -73,7 +73,7 @@ GMFN double SetTargetPassVisibilityMask(double pass_ptr, double mask)
    if (pass == NULL)
       return FALSE;
 
-   pass->setVisibilityMask(mask);
+   pass->setVisibilityMask((Ogre::uint32)mask);
 
    return TRUE;
 }
@@ -86,7 +86,7 @@ GMFN double SetTargetPassLODBias(double pass_ptr, double bias)
    if (pass == NULL)
       return FALSE;
 
-   pass->setLodBias(bias);
+   pass->setLodBias((float)bias);
 
    return TRUE;
 }
@@ -141,7 +141,7 @@ GMFN double GetCompositionPass(double pass_ptr, double pass_index)
    if (pass == NULL)
       return 0;
 
-   return ConvertToGMPointer(pass->getPass(pass_index));
+   return ConvertToGMPointer(pass->getPass((size_t)pass_index));
 }
 
 

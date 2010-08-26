@@ -4,30 +4,30 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreD3D9VideoModeList.h"
 #include "OgreException.h"
+#include "OgreD3D9RenderSystem.h"
 
 namespace Ogre 
 {
@@ -49,7 +49,7 @@ namespace Ogre
 	BOOL D3D9VideoModeList::enumerate()
 	{
 		UINT iMode;
-		LPDIRECT3D9 pD3D = mpDriver->getD3D();
+		IDirect3D9* pD3D = D3D9RenderSystem::getDirect3D9();
 		UINT adapter = mpDriver->getAdapterNumber();
 
 		for( iMode=0; iMode < pD3D->GetAdapterModeCount( adapter, D3DFMT_R5G6B5 ); iMode++ )
@@ -63,7 +63,7 @@ namespace Ogre
 
 			// Check to see if it is already in the list (to filter out refresh rates)
 			BOOL found = FALSE;
-			std::vector<D3D9VideoMode>::iterator it;
+			vector<D3D9VideoMode>::type::iterator it;
 			for( it = mModeList.begin(); it != mModeList.end(); it++ )
 			{
 				D3DDISPLAYMODE oldDisp = it->getDisplayMode();
@@ -94,7 +94,7 @@ namespace Ogre
 
 			// Check to see if it is already in the list (to filter out refresh rates)
 			BOOL found = FALSE;
-			std::vector<D3D9VideoMode>::iterator it;
+			vector<D3D9VideoMode>::type::iterator it;
 			for( it = mModeList.begin(); it != mModeList.end(); it++ )
 			{
 				D3DDISPLAYMODE oldDisp = it->getDisplayMode();
@@ -124,14 +124,14 @@ namespace Ogre
 
 	D3D9VideoMode* D3D9VideoModeList::item( size_t index )
 	{
-		std::vector<D3D9VideoMode>::iterator p = mModeList.begin();
+		vector<D3D9VideoMode>::type::iterator p = mModeList.begin();
 
 		return &p[index];
 	}
 
 	D3D9VideoMode* D3D9VideoModeList::item( const String &name )
 	{
-		std::vector<D3D9VideoMode>::iterator it = mModeList.begin();
+		vector<D3D9VideoMode>::type::iterator it = mModeList.begin();
 		if (it == mModeList.end())
 			return NULL;
 

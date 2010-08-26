@@ -13,8 +13,7 @@ void DefaultForceCallback(OgreNewt::Body* body, float timestep, int threadIndex)
 
 OgreNewtBody::OgreNewtBody(const OgreNewt::World* W, const OgreNewt::CollisionPtr& col, int bodytype)
 {
-   m_body = new OgreNewt::Body(W, col, bodytype);
-   m_userdata = NULL;
+   m_body = OGRE_NEW OgreNewt::Body(W, col, bodytype);
    m_body->setUserData(this);
    m_override_gravity = false;
 
@@ -37,15 +36,20 @@ OgreNewtBody::~OgreNewtBody()
 }
 
 
-void OgreNewtBody::setUserData( void* data )
+void OgreNewtBody::setUserData( char *key, void* data )
 {
-   m_userdata = data;
+   m_userdata[Ogre::String(key)] = data;
 }
 
 
-void* OgreNewtBody::getUserData() const
+void* OgreNewtBody::getUserData( char *key ) const
 {
-   return m_userdata;
+   std::map<Ogre::String, void *>::const_iterator iter = m_userdata.find(Ogre::String(key));
+
+   if (iter != m_userdata.end())
+      return (*iter).second;
+
+   return NULL;
 }
 
 

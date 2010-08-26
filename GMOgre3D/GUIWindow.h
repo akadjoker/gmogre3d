@@ -180,7 +180,7 @@ OgreCEGUIWindowData *GetGUIWindowData(CEGUI::Window *win)
    
    if (data == NULL)
    {
-      data = new OgreCEGUIWindowData;
+      data = OGRE_NEW OgreCEGUIWindowData;
       data->m_metrics_mode = Ogre::GMM_PIXELS;
       win->setUserData(data);
 

@@ -4,26 +4,25 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -39,6 +38,8 @@ Torus Knot Software Ltd.
 #include "OgreGpuProgramManager.h"
 #include "OgreHighLevelGpuProgramManager.h"
 #include "OgreExternalTextureSourceManager.h"
+#include "OgreLodStrategyManager.h"
+#include "OgreDistanceLodStrategy.h"
 
 namespace Ogre
 {
@@ -550,13 +551,13 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseMaxLights(String& params, MaterialScriptContext& context)
     {
-		context.pass->setMaxSimultaneousLights(StringConverter::parseInt(params));
+		context.pass->setMaxSimultaneousLights((ushort)StringConverter::parseInt(params));
         return false;
     }
 	//-----------------------------------------------------------------------
 	bool parseStartLight(String& params, MaterialScriptContext& context)
 	{
-		context.pass->setStartLight(StringConverter::parseInt(params));
+		context.pass->setStartLight((ushort)StringConverter::parseInt(params));
 		return false;
 	}
     //-----------------------------------------------------------------------
@@ -646,7 +647,7 @@ namespace Ogre
 						{
 							// Parse num lights
 							context.pass->setLightCountPerIteration(
-								StringConverter::parseInt(vecparams[2]));
+								(ushort)StringConverter::parseInt(vecparams[2]));
 							// Light type
 							if (vecparams.size() == 4)
 							{
@@ -1153,7 +1154,7 @@ namespace Ogre
             return false;
         }
 
-        context.pass->setAlphaRejectSettings(cmp, StringConverter::parseInt(vecparams[1]));
+        context.pass->setAlphaRejectSettings(cmp, (unsigned char)StringConverter::parseInt(vecparams[1]));
 
         return false;
     }
@@ -1665,17 +1666,41 @@ namespace Ogre
 	//-----------------------------------------------------------------------
 	bool parseContentType(String& params, MaterialScriptContext& context)
 	{
-		if (params == "named")
+		StringVector vecparams = StringUtil::tokenise(params, " \t");
+		if (vecparams.empty())
+		{
+			logParseError("No content_type specified", context);
+			return false;
+		}
+		String& paramType = vecparams[0];
+		if (paramType == "named")
 		{
 			context.textureUnit->setContentType(TextureUnitState::CONTENT_NAMED);
 		}
-		else if (params == "shadow")
+		else if (paramType == "shadow")
 		{
 			context.textureUnit->setContentType(TextureUnitState::CONTENT_SHADOW);
 		}
+		else if (paramType == "compositor")
+		{
+			context.textureUnit->setContentType(TextureUnitState::CONTENT_COMPOSITOR);
+			if (vecparams.size() == 3)
+			{
+				context.textureUnit->setCompositorReference(vecparams[1], vecparams[2]);
+			}
+			else if (vecparams.size() == 4)
+			{
+				context.textureUnit->setCompositorReference(vecparams[1], vecparams[2], 
+					StringConverter::parseUnsignedInt(vecparams[3]));
+			}
+			else
+			{
+				logParseError("compositor content_type requires 2 or 3 extra params", context);
+			}
+		}
 		else
 		{
-			logParseError("Invalid content_type specified.", context);
+			logParseError("Invalid content_type specified : " + paramType, context);
 		}
 		return false;
 	}
@@ -1701,12 +1726,12 @@ namespace Ogre
 		return false;
 	}
     //-----------------------------------------------------------------------
-    bool parseLodDistances(String& params, MaterialScriptContext& context)
+    bool parseLodValues(String& params, MaterialScriptContext& context)
     {
         StringVector vecparams = StringUtil::split(params, " \t");
 
-        // iterate over the parameters and parse distances out of them
-        Material::LodDistanceList lodList;
+        // iterate over the parameters and parse values out of them
+        Material::LodValueList lodList;
         StringVector::iterator i, iend;
         iend = vecparams.end();
         for (i = vecparams.begin(); i != iend; ++i)
@@ -1721,7 +1746,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     bool parseLodIndex(String& params, MaterialScriptContext& context)
     {
-        context.technique->setLodIndex(StringConverter::parseInt(params));
+        context.technique->setLodIndex((ushort)StringConverter::parseInt(params));
         return false;
     }
 	//-----------------------------------------------------------------------
@@ -2184,6 +2209,7 @@ namespace Ogre
         try {
 			const GpuConstantDefinition& def = 
 				context.programParams->getConstantDefinition(vecparams[0]);
+            (void)def; // Silence warning
         }
         catch (Exception& e)
         {
@@ -2216,6 +2242,7 @@ namespace Ogre
         try {
 			const GpuConstantDefinition& def = 
 				context.programParams->getConstantDefinition(vecparams[0]);
+            (void)def; // Silence warning
         }
         catch (Exception& e)
         {
@@ -2322,7 +2349,7 @@ namespace Ogre
         // Create a new technique if it doesn't already exist
         if (context.material->getNumTechniques() > context.techLev)
         {
-            context.technique = context.material->getTechnique(context.techLev);
+            context.technique = context.material->getTechnique((ushort)context.techLev);
         }
         else
         {
@@ -2366,7 +2393,7 @@ namespace Ogre
 
         if (context.technique->getNumPasses() > context.passLev)
         {
-            context.pass = context.technique->getPass(context.passLev);
+            context.pass = context.technique->getPass((ushort)context.passLev);
         }
         else
         {
@@ -2414,7 +2441,7 @@ namespace Ogre
 
         if (context.pass->getNumTextureUnitStates() > static_cast<size_t>(context.stateLev))
         {
-            context.textureUnit = context.pass->getTextureUnitState(context.stateLev);
+            context.textureUnit = context.pass->getTextureUnitState((ushort)context.stateLev);
         }
         else
         {
@@ -2793,7 +2820,7 @@ namespace Ogre
 	{
 		// Source filename, preserve case
 		context.programDef->supportsPoseAnimation
-			= StringConverter::parseInt(params);
+			= (ushort)StringConverter::parseInt(params);
 
 		return false;
 	}
@@ -2922,6 +2949,41 @@ namespace Ogre
 		return false;
 
 	}
+    //-----------------------------------------------------------------------
+    bool parseLodStrategy(String& params, MaterialScriptContext& context)
+    {
+        LodStrategy *strategy = LodStrategyManager::getSingleton().getStrategy(params);
+        
+        if (strategy == 0)
+            logParseError(
+            "Bad lod_strategy attribute, available lod strategy name expected.",
+            context);
+
+        context.material->setLodStrategy(strategy);
+
+        return false;
+    }
+    //-----------------------------------------------------------------------
+    bool parseLodDistances(String& params, MaterialScriptContext& context)
+    {
+        // Set to distance strategy
+        context.material->setLodStrategy(DistanceLodStrategy::getSingletonPtr());
+
+        StringVector vecparams = StringUtil::split(params, " \t");
+
+        // iterate over the parameters and parse values out of them
+        Material::LodValueList lodList;
+        StringVector::iterator i, iend;
+        iend = vecparams.end();
+        for (i = vecparams.begin(); i != iend; ++i)
+        {
+            lodList.push_back(StringConverter::parseReal(*i));
+        }
+
+        context.material->setLodLevels(lodList);
+
+        return false;
+    }
 	//-----------------------------------------------------------------------
     //-----------------------------------------------------------------------
     MaterialSerializer::MaterialSerializer()
@@ -2933,6 +2995,8 @@ namespace Ogre
         mRootAttribParsers.insert(AttribParserList::value_type("fragment_program", (ATTRIBUTE_PARSER)parseFragmentProgram));
 
         // Set up material attribute parsers
+        mMaterialAttribParsers.insert(AttribParserList::value_type("lod_values", (ATTRIBUTE_PARSER)parseLodValues));
+        mMaterialAttribParsers.insert(AttribParserList::value_type("lod_strategy", (ATTRIBUTE_PARSER)parseLodStrategy));
         mMaterialAttribParsers.insert(AttribParserList::value_type("lod_distances", (ATTRIBUTE_PARSER)parseLodDistances));
         mMaterialAttribParsers.insert(AttribParserList::value_type("receive_shadows", (ATTRIBUTE_PARSER)parseReceiveShadows));
 		mMaterialAttribParsers.insert(AttribParserList::value_type("transparency_casts_shadows", (ATTRIBUTE_PARSER)parseTransparencyCastsShadows));
@@ -3328,7 +3392,7 @@ namespace Ogre
                 hgp->setSourceFile(def->source);
 
 			    // Set custom parameters
-				std::vector<std::pair<String, String> >::const_iterator i, iend;
+				vector<std::pair<String, String> >::type::const_iterator i, iend;
 			    iend = def->customParameters.end();
 			    for (i = def->customParameters.begin(); i != iend; ++i)
 			    {
@@ -3418,11 +3482,11 @@ namespace Ogre
     }
     //-----------------------------------------------------------------------
     void MaterialSerializer::exportMaterial(const MaterialPtr& pMat, const String &fileName, bool exportDefaults,
-        const bool includeProgDef, const String& programFilename)
+        const bool includeProgDef, const String& programFilename, const String& materialName)
     {
         clearQueue();
         mDefaults = exportDefaults;
-        writeMaterial(pMat);
+        writeMaterial(pMat, materialName);
         exportQueued(fileName, includeProgDef, programFilename);
     }
     //-----------------------------------------------------------------------
@@ -3469,13 +3533,13 @@ namespace Ogre
     }
     //-----------------------------------------------------------------------
     void MaterialSerializer::queueForExport(const MaterialPtr& pMat,
-		bool clearQueued, bool exportDefaults)
+		bool clearQueued, bool exportDefaults, const String& materialName)
     {
         if (clearQueued)
             clearQueue();
 
         mDefaults = exportDefaults;
-        writeMaterial(pMat);
+        writeMaterial(pMat, materialName);
     }
     //-----------------------------------------------------------------------
     void MaterialSerializer::clearQueue()
@@ -3490,29 +3554,50 @@ namespace Ogre
         return mBuffer;
     }
     //-----------------------------------------------------------------------
-    void MaterialSerializer::writeMaterial(const MaterialPtr& pMat)
+    void MaterialSerializer::writeMaterial(const MaterialPtr& pMat, const String& materialName)
     {
-        LogManager::getSingleton().logMessage("MaterialSerializer : writing material " + pMat->getName() + " to queue.", LML_CRITICAL);
+		String outMaterialName;
+
+		if (materialName.length() > 0)
+		{
+			outMaterialName = materialName;
+		}
+		else
+		{
+			outMaterialName = pMat->getName();
+		}
+
+        LogManager::getSingleton().logMessage("MaterialSerializer : writing material " + outMaterialName + " to queue.", LML_CRITICAL);
+
+		bool skipWriting = false;
+
+		// Fire pre-write event.
+		fireMaterialEvent(MSE_PRE_WRITE, skipWriting, pMat.get());
+		if (skipWriting)		
+			return;		
+
         // Material name
-        writeAttribute(0, "material " + pMat->getName());
+		writeAttribute(0, "material " + outMaterialName);
         beginSection(0);
         {
+			// Fire write begin event.
+			fireMaterialEvent(MSE_WRITE_BEGIN, skipWriting, pMat.get());
+
             // Write LOD information
-            Material::LodDistanceIterator distIt = pMat->getLodDistanceIterator();
+            Material::LodValueIterator valueIt = pMat->getLodValueIterator();
             // Skip zero value
-            if (distIt.hasMoreElements())
-                distIt.getNext();
+            if (valueIt.hasMoreElements())
+                valueIt.getNext();
             String attributeVal;
-            while (distIt.hasMoreElements())
+            while (valueIt.hasMoreElements())
             {
-                Real sqdist = distIt.getNext();
-                attributeVal.append(StringConverter::toString(Math::Sqrt(sqdist)));
-                if (distIt.hasMoreElements())
+                attributeVal.append(StringConverter::toString(valueIt.getNext()));
+                if (valueIt.hasMoreElements())
                     attributeVal.append(" ");
             }
             if (!attributeVal.empty())
             {
-                writeAttribute(1, "lod_distances");
+                writeAttribute(1, "lod_values");
                 writeValue(attributeVal);
             }
 
@@ -3540,13 +3625,26 @@ namespace Ogre
                 writeTechnique(it.getNext());
                 mBuffer += "\n";
             }
+
+			// Fire write end event.
+			fireMaterialEvent(MSE_WRITE_END, skipWriting, pMat.get());
         }
         endSection(0);
         mBuffer += "\n";
+
+		// Fire post section write event.
+		fireMaterialEvent(MSE_POST_WRITE, skipWriting, pMat.get());
     }
     //-----------------------------------------------------------------------
     void MaterialSerializer::writeTechnique(const Technique* pTech)
     {
+		bool skipWriting = false;
+
+		// Fire pre-write event.
+		fireTechniqueEvent(MSE_PRE_WRITE, skipWriting, pTech);
+		if (skipWriting)		
+			return;	
+		
         // Technique header
         writeAttribute(1, "technique");
         // only output technique name if it exists.
@@ -3555,6 +3653,9 @@ namespace Ogre
 
         beginSection(1);
         {
+			// Fire write begin event.
+			fireTechniqueEvent(MSE_WRITE_BEGIN, skipWriting, pTech);
+
 			// Lod index
 			if (mDefaults ||
 				pTech->getLodIndex() != 0)
@@ -3615,13 +3716,26 @@ namespace Ogre
                 writePass(it.getNext());
                 mBuffer += "\n";
             }
+
+			// Fire write end event.
+			fireTechniqueEvent(MSE_WRITE_END, skipWriting, pTech);
         }
         endSection(1);
+
+		// Fire post section write event.
+		fireTechniqueEvent(MSE_POST_WRITE, skipWriting, pTech);
 
     }
     //-----------------------------------------------------------------------
     void MaterialSerializer::writePass(const Pass* pPass)
     {
+		bool skipWriting = false;
+
+		// Fire pre-write event.
+		firePassEvent(MSE_PRE_WRITE, skipWriting, pPass);
+		if (skipWriting)		
+			return;
+		
         writeAttribute(2, "pass");
         // only output pass name if its not the default name
         if (pPass->getName() != StringConverter::toString(pPass->getIndex()))
@@ -3629,6 +3743,9 @@ namespace Ogre
 
         beginSection(2);
         {
+			// Fire write begin event.
+			firePassEvent(MSE_WRITE_BEGIN, skipWriting, pPass);
+
             //lighting
             if (mDefaults ||
                 pPass->getLightingEnabled() != true)
@@ -3937,6 +4054,8 @@ namespace Ogre
 				case IS_DECAL:
 					writeValue("decal");
 					break;
+                case IS_UNKNOWN:
+                    break;
 				};
 			}
 
@@ -4102,9 +4221,16 @@ namespace Ogre
             {
                 writeTextureUnit(it.getNext());
             }
+
+			// Fire write end event.
+			firePassEvent(MSE_WRITE_END, skipWriting, pPass);
         }
         endSection(2);
-        LogManager::getSingleton().logMessage("MaterialSerializer : done.", LML_CRITICAL);
+		
+		// Fire post section write event.
+		firePassEvent(MSE_POST_WRITE, skipWriting, pPass);
+        
+		LogManager::getSingleton().logMessage("MaterialSerializer : done.", LML_CRITICAL);
     }
     //-----------------------------------------------------------------------
     String MaterialSerializer::convertFiltering(FilterOptions fo)
@@ -4143,6 +4269,13 @@ namespace Ogre
     //-----------------------------------------------------------------------
     void MaterialSerializer::writeTextureUnit(const TextureUnitState *pTex)
     {
+		bool skipWriting = false;
+
+		// Fire pre-write event.
+		fireTextureUnitStateEvent(MSE_PRE_WRITE, skipWriting, pTex);
+		if (skipWriting)		
+			return;
+	
         LogManager::getSingleton().logMessage("MaterialSerializer : parsing texture layer.", LML_CRITICAL);
         mBuffer += "\n";
         writeAttribute(3, "texture_unit");
@@ -4152,6 +4285,9 @@ namespace Ogre
 
         beginSection(3);
         {
+			// Fire write begin event.
+			fireTextureUnitStateEvent(MSE_WRITE_BEGIN, skipWriting, pTex);
+
             // texture_alias
             if (!pTex->getTextureNameAlias().empty())
             {
@@ -4459,11 +4595,22 @@ namespace Ogre
 				case TextureUnitState::CONTENT_SHADOW:
 					writeValue("shadow");
 					break;
+				case TextureUnitState::CONTENT_COMPOSITOR:
+					writeValue("compositor");
+					writeValue(pTex->getReferencedCompositorName());
+					writeValue(pTex->getReferencedTextureName());
+					writeValue(StringConverter::toString(pTex->getReferencedMRTIndex()));
+					break;
 				};
 			}
 
+			// Fire write end event.
+			fireTextureUnitStateEvent(MSE_WRITE_END, skipWriting, pTex);
         }
         endSection(3);
+
+		// Fire post section write event.
+		fireTextureUnitStateEvent(MSE_POST_WRITE, skipWriting, pTex);
 
     }
     //-----------------------------------------------------------------------
@@ -4768,7 +4915,14 @@ namespace Ogre
     //-----------------------------------------------------------------------
     void MaterialSerializer::writeGpuProgramRef(const String& attrib,
         const GpuProgramPtr& program, const GpuProgramParametersSharedPtr& params)
-    {
+    {		
+		bool skipWriting = false;
+
+		// Fire pre-write event.
+		fireGpuProgramRefEvent(MSE_PRE_WRITE, skipWriting, attrib, program, params, NULL);
+		if (skipWriting)		
+			return;
+
         mBuffer += "\n";
         writeAttribute(3, attrib);
         writeValue(program->getName());
@@ -4780,17 +4934,26 @@ namespace Ogre
             if (program->hasDefaultParameters())
                 defaultParams = program->getDefaultParameters().getPointer();
 
+			// Fire write begin event.
+			fireGpuProgramRefEvent(MSE_WRITE_BEGIN, skipWriting, attrib, program, params, defaultParams);
+
             writeGPUProgramParameters(params, defaultParams);
+
+			// Fire write end event.
+			fireGpuProgramRefEvent(MSE_WRITE_END, skipWriting, attrib, program, params, defaultParams);
         }
         endSection(3);
 
         // add to GpuProgram contatiner
         mGpuProgramDefinitionContainer.insert(program->getName());
+
+		// Fire post section write event.
+		fireGpuProgramRefEvent(MSE_POST_WRITE, skipWriting, attrib, program, params, NULL);		
     }
     //-----------------------------------------------------------------------
     void MaterialSerializer::writeGPUProgramParameters(
 		const GpuProgramParametersSharedPtr& params,
-		GpuProgramParameters* defaultParams, const int level,
+		GpuProgramParameters* defaultParams, unsigned short level,
 		const bool useMainBuffer)
     {
         // iterate through the constant definitions
@@ -4806,7 +4969,7 @@ namespace Ogre
 	//-----------------------------------------------------------------------
 	void MaterialSerializer::writeNamedGpuProgramParameters(
 		const GpuProgramParametersSharedPtr& params,
-		GpuProgramParameters* defaultParams, const int level,
+		GpuProgramParameters* defaultParams, unsigned short level,
 		const bool useMainBuffer)
 	{
 		GpuConstantDefinitionIterator constIt = params->getConstantDefinitionIterator();
@@ -4837,14 +5000,14 @@ namespace Ogre
 	//-----------------------------------------------------------------------
 	void MaterialSerializer::writeLowLevelGpuProgramParameters(
 		const GpuProgramParametersSharedPtr& params,
-		GpuProgramParameters* defaultParams, const int level,
+		GpuProgramParameters* defaultParams, unsigned short level,
 		const bool useMainBuffer)
 	{
 		// Iterate over the logical->physical mappings
 		// This will represent the values which have been set
 
 		// float params
-		const GpuLogicalBufferStruct* floatLogical = params->getFloatLogicalBufferStruct();
+		GpuLogicalBufferStructPtr floatLogical = params->getFloatLogicalBufferStruct();
 		{
 			OGRE_LOCK_MUTEX(floatLogical->mutex)
 
@@ -4871,7 +5034,7 @@ namespace Ogre
 		}
 
 		// int params
-		const GpuLogicalBufferStruct* intLogical = params->getIntLogicalBufferStruct();
+		GpuLogicalBufferStructPtr intLogical = params->getIntLogicalBufferStruct();
 		{
 			OGRE_LOCK_MUTEX(intLogical->mutex)
 
@@ -4906,7 +5069,7 @@ namespace Ogre
 		const GpuProgramParameters::AutoConstantEntry* defaultAutoEntry, 
 		bool isFloat, size_t physicalIndex, size_t physicalSize,
 		const GpuProgramParametersSharedPtr& params, GpuProgramParameters* defaultParams,
-		const int level, const bool useMainBuffer)
+		const ushort level, const bool useMainBuffer)
 	{
 		// Skip any params with array qualifiers
 		// These are only for convenience of setters, the full array will be
@@ -5065,7 +5228,10 @@ namespace Ogre
 
                 while (currentParam != endParam)
                 {
-                    if (currentParam->name != "type")
+                    if (currentParam->name != "type" &&
+						currentParam->name !="assemble_code" &&
+						currentParam->name !="micro_code" &&
+						currentParam->name !="external_micro_code")
                     {
                         String paramstr = program->getParameter(currentParam->name);
                         if ((currentParam->name == "includes_skeletal_animation")
@@ -5114,4 +5280,104 @@ namespace Ogre
         mGpuProgramBuffer += "\n";
     }
 
+	//---------------------------------------------------------------------
+	void MaterialSerializer::addListener(Listener* listener)
+	{
+		mListeners.push_back(listener);
+	}
+
+	//---------------------------------------------------------------------
+	void MaterialSerializer::removeListener(Listener* listener)
+	{
+		ListenerListIterator i, iend;
+		iend = mListeners.end();
+		for (i = mListeners.begin(); i != iend; ++i)
+		{
+			if (*i == listener)
+			{
+				mListeners.erase(i);
+				break;
+			}
+		}
+	}
+
+	//---------------------------------------------------------------------
+	void MaterialSerializer::fireMaterialEvent(SerializeEvent event, bool& skip, const Material* mat)
+	{
+		ListenerListIterator it	   = mListeners.begin();
+		ListenerListIterator itEnd = mListeners.end();
+
+		while (it != itEnd)
+		{
+			(*it)->materialEventRaised(this, event, skip, mat);			
+			if (skip)
+				break;
+			++it;
+		}		
+	}
+
+	//---------------------------------------------------------------------
+	void MaterialSerializer::fireTechniqueEvent(SerializeEvent event, bool& skip, const Technique* tech)
+	{
+		ListenerListIterator it	   = mListeners.begin();
+		ListenerListIterator itEnd = mListeners.end();
+
+		while (it != itEnd)
+		{
+			(*it)->techniqueEventRaised(this, event, skip, tech);
+			if (skip)
+				break;
+			++it;
+		}
+	}
+
+	//---------------------------------------------------------------------
+	void MaterialSerializer::firePassEvent(SerializeEvent event, bool& skip, const Pass* pass)
+	{
+		ListenerListIterator it	   = mListeners.begin();
+		ListenerListIterator itEnd = mListeners.end();
+
+		while (it != itEnd)
+		{
+			(*it)->passEventRaised(this, event, skip, pass);
+			if (skip)
+				break;
+			++it;
+		}
+	}
+
+	//---------------------------------------------------------------------
+	void MaterialSerializer::fireGpuProgramRefEvent(SerializeEvent event, bool& skip,
+		const String& attrib, 
+		const GpuProgramPtr& program, 
+		const GpuProgramParametersSharedPtr& params,
+		GpuProgramParameters* defaultParams)
+	{
+		ListenerListIterator it	   = mListeners.begin();
+		ListenerListIterator itEnd = mListeners.end();
+
+		while (it != itEnd)
+		{
+			(*it)->gpuProgramRefEventRaised(this, event, skip, attrib, program, params, defaultParams);
+			if (skip)
+				break;
+			++it;
+		}
+	}	
+
+	//---------------------------------------------------------------------
+	void MaterialSerializer::fireTextureUnitStateEvent(SerializeEvent event, bool& skip,
+		const TextureUnitState* textureUnit)
+	{
+		ListenerListIterator it	   = mListeners.begin();
+		ListenerListIterator itEnd = mListeners.end();
+
+		while (it != itEnd)
+		{
+			(*it)->textureUnitStateEventRaised(this, event, skip, textureUnit);
+			if (skip)
+				break;
+			++it;
+		}
+	}	
 }

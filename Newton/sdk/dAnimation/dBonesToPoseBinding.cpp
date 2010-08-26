@@ -14,6 +14,7 @@
 #include "dAnimationClip.h"
 #include "dBonesToPoseBinding.h"
 
+dInitRtti(dBonesToPoseBinding);
 
 dBonesToPoseBinding::dBonesToPoseBinding(dPoseGenerator* pose)
 {

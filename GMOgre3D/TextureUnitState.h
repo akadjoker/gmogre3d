@@ -77,7 +77,7 @@ GMFN double SetTextureUnitStateTextureCoordSet(double tex_unit_ptr, double set)
    if (tex_unit == NULL)
       return FALSE;
 
-   tex_unit->setTextureCoordSet(set);
+   tex_unit->setTextureCoordSet((unsigned int)set);
 
    return TRUE;
 }
@@ -90,7 +90,7 @@ GMFN double SetTextureUnitStateScrollAnimation(double tex_unit_ptr, double uspee
    if (tex_unit == NULL)
       return FALSE;
 
-   tex_unit->setScrollAnimation(uspeed, vspeed);
+   tex_unit->setScrollAnimation((Ogre::Real)uspeed, (Ogre::Real)vspeed);
 
    return TRUE;
 }
@@ -103,7 +103,7 @@ GMFN double SetTextureUnitStateRotateAnimation(double tex_unit_ptr, double speed
    if (tex_unit == NULL)
       return FALSE;
 
-   tex_unit->setRotateAnimation(speed);
+   tex_unit->setRotateAnimation((Ogre::Real)speed);
 
    return TRUE;
 }
@@ -115,7 +115,7 @@ GMFN double SetTextureUnitStateTransformAnimation(double tex_unit_ptr, double tr
    if (tex_unit == NULL)
       return FALSE;
 
-   tex_unit->setTransformAnimation(static_cast<Ogre::TextureUnitState::TextureTransformType>((int)transform_type), static_cast<Ogre::WaveformType>((int)waveform_type), base, frequency, phase, amplitude);
+   tex_unit->setTransformAnimation(static_cast<Ogre::TextureUnitState::TextureTransformType>((int)transform_type), static_cast<Ogre::WaveformType>((int)waveform_type), (Ogre::Real)base, (Ogre::Real)frequency, (Ogre::Real)phase, (Ogre::Real)amplitude);
 
    return TRUE;
 }
@@ -196,7 +196,7 @@ GMFN double SetTextureUnitStateTextureScroll(double tex_unit_ptr, double uscroll
    if (tex_unit == NULL)
       return FALSE;
 
-   tex_unit->setTextureScroll(uscroll, vscroll);
+   tex_unit->setTextureScroll((Ogre::Real)uscroll, (Ogre::Real)vscroll);
 
    return TRUE;
 }
@@ -209,7 +209,7 @@ GMFN double SetTextureUnitStateTextureScale(double tex_unit_ptr, double uscale, 
    if (tex_unit == NULL)
       return FALSE;
 
-   tex_unit->setTextureScale(uscale, vscale);
+   tex_unit->setTextureScale((Ogre::Real)uscale, (Ogre::Real)vscale);
 
    return TRUE;
 }
@@ -222,7 +222,7 @@ GMFN double SetTextureUnitStateTextureRotate(double tex_unit_ptr, double degrees
    if (tex_unit == NULL)
       return FALSE;
 
-   tex_unit->setTextureRotate(Ogre::Degree(degrees));
+   tex_unit->setTextureRotate(Ogre::Degree((Ogre::Real)degrees));
 
    return TRUE;
 }
@@ -248,7 +248,7 @@ GMFN double SetTextureUnitStateTextureAnisotropy(double tex_unit_ptr, double lev
    if (tex_unit == NULL)
       return FALSE;
 
-   tex_unit->setTextureAnisotropy(level);
+   tex_unit->setTextureAnisotropy((unsigned int)level);
 
    return TRUE;
 }

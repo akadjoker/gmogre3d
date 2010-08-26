@@ -4,26 +4,25 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -83,6 +82,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void ZipArchive::load()
     {
+		OGRE_LOCK_AUTO_MUTEX
         if (!mZzipDir)
         {
             zzip_error_t zzipError;
@@ -120,6 +120,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void ZipArchive::unload()
     {
+		OGRE_LOCK_AUTO_MUTEX
         if (mZzipDir)
         {
             zzip_dir_close(mZzipDir);
@@ -129,8 +130,10 @@ namespace Ogre {
     
     }
     //-----------------------------------------------------------------------
-	DataStreamPtr ZipArchive::open(const String& filename) const
+	DataStreamPtr ZipArchive::open(const String& filename, bool readOnly) const
     {
+		// zziplib is not threadsafe
+		OGRE_LOCK_AUTO_MUTEX
 
         // Format not used here (always binary)
         ZZIP_FILE* zzipFile = 
@@ -154,9 +157,22 @@ namespace Ogre {
         return DataStreamPtr(OGRE_NEW ZipDataStream(filename, zzipFile, static_cast<size_t>(zstat.st_size)));
 
     }
+	//---------------------------------------------------------------------
+	DataStreamPtr ZipArchive::create(const String& filename) const
+	{
+		OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, 
+			"Modification of zipped archives is not supported", 
+			"ZipArchive::create");
+
+	}
+	//---------------------------------------------------------------------
+	void ZipArchive::remove(const String& filename) const
+	{
+	}
     //-----------------------------------------------------------------------
     StringVectorPtr ZipArchive::list(bool recursive, bool dirs)
     {
+		OGRE_LOCK_AUTO_MUTEX
         StringVectorPtr ret = StringVectorPtr(OGRE_NEW_T(StringVector, MEMCATEGORY_GENERAL)(), SPFM_DELETE_T);
 
         FileInfoList::iterator i, iend;
@@ -171,6 +187,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     FileInfoListPtr ZipArchive::listFileInfo(bool recursive, bool dirs)
     {
+		OGRE_LOCK_AUTO_MUTEX
         FileInfoList* fil = OGRE_NEW_T(FileInfoList, MEMCATEGORY_GENERAL)();
         FileInfoList::const_iterator i, iend;
         iend = mFileList.end();
@@ -184,6 +201,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     StringVectorPtr ZipArchive::find(const String& pattern, bool recursive, bool dirs)
     {
+		OGRE_LOCK_AUTO_MUTEX
         StringVectorPtr ret = StringVectorPtr(OGRE_NEW_T(StringVector, MEMCATEGORY_GENERAL)(), SPFM_DELETE_T);
         // If pattern contains a directory name, do a full match
         bool full_match = (pattern.find ('/') != String::npos) ||
@@ -204,6 +222,7 @@ namespace Ogre {
 	FileInfoListPtr ZipArchive::findFileInfo(const String& pattern, 
         bool recursive, bool dirs)
     {
+		OGRE_LOCK_AUTO_MUTEX
         FileInfoListPtr ret = FileInfoListPtr(OGRE_NEW_T(FileInfoList, MEMCATEGORY_GENERAL)(), SPFM_DELETE_T);
         // If pattern contains a directory name, do a full match
         bool full_match = (pattern.find ('/') != String::npos) ||
@@ -223,6 +242,8 @@ namespace Ogre {
     //-----------------------------------------------------------------------
 	bool ZipArchive::exists(const String& filename)
 	{
+		// zziplib is not threadsafe
+		OGRE_LOCK_AUTO_MUTEX
 		ZZIP_STAT zstat;
 		int res = zzip_dir_stat(mZzipDir, filename.c_str(), &zstat, ZZIP_CASEINSENSITIVE);
 
@@ -281,35 +302,72 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     size_t ZipDataStream::read(void* buf, size_t count)
     {
-        zzip_ssize_t r = zzip_file_read(mZzipFile, (char*)buf, count);
-        if (r<0) {
-            ZZIP_DIR *dir = zzip_dirhandle(mZzipFile);
-            String msg = zzip_strerror_of(dir);
-            OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR,
-                        mName+" - error from zziplib: "+msg,
-                        "ZipDataStream::read");
-        }
-        return (size_t) r;
+		size_t was_avail = mCache.read(buf, count);
+		zzip_ssize_t r = 0;
+		if (was_avail < count)
+		{
+			r = zzip_file_read(mZzipFile, (char*)buf + was_avail, count - was_avail);
+			if (r<0) {
+				ZZIP_DIR *dir = zzip_dirhandle(mZzipFile);
+				String msg = zzip_strerror_of(dir);
+				OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR,
+					mName+" - error from zziplib: "+msg,
+					"ZipDataStream::read");
+			}
+			mCache.cacheData((char*)buf + was_avail, (size_t)r);
+		}
+		return was_avail + (size_t)r;
     }
+	//---------------------------------------------------------------------
+	size_t ZipDataStream::write(void* buf, size_t count)
+	{
+		// not supported
+		return 0;
+	}
     //-----------------------------------------------------------------------
     void ZipDataStream::skip(long count)
     {
-        zzip_seek(mZzipFile, static_cast<zzip_off_t>(count), SEEK_CUR);
+        long was_avail = static_cast<long>(mCache.avail());
+		if (count > 0)
+		{
+			if (!mCache.ff(count))
+				zzip_seek(mZzipFile, static_cast<zzip_off_t>(count - was_avail), SEEK_CUR);
+		}
+		else if (count < 0)
+		{
+			if (!mCache.rewind((size_t)(-count)))
+				zzip_seek(mZzipFile, static_cast<zzip_off_t>(count + was_avail), SEEK_CUR);
+		}
     }
     //-----------------------------------------------------------------------
     void ZipDataStream::seek( size_t pos )
     {
-		zzip_seek(mZzipFile, static_cast<zzip_off_t>(pos), SEEK_SET);
+		zzip_off_t newPos = static_cast<zzip_off_t>(pos);
+		zzip_off_t prevPos = static_cast<zzip_off_t>(tell());
+		if (prevPos < 0)
+		{
+			// seek set after invalid pos
+			mCache.clear();
+			zzip_seek(mZzipFile, newPos, SEEK_SET);
+		}
+		else
+		{
+			// everything is going all right, relative seek
+			skip(newPos - prevPos);
+		}
     }
     //-----------------------------------------------------------------------
     size_t ZipDataStream::tell(void) const
     {
-		return zzip_tell(mZzipFile);
+		zzip_off_t pos = zzip_tell(mZzipFile);
+		if (pos<0)
+			return (size_t)(-1);
+		return static_cast<size_t>(pos) - mCache.avail();
     }
     //-----------------------------------------------------------------------
     bool ZipDataStream::eof(void) const
     {
-        return (zzip_tell(mZzipFile) >= static_cast<zzip_off_t>(mSize));
+        return (tell() >= mSize);
     }
     //-----------------------------------------------------------------------
     void ZipDataStream::close(void)
@@ -319,6 +377,7 @@ namespace Ogre {
 			zzip_file_close(mZzipFile);
 			mZzipFile = 0;
 		}
+		mCache.clear();
     }
     //-----------------------------------------------------------------------
     const String& ZipArchiveFactory::getType(void) const

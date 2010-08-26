@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #ifndef __D3D9HARDWAREINDEXBUFFER_H__
@@ -31,22 +30,17 @@ Torus Knot Software Ltd.
 
 #include "OgreD3D9Prerequisites.h"
 #include "OgreHardwareIndexBuffer.h"
+#include "OgreD3D9Resource.h"
 
 namespace Ogre { 
 
 
-    class D3D9HardwareIndexBuffer : public HardwareIndexBuffer
+    class _OgreD3D9Export D3D9HardwareIndexBuffer : public HardwareIndexBuffer, public D3D9Resource
     {
-    protected:
-        LPDIRECT3DINDEXBUFFER9 mlpD3DBuffer;
-		D3DPOOL mD3DPool;
-        /** See HardwareBuffer. */
-        void* lockImpl(size_t offset, size_t length, LockOptions options);
-        /** See HardwareBuffer. */
-		void unlockImpl(void);
+  
     public:
-		D3D9HardwareIndexBuffer(IndexType idxType, size_t numIndexes, 
-			HardwareBuffer::Usage usage, LPDIRECT3DDEVICE9 pDev, bool useSystemMem, bool useShadowBuffer);
+		D3D9HardwareIndexBuffer(HardwareBufferManagerBase* mgr, IndexType idxType, size_t numIndexes, 
+			HardwareBuffer::Usage usage, bool useSystemMem, bool useShadowBuffer);
         ~D3D9HardwareIndexBuffer();
         /** See HardwareBuffer. */
         void readData(size_t offset, size_t length, void* pDest);
@@ -54,19 +48,51 @@ namespace Ogre {
         void writeData(size_t offset, size_t length, const void* pSource,
 				bool discardWholeBuffer = false);
 
-		/// For dealing with lost devices - release the resource if in the default pool
-		bool releaseIfDefaultPool(void);
-		/// For dealing with lost devices - recreate the resource if in the default pool
-		bool recreateIfDefaultPool(LPDIRECT3DDEVICE9 pDev);
+		// Called immediately after the Direct3D device has been created.
+		virtual void notifyOnDeviceCreate(IDirect3DDevice9* d3d9Device);
 
+		// Called before the Direct3D device is going to be destroyed.
+		virtual void notifyOnDeviceDestroy(IDirect3DDevice9* d3d9Device);
+
+		// Called immediately after the Direct3D device has entered a lost state.
+		virtual void notifyOnDeviceLost(IDirect3DDevice9* d3d9Device);
+
+		// Called immediately after the Direct3D device has been reset
+		virtual void notifyOnDeviceReset(IDirect3DDevice9* d3d9Device);
+
+		// Create the actual index buffer.
+		void createBuffer(IDirect3DDevice9* d3d9Device, D3DPOOL ePool);
+	
 		/// Get the D3D-specific index buffer
-        LPDIRECT3DINDEXBUFFER9 getD3DIndexBuffer(void) { return mlpD3DBuffer; }
+        IDirect3DIndexBuffer9* getD3DIndexBuffer(void);		
 
+	protected:
+		struct BufferResources
+		{
+			IDirect3DIndexBuffer9*		mBuffer;
+			bool						mOutOfDate;
+			size_t						mLockOffset;
+			size_t						mLockLength;
+			LockOptions					mLockOptions;
+			uint						mLastUsedFrame;
+		};
 
+	protected:
+		/** See HardwareBuffer. */
+		void* lockImpl(size_t offset, size_t length, LockOptions options);
+		/** See HardwareBuffer. */
+		void unlockImpl(void);
+		// updates buffer resources from system memory buffer.
+		bool updateBufferResources(const char* systemMemoryBuffer, BufferResources* bufferResources);
 
+	protected:		
+		typedef map<IDirect3DDevice9*, BufferResources*>::type	DeviceToBufferResourcesMap;
+		typedef DeviceToBufferResourcesMap::iterator			DeviceToBufferResourcesIterator;
+
+		DeviceToBufferResourcesMap	mMapDeviceToBufferResources;	// Map between device to buffer resources.	
+		D3DINDEXBUFFER_DESC			mBufferDesc;					// Buffer description.		
+		char*						mSystemMemoryBuffer;			// Consistent system memory buffer for multiple devices support.
     };
-
-
 }
 
 

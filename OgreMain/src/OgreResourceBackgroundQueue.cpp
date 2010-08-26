@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -37,6 +36,8 @@ Torus Knot Software Ltd.
 
 namespace Ogre {
 
+	// Note, no locks are required here anymore because all of the parallelisation
+	// is now contained in WorkQueue - this class is entirely single-threaded
 	//------------------------------------------------------------------------
     //-----------------------------------------------------------------------
     template<> ResourceBackgroundQueue* Singleton<ResourceBackgroundQueue>::ms_Singleton = 0;
@@ -51,10 +52,6 @@ namespace Ogre {
     //-----------------------------------------------------------------------	
 	//------------------------------------------------------------------------
 	ResourceBackgroundQueue::ResourceBackgroundQueue()
-		:mNextTicketID(0), mStartThread(true), mThread(0)
-#if OGRE_THREAD_SUPPORT
-        , mShuttingDown(false)
-#endif
 	{
 	}
 	//------------------------------------------------------------------------
@@ -62,86 +59,29 @@ namespace Ogre {
 	{
 		shutdown();
 	}
-	//------------------------------------------------------------------------
-	void ResourceBackgroundQueue::initialise(void)
+	//---------------------------------------------------------------------
+	void ResourceBackgroundQueue::initialise()
 	{
-#if OGRE_THREAD_SUPPORT
-		if (mStartThread)
-		{
-			{
-				OGRE_LOCK_AUTO_MUTEX
-				mShuttingDown = false;
-			}
-
-#if OGRE_THREAD_SUPPORT == 1
-			RenderSystem* rs = Root::getSingleton().getRenderSystem();
-#endif
-
-			LogManager::getSingleton().logMessage(
-				"ResourceBackgroundQueue - threading enabled, starting own thread");
-			{
-				OGRE_LOCK_MUTEX_NAMED(initMutex, initLock)
-
-#if OGRE_THREAD_SUPPORT == 1
-				// Call thread creation pre-hook
-				rs->preExtraThreadsStarted();
-#endif
-
-				mThread = OGRE_NEW_T(boost::thread, MEMCATEGORY_RESOURCE)(
-					boost::function0<void>(&ResourceBackgroundQueue::threadFunc));
-				// Wait for init to finish before allowing main thread to continue
-				// this releases the initMutex until notified
-				OGRE_THREAD_WAIT(initSync, initLock)
-
-#if OGRE_THREAD_SUPPORT == 1
-				// Call thread creation post-hook
-				rs->postExtraThreadsStarted();
-#endif
-			}
-
-		}
-		else
-		{
-			LogManager::getSingleton().logMessage(
-				"ResourceBackgroundQueue - threading enabled, user thread");
-		}
-#else
-		LogManager::getSingleton().logMessage(
-			"ResourceBackgroundQueue - threading disabled");	
-#endif
+		WorkQueue* wq = Root::getSingleton().getWorkQueue();
+		mWorkQueueChannel = wq->getChannel("Ogre/ResourceBGQ");
+		wq->addResponseHandler(mWorkQueueChannel, this);
+		wq->addRequestHandler(mWorkQueueChannel, this);
 	}
-	//------------------------------------------------------------------------
-	void ResourceBackgroundQueue::shutdown(void)
+	//---------------------------------------------------------------------
+	void ResourceBackgroundQueue::shutdown()
 	{
-#if OGRE_THREAD_SUPPORT
-		if (mThread)
-		{
-			// Put a shutdown request on the queue
-			Request req;
-			req.type = RT_SHUTDOWN;
-			addRequest(req);
-			// Wait for thread to finish
-			mThread->join();
-			OGRE_DELETE_T(mThread, thread, MEMCATEGORY_RESOURCE);
-			mThread = 0;
-			mRequestQueue.clear();
-			mRequestTicketMap.clear();
-		}
-#endif
+		WorkQueue* wq = Root::getSingleton().getWorkQueue();
+		wq->abortRequestsByChannel(mWorkQueueChannel);
+		wq->removeRequestHandler(mWorkQueueChannel, this);
+		wq->removeResponseHandler(mWorkQueueChannel, this);
 	}
 	//------------------------------------------------------------------------
 	BackgroundProcessTicket ResourceBackgroundQueue::initialiseResourceGroup(
 		const String& name, ResourceBackgroundQueue::Listener* listener)
 	{
 #if OGRE_THREAD_SUPPORT
-		if (!mThread && mStartThread)
-		{
-			OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR, 
-				"Thread not initialised",
-				"ResourceBackgroundQueue::initialiseResourceGroup");
-		}
 		// queue a request
-		Request req;
+		ResourceRequest req;
 		req.type = RT_INITIALISE_GROUP;
 		req.groupName = name;
 		req.listener = listener;
@@ -158,14 +98,8 @@ namespace Ogre {
 		ResourceBackgroundQueue::Listener* listener)
 	{
 #if OGRE_THREAD_SUPPORT
-		if (!mThread && mStartThread)
-		{
-			OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR, 
-				"Thread not initialised",
-				"ResourceBackgroundQueue::initialiseAllResourceGroups");
-		}
 		// queue a request
-		Request req;
+		ResourceRequest req;
 		req.type = RT_INITIALISE_ALL_GROUPS;
 		req.listener = listener;
 		return addRequest(req);
@@ -180,14 +114,8 @@ namespace Ogre {
 		const String& name, ResourceBackgroundQueue::Listener* listener)
 	{
 #if OGRE_THREAD_SUPPORT
-		if (!mThread && mStartThread)
-		{
-			OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR, 
-				"Thread not initialised",
-				"ResourceBackgroundQueue::prepareResourceGroup");
-		}
 		// queue a request
-		Request req;
+		ResourceRequest req;
 		req.type = RT_PREPARE_GROUP;
 		req.groupName = name;
 		req.listener = listener;
@@ -203,14 +131,8 @@ namespace Ogre {
 		const String& name, ResourceBackgroundQueue::Listener* listener)
 	{
 #if OGRE_THREAD_SUPPORT
-		if (!mThread && mStartThread)
-		{
-			OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR, 
-				"Thread not initialised",
-				"ResourceBackgroundQueue::loadResourceGroup");
-		}
 		// queue a request
-		Request req;
+		ResourceRequest req;
 		req.type = RT_LOAD_GROUP;
 		req.groupName = name;
 		req.listener = listener;
@@ -230,21 +152,16 @@ namespace Ogre {
 		ResourceBackgroundQueue::Listener* listener)
 	{
 #if OGRE_THREAD_SUPPORT
-		if (!mThread && mStartThread)
-		{
-			OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR, 
-				"Thread not initialised",
-				"ResourceBackgroundQueue::prepare");
-		}
 		// queue a request
-		Request req;
+		ResourceRequest req;
 		req.type = RT_PREPARE_RESOURCE;
 		req.resourceType = resType;
 		req.resourceName = name;
 		req.groupName = group;
 		req.isManual = isManual;
 		req.loader = loader;
-		req.loadParams = loadParams;
+		// Make instance copy of loadParams for thread independence
+		req.loadParams = ( loadParams ? OGRE_NEW_T(NameValuePairList, MEMCATEGORY_GENERAL)( *loadParams ) : 0 );
 		req.listener = listener;
 		return addRequest(req);
 #else
@@ -264,21 +181,16 @@ namespace Ogre {
 		ResourceBackgroundQueue::Listener* listener)
 	{
 #if OGRE_THREAD_SUPPORT
-		if (!mThread && mStartThread)
-		{
-			OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR, 
-				"Thread not initialised",
-				"ResourceBackgroundQueue::load");
-		}
 		// queue a request
-		Request req;
+		ResourceRequest req;
 		req.type = RT_LOAD_RESOURCE;
 		req.resourceType = resType;
 		req.resourceName = name;
 		req.groupName = group;
 		req.isManual = isManual;
 		req.loader = loader;
-		req.loadParams = loadParams;
+		// Make instance copy of loadParams for thread independence
+		req.loadParams = ( loadParams ? OGRE_NEW_T(NameValuePairList, MEMCATEGORY_GENERAL)( *loadParams ) : 0 );
 		req.listener = listener;
 		return addRequest(req);
 #else
@@ -294,14 +206,8 @@ namespace Ogre {
 		const String& resType, const String& name, Listener* listener)
 	{
 #if OGRE_THREAD_SUPPORT
-		if (!mThread && mStartThread)
-		{
-			OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR, 
-				"Thread not initialised",
-				"ResourceBackgroundQueue::unload");
-		}
 		// queue a request
-		Request req;
+		ResourceRequest req;
 		req.type = RT_UNLOAD_RESOURCE;
 		req.resourceType = resType;
 		req.resourceName = name;
@@ -321,14 +227,8 @@ namespace Ogre {
 		const String& resType, ResourceHandle handle, Listener* listener)
 	{
 #if OGRE_THREAD_SUPPORT
-		if (!mThread && mStartThread)
-		{
-			OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR, 
-				"Thread not initialised",
-				"ResourceBackgroundQueue::unload");
-		}
 		// queue a request
-		Request req;
+		ResourceRequest req;
 		req.type = RT_UNLOAD_RESOURCE;
 		req.resourceType = resType;
 		req.resourceHandle = handle;
@@ -348,14 +248,8 @@ namespace Ogre {
 		const String& name, Listener* listener)
 	{
 #if OGRE_THREAD_SUPPORT
-		if (!mThread && mStartThread)
-		{
-			OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR, 
-				"Thread not initialised",
-				"ResourceBackgroundQueue::unloadResourceGroup");
-		}
 		// queue a request
-		Request req;
+		ResourceRequest req;
 		req.type = RT_UNLOAD_GROUP;
 		req.groupName = name;
 		req.listener = listener;
@@ -371,253 +265,192 @@ namespace Ogre {
 	bool ResourceBackgroundQueue::isProcessComplete(
 			BackgroundProcessTicket ticket)
 	{
-		// Lock
-		OGRE_LOCK_AUTO_MUTEX
-
-		return mRequestTicketMap.find(ticket) == mRequestTicketMap.end();
+		return mOutstandingRequestSet.find(ticket) == mOutstandingRequestSet.end();
 	}
 	//------------------------------------------------------------------------
-#if OGRE_THREAD_SUPPORT
-	BackgroundProcessTicket ResourceBackgroundQueue::addRequest(Request& req)
-	{
-		// Lock
-		OGRE_LOCK_AUTO_MUTEX
+    void ResourceBackgroundQueue::abortRequest( BackgroundProcessTicket ticket )
+    {
+		WorkQueue* queue = Root::getSingleton().getWorkQueue();
 
-		req.ticketID = ++mNextTicketID;
-		mRequestQueue.push_back(req);
-		Request* requestInList = &(mRequestQueue.back());
-		mRequestTicketMap[req.ticketID] = requestInList;
-
-		// Notify to wake up loading thread
-		OGRE_THREAD_NOTIFY_ONE(mCondition)
-
-		return req.ticketID;
+		queue->abortRequest( ticket );
 	}
 	//------------------------------------------------------------------------
-	void ResourceBackgroundQueue::threadFunc(void)
+	BackgroundProcessTicket ResourceBackgroundQueue::addRequest(ResourceRequest& req)
 	{
-		// Background thread implementation 
-		// Static (since no params allowed), so get instance
-		ResourceBackgroundQueue& queueInstance = 
-			ResourceBackgroundQueue::getSingleton();
+		WorkQueue* queue = Root::getSingleton().getWorkQueue();
 
-		LogManager::getSingleton().logMessage("ResourceBackgroundQueue - thread starting.");
+		Any data(req);
 
-		// Initialise the thread
-		queueInstance._initThread();
-
-		// Spin forever until we're told to shut down
-		while (!queueInstance.mShuttingDown)
-		{
-			// Our thread will just wait when there is nothing on the queue
-			// _doNextQueuedBackgroundProcess won't do this since the thread
-			// may be shared
-
-            // Manual scope block just to define scope of lock
-            {
-                // Lock; note that 'mCondition.wait()' will free the lock
-                boost::recursive_mutex::scoped_lock queueLock(
-                    queueInstance.OGRE_AUTO_MUTEX_NAME);
-                if (queueInstance.mRequestQueue.empty())
-                {
-                    // frees lock and suspends the thread
-                    queueInstance.mCondition.wait(queueLock);
-                }
-                // When we get back here, it's because we've been notified 
-                // and thus the thread as been woken up. Lock has also been
-                // re-acquired.
-            } // release lock so queueing can be done while we process one request
-
-			queueInstance._doNextQueuedBackgroundProcess();
+		WorkQueue::RequestID requestID = 
+			queue->addRequest(mWorkQueueChannel, (uint16)req.type, data);
 
 
-		}
+		mOutstandingRequestSet.insert(requestID);
 
-		LogManager::getSingleton().logMessage("ResourceBackgroundQueue - thread stopped.");
-
-	
-		
-	}
-#endif
-	//-----------------------------------------------------------------------
-	void ResourceBackgroundQueue::_initThread()
-	{
-		// Register the calling thread with RenderSystem
-		// Note how we assume only one thread is processing the queue
-#if OGRE_THREAD_SUPPORT == 1
-		Root::getSingleton().getRenderSystem()->registerThread();
-#endif
-		{
-			// notify waiting thread(s)
-			OGRE_LOCK_MUTEX(initMutex)
-			OGRE_THREAD_NOTIFY_ALL(initSync)
-		}
-
+		return requestID;
 	}
 	//-----------------------------------------------------------------------
-	bool ResourceBackgroundQueue::_doNextQueuedBackgroundProcess()
+	bool ResourceBackgroundQueue::canHandleRequest(const WorkQueue::Request* req, const WorkQueue* srcQ)
+	{
+		return true;
+	}
+	//-----------------------------------------------------------------------
+	WorkQueue::Response* ResourceBackgroundQueue::handleRequest(const WorkQueue::Request* req, const WorkQueue* srcQ)
 	{
 
-		Request* req;
+		ResourceRequest resreq = any_cast<ResourceRequest>(req->getData());
 
-		// Manual scope block just to define scope of lock
+		if( req->getAborted() )
 		{
-			OGRE_LOCK_AUTO_MUTEX
-			// return false if nothing in the queue
-			if (mRequestQueue.empty())
-				return false;
-
-			// Process one request
-			req = &(mRequestQueue.front());
-		} // release lock so queueing can be done while we process one request
-		// use of std::list means that references guarateed to remain valid
-		// we only allow one background thread
+			if( resreq.type == RT_PREPARE_RESOURCE || resreq.type == RT_LOAD_RESOURCE )
+			{
+				OGRE_DELETE_T(resreq.loadParams, NameValuePairList, MEMCATEGORY_GENERAL);
+				resreq.loadParams = 0;
+			}
+			resreq.result.error = false;
+			ResourceResponse resresp(ResourcePtr(), resreq);
+			return OGRE_NEW WorkQueue::Response(req, true, Any(resresp));
+		}
 
 		ResourceManager* rm = 0;
+		ResourcePtr resource;
 		try
 		{
 
-			switch (req->type)
+			switch (resreq.type)
 			{
 			case RT_INITIALISE_GROUP:
 				ResourceGroupManager::getSingleton().initialiseResourceGroup(
-					req->groupName);
+					resreq.groupName);
 				break;
 			case RT_INITIALISE_ALL_GROUPS:
 				ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
 				break;
 			case RT_PREPARE_GROUP:
 				ResourceGroupManager::getSingleton().prepareResourceGroup(
-					req->groupName);
+					resreq.groupName);
 				break;
 			case RT_LOAD_GROUP:
 	#if OGRE_THREAD_SUPPORT == 2
 				ResourceGroupManager::getSingleton().prepareResourceGroup(
-					req->groupName);
+					resreq.groupName);
 	#else
 				ResourceGroupManager::getSingleton().loadResourceGroup(
-					req->groupName);
+					resreq.groupName);
 	#endif
 				break;
 			case RT_UNLOAD_GROUP:
 				ResourceGroupManager::getSingleton().unloadResourceGroup(
-					req->groupName);
+					resreq.groupName);
 				break;
 			case RT_PREPARE_RESOURCE:
 				rm = ResourceGroupManager::getSingleton()._getResourceManager(
-					req->resourceType);
-				rm->prepare(req->resourceName, req->groupName, req->isManual, 
-					req->loader, req->loadParams);
+					resreq.resourceType);
+				resource = rm->prepare(resreq.resourceName, resreq.groupName, resreq.isManual, 
+					resreq.loader, resreq.loadParams, true);
 				break;
 			case RT_LOAD_RESOURCE:
 				rm = ResourceGroupManager::getSingleton()._getResourceManager(
-					req->resourceType);
+					resreq.resourceType);
 	#if OGRE_THREAD_SUPPORT == 2
-				rm->prepare(req->resourceName, req->groupName, req->isManual, 
-					req->loader, req->loadParams);
+				resource = rm->prepare(resreq.resourceName, resreq.groupName, resreq.isManual, 
+					resreq.loader, resreq.loadParams, true);
 	#else
-				rm->load(req->resourceName, req->groupName, req->isManual, 
-					req->loader, req->loadParams);
+				resource = rm->load(resreq.resourceName, resreq.groupName, resreq.isManual, 
+					resreq.loader, resreq.loadParams, true);
 	#endif
 				break;
 			case RT_UNLOAD_RESOURCE:
 				rm = ResourceGroupManager::getSingleton()._getResourceManager(
-					req->resourceType);
-				if (req->resourceName.empty())
-					rm->unload(req->resourceHandle);
+					resreq.resourceType);
+				if (resreq.resourceName.empty())
+					rm->unload(resreq.resourceHandle);
 				else
-					rm->unload(req->resourceName);
-				break;
-			case RT_SHUTDOWN:
-				// That's all folks
-	#if OGRE_THREAD_SUPPORT
-				mShuttingDown = true;
-	#if OGRE_THREAD_SUPPORT == 1
-				Root::getSingleton().getRenderSystem()->unregisterThread();
-	#endif
-	#endif
+					rm->unload(resreq.resourceName);
 				break;
 			};
 		}
 		catch (Exception& e)
 		{
-			req->result.error = true;
-			req->result.message = e.getFullDescription();
+			if( resreq.type == RT_PREPARE_RESOURCE || resreq.type == RT_LOAD_RESOURCE )
+			{
+				OGRE_DELETE_T(resreq.loadParams, NameValuePairList, MEMCATEGORY_GENERAL);
+				resreq.loadParams = 0;
+			}
+			resreq.result.error = true;
+			resreq.result.message = e.getFullDescription();
+
+			// return error response
+			ResourceResponse resresp(resource, resreq);
+			return OGRE_NEW WorkQueue::Response(req, false, Any(resresp), e.getFullDescription());
 		}
 
-		// Queue notification (don't do shutdown since not needed & listeners 
-		// might be being destroyed too
-		if (req->listener && req->type != RT_SHUTDOWN)
+
+		// success
+		if( resreq.type == RT_PREPARE_RESOURCE || resreq.type == RT_LOAD_RESOURCE )
 		{
-			// Fire in-thread notification first
-			req->listener->operationCompletedInThread(req->ticketID, req->result);
-			// Then queue main thread notification
-			queueFireBackgroundOperationComplete(req);
+			OGRE_DELETE_T(resreq.loadParams, NameValuePairList, MEMCATEGORY_GENERAL);
+			resreq.loadParams = 0;
 		}
+		resreq.result.error = false;
+		ResourceResponse resresp(resource, resreq);
+		return OGRE_NEW WorkQueue::Response(req, true, Any(resresp));
 
-
-		{
-			// re-lock to consume completed request
-			OGRE_LOCK_AUTO_MUTEX
-
-			// Consume the ticket
-			mRequestTicketMap.erase(req->ticketID);
-			mRequestQueue.pop_front();
-		}
-
-		return true;
-
-	}
-	//-----------------------------------------------------------------------
-	void ResourceBackgroundQueue::_queueFireBackgroundLoadingComplete(Resource* res)
-	{
-		OGRE_LOCK_MUTEX(mNotificationQueueMutex);
-		mNotificationQueue.push_back(QueuedNotification(res,true));
-
-	}
-	//-----------------------------------------------------------------------
-	void ResourceBackgroundQueue::_queueFireBackgroundPreparingComplete(Resource* res)
-	{
-		OGRE_LOCK_MUTEX(mNotificationQueueMutex);
-		mNotificationQueue.push_back(QueuedNotification(res,false));
-
-	}
-	//-----------------------------------------------------------------------
-	void ResourceBackgroundQueue::queueFireBackgroundOperationComplete(
-		ResourceBackgroundQueue::Request* req)
-	{
-		OGRE_LOCK_MUTEX(mNotificationQueueMutex);
-		mNotificationQueue.push_back(QueuedNotification(*req));
 	}
 	//------------------------------------------------------------------------
-	void ResourceBackgroundQueue::_fireOnFrameCallbacks()
+	bool ResourceBackgroundQueue::canHandleResponse(const WorkQueue::Response* res, const WorkQueue* srcQ)
 	{
-		OGRE_LOCK_MUTEX(mNotificationQueueMutex);
-		for (NotificationQueue::iterator i = mNotificationQueue.begin();
-			i != mNotificationQueue.end(); ++i)
+		return true;
+	}
+	//------------------------------------------------------------------------
+	void ResourceBackgroundQueue::handleResponse(const WorkQueue::Response* res, const WorkQueue* srcQ)
+	{
+		if( res->getRequest()->getAborted() )
 		{
-			if (i->resource) {
-                if (i->load) {
-                    i->resource->_fireBackgroundLoadingComplete();
-                } else {
-                    i->resource->_fireBackgroundPreparingComplete();
-                }
-			} else {
-                const ResourceBackgroundQueue::Request &r = i->req;
-#if OGRE_THREAD_SUPPORT == 2
-                if (r.type==RT_LOAD_RESOURCE) {
-                    ResourceManager *rm = ResourceGroupManager::getSingleton()
-                                            ._getResourceManager(r.resourceType);
-                    rm->load(r.resourceName, r.groupName, r.isManual, r.loader, r.loadParams);
-                } else if (r.type==RT_LOAD_GROUP) {
-                    ResourceGroupManager::getSingleton().loadResourceGroup(r.groupName);
-                }
-#endif
-                r.listener->operationCompleted(r.ticketID, r.result);
-            }
+			mOutstandingRequestSet.erase(res->getRequest()->getID());
+			return ;
 		}
-		mNotificationQueue.clear();
 
+		if (res->succeeded())
+		{
+			ResourceResponse resresp = any_cast<ResourceResponse>(res->getData());
+
+			// Complete full loading in main thread if semithreading
+			const ResourceRequest& req = resresp.request;
+#if OGRE_THREAD_SUPPORT == 2
+			// These load commands would have been downgraded to prepare() for the background
+			if (req.type == RT_LOAD_RESOURCE)
+			{
+				ResourceManager *rm = ResourceGroupManager::getSingleton()
+					._getResourceManager(req.resourceType);
+				rm->load(req.resourceName, req.groupName, req.isManual, req.loader, req.loadParams, true);
+			} 
+			else if (req.type == RT_LOAD_GROUP) 
+			{
+				ResourceGroupManager::getSingleton().loadResourceGroup(req.groupName);
+			}
+#endif
+			mOutstandingRequestSet.erase(res->getRequest()->getID());
+
+			// Call resource listener
+			if (!resresp.resource.isNull()) 
+			{
+
+				if (req.type == RT_LOAD_RESOURCE) 
+				{
+					resresp.resource->_fireLoadingComplete( true );
+				} 
+				else 
+				{
+					resresp.resource->_firePreparingComplete( true );
+				}
+			} 
+
+			// Call queue listener
+			if (req.listener)
+				req.listener->operationCompleted(res->getRequest()->getID(), req.result);
+
+		}
 	}
 	//------------------------------------------------------------------------
 

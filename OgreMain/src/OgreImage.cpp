@@ -4,26 +4,25 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -65,22 +64,24 @@ namespace Ogre {
 	//-----------------------------------------------------------------------------
 	Image::~Image()
 	{
+		freeMemory();
+	}
+	//---------------------------------------------------------------------
+	void Image::freeMemory()
+	{
 		//Only delete if this was not a dynamic image (meaning app holds & destroys buffer)
 		if( m_pBuffer && m_bAutoDelete )
 		{
 			OGRE_FREE(m_pBuffer, MEMCATEGORY_GENERAL);
 			m_pBuffer = NULL;
 		}
+
 	}
 
 	//-----------------------------------------------------------------------------
 	Image & Image::operator = ( const Image &img )
 	{
-		if( m_pBuffer && m_bAutoDelete )
-		{
-			OGRE_FREE(m_pBuffer, MEMCATEGORY_GENERAL);
-			m_pBuffer = NULL;
-		}
+		freeMemory();
 		m_uWidth = img.m_uWidth;
 		m_uHeight = img.m_uHeight;
 		m_uDepth = img.m_uDepth;
@@ -237,11 +238,7 @@ namespace Ogre {
 		size_t numFaces, size_t numMipMaps)
 	{
 
-		if( m_pBuffer && m_bAutoDelete )
-		{
-			OGRE_FREE(m_pBuffer, MEMCATEGORY_GENERAL);
-			m_pBuffer = NULL;
-		}
+		freeMemory();
 		// Set image metadata
 		m_uWidth = uWidth;
 		m_uHeight = uHeight;
@@ -342,6 +339,7 @@ namespace Ogre {
 		imgData->height = m_uHeight;
 		imgData->width = m_uWidth;
 		imgData->depth = m_uDepth;
+		imgData->size = m_uSize;
 		// Wrap in CodecDataPtr, this will delete
 		Codec::CodecDataPtr codeDataPtr(imgData);
 		// Wrap memory, be sure not to delete when stream destroyed
@@ -380,11 +378,7 @@ namespace Ogre {
 	//-----------------------------------------------------------------------------
 	Image & Image::load(DataStreamPtr& stream, const String& type )
 	{
-		if( m_pBuffer && m_bAutoDelete )
-		{
-			OGRE_FREE(m_pBuffer, MEMCATEGORY_GENERAL);
-			m_pBuffer = NULL;
-		}
+		freeMemory();
 
 		Codec * pCodec = 0;
 		if (!type.empty())
@@ -402,14 +396,14 @@ namespace Ogre {
 			// return to start
 			stream->seek(0);
 			pCodec = Codec::getCodec(magicBuf, magicLen);
-		}
 
-		if( !pCodec )
-			OGRE_EXCEPT(
-			Exception::ERR_INVALIDPARAMS, 
-			"Unable to load image - unable to identify codec. Check file extension "
-			"and file format.",
-			"Image::load" );
+      if( !pCodec )
+        OGRE_EXCEPT(
+        Exception::ERR_INVALIDPARAMS, 
+        "Unable to load image: Image format is unknown. Unable to identify codec. "
+        "Check it or specify format explicitly.",
+        "Image::load" );
+		}
 
 		Codec::DecodeResult res = pCodec->decode(stream);
 
@@ -430,6 +424,8 @@ namespace Ogre {
 		m_pBuffer = res.first->getPtr();
 		// Make sure stream does not delete
 		res.first->setFreeOnClose(false);
+		// make sure we delete
+		m_bAutoDelete = true;
 
 		return *this;
 	}
@@ -732,7 +728,7 @@ namespace Ogre {
 		// Figure out the offsets 
 		size_t fullFaceSize = 0;
 		size_t finalFaceSize = 0;
-		size_t finalWidth, finalHeight, finalDepth;
+		size_t finalWidth = 0, finalHeight = 0, finalDepth = 0;
 		for(size_t mip=0; mip <= numMips; ++mip)
         {
 			if (mip == mipmap)
@@ -770,5 +766,133 @@ namespace Ogre {
         }
         return size;
     }
+	//---------------------------------------------------------------------
+	Image & Image::loadTwoImagesAsRGBA(const String& rgbFilename, const String& alphaFilename,
+		const String& groupName, PixelFormat fmt)
+	{
+		Image rgb, alpha;
+
+		rgb.load(rgbFilename, groupName);
+		alpha.load(alphaFilename, groupName);
+
+		return combineTwoImagesAsRGBA(rgb, alpha, fmt);
+
+	}
+	//---------------------------------------------------------------------
+	Image & Image::loadTwoImagesAsRGBA(DataStreamPtr& rgbStream, DataStreamPtr& alphaStream,
+		PixelFormat fmt, const String& rgbType, const String& alphaType)
+	{
+		Image rgb, alpha;
+
+		rgb.load(rgbStream, rgbType);
+		alpha.load(alphaStream, alphaType);
+
+		return combineTwoImagesAsRGBA(rgb, alpha, fmt);
+
+	}
+	//---------------------------------------------------------------------
+	Image & Image::combineTwoImagesAsRGBA(const Image& rgb, const Image& alpha, PixelFormat fmt)
+	{
+		// the images should be the same size, have the same number of mipmaps
+		if (rgb.getWidth() != alpha.getWidth() ||
+			rgb.getHeight() != alpha.getHeight() ||
+			rgb.getDepth() != alpha.getDepth())
+		{
+			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
+				"Images must be the same dimensions", "Image::combineTwoImagesAsRGBA");
+		}
+		if (rgb.getNumMipmaps() != alpha.getNumMipmaps() ||
+			rgb.getNumFaces() != alpha.getNumFaces())
+		{
+			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
+				"Images must have the same number of surfaces (faces & mipmaps)", 
+				"Image::combineTwoImagesAsRGBA");
+		}
+		// Format check
+		if (PixelUtil::getComponentCount(fmt) != 4)
+		{
+			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
+				"Target format must have 4 components", 
+				"Image::combineTwoImagesAsRGBA");
+		}
+		if (PixelUtil::isCompressed(fmt) || PixelUtil::isCompressed(rgb.getFormat()) 
+			|| PixelUtil::isCompressed(alpha.getFormat()))
+		{
+			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
+				"Compressed formats are not supported in this method", 
+				"Image::combineTwoImagesAsRGBA");
+		}
+
+		freeMemory();
+
+		m_uWidth = rgb.getWidth();
+		m_uHeight = rgb.getHeight();
+		m_uDepth = rgb.getDepth();
+		m_eFormat = fmt;
+		m_uNumMipmaps = rgb.getNumMipmaps();
+		size_t numFaces = rgb.getNumFaces();
+
+		// Set flags
+		m_uFlags = 0;
+		if (m_uDepth != 1)
+			m_uFlags |= IF_3D_TEXTURE;
+		if(numFaces == 6)
+			m_uFlags |= IF_CUBEMAP;
+
+		m_uSize = calculateSize(m_uNumMipmaps, numFaces, m_uWidth, m_uHeight, m_uDepth, m_eFormat);
+
+		m_ucPixelSize = static_cast<uchar>(PixelUtil::getNumElemBytes( m_eFormat ));
+
+		m_pBuffer = static_cast<uchar*>(OGRE_MALLOC(m_uSize, MEMCATEGORY_GENERAL));
+
+		// make sure we delete
+		m_bAutoDelete = true;
+
+
+		for (size_t face = 0; face < numFaces; ++face)
+		{
+			for (size_t mip = 0; mip <= m_uNumMipmaps; ++mip)
+			{
+				// convert the RGB first
+				PixelBox srcRGB = rgb.getPixelBox(face, mip);
+				PixelBox dst = getPixelBox(face, mip);
+				PixelUtil::bulkPixelConversion(srcRGB, dst);
+
+				// now selectively add the alpha
+				PixelBox srcAlpha = alpha.getPixelBox(face, mip);
+				uchar* psrcAlpha = static_cast<uchar*>(srcAlpha.data);
+				uchar* pdst = static_cast<uchar*>(dst.data);
+				for (size_t d = 0; d < m_uDepth; ++d)
+				{
+					for (size_t y = 0; y < m_uHeight; ++y)
+					{
+						for (size_t x = 0; x < m_uWidth; ++x)
+						{
+							ColourValue colRGBA, colA;
+							// read RGB back from dest to save having another pointer
+							PixelUtil::unpackColour(&colRGBA, m_eFormat, pdst);
+							PixelUtil::unpackColour(&colA, alpha.getFormat(), psrcAlpha);
+
+							// combine RGB from alpha source texture
+							colRGBA.a = (colA.r + colA.g + colA.b) / 3.0f;
+
+							PixelUtil::packColour(colRGBA, m_eFormat, pdst);
+							
+							psrcAlpha += PixelUtil::getNumElemBytes(alpha.getFormat());
+							pdst += PixelUtil::getNumElemBytes(m_eFormat);
+
+						}
+					}
+				}
+				
+
+			}
+		}
+
+		return *this;
+
+	}
+	//---------------------------------------------------------------------
+
     
 }

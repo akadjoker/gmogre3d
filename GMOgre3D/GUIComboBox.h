@@ -57,7 +57,7 @@ GMFN double AddGUIComboBoxItem(double gui_combo_box_ptr, char *text, double id)
    if (combo_box == NULL)
       return FALSE;
 
-   CEGUI::ListboxTextItem *item = new CEGUI::ListboxTextItem(text, id, 0, false, true);
+   CEGUI::ListboxTextItem *item = OGRE_NEW CEGUI::ListboxTextItem(text, id, 0, false, true);
    
    combo_box->addItem(item);
 

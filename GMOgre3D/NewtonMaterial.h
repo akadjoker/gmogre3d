@@ -38,7 +38,7 @@ GMFN double CreateNewtonMaterial(double newton_world_ptr)
    OgreNewt::MaterialID *mat;
 
    TRY
-      mat = new OgreNewt::MaterialID(world);
+      mat = OGRE_NEW OgreNewt::MaterialID(world);
    CATCH("CreateNewtonMaterial")
 
    return ConvertToGMPointer(mat);

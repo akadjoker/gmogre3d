@@ -131,7 +131,7 @@ public:
     {
         Ogre::Vector3 d(v.normalisedCopy());
         m_pitch = asin(d.y);
-        m_yaw = atan2(d.z, d.x)+Ogre::Math::PI/2.0;
+        m_yaw = (Ogre::Real)atan2(d.z, d.x)+Ogre::Math::PI/2.0f;
         m_changed = true;
         
         return *this;

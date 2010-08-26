@@ -114,6 +114,49 @@ GMFN double SetManualObjectQueryFlags(double man_obj_ptr, double flags)
 }
 
 
+GMFN double SetManualObjectLightFlags(double man_obj_ptr, double flags)
+{
+   Ogre::ManualObject *man_obj = ConvertFromGMPointer<Ogre::ManualObject*>(man_obj_ptr);
+
+   if (man_obj == NULL)
+      return FALSE;
+
+   man_obj->setLightMask((Ogre::uint)flags);
+
+   return TRUE;
+}
+
+
+GMFN double SetManualObjectUserData(double man_obj_ptr, char *key, double data)
+{
+   Ogre::ManualObject *man_obj = ConvertFromGMPointer<Ogre::ManualObject*>(man_obj_ptr);
+
+   if (man_obj == NULL)
+      return FALSE;
+
+   if (key == NULL)
+      man_obj->getUserObjectBindings().setUserAny(Ogre::Any(data));
+   else
+      man_obj->getUserObjectBindings().setUserAny(key, Ogre::Any(data));
+
+   return TRUE;
+}
+
+
+GMFN double GetManualObjectUserData(double man_obj_ptr, char *key)
+{
+   Ogre::ManualObject *man_obj = ConvertFromGMPointer<Ogre::ManualObject*>(man_obj_ptr);
+
+   if (man_obj == NULL)
+      return FALSE;
+
+   if (key == NULL)
+      return Ogre::any_cast<double>(man_obj->getUserObjectBindings().getUserAny());
+   else
+      return Ogre::any_cast<double>(man_obj->getUserObjectBindings().getUserAny(key));
+}
+
+
 GMFN double SetManualObjectBoundingBox(double man_obj_ptr, double mx, double mz, double my, double Mx, double Mz, double My)
 {
    Ogre::ManualObject *man_obj = ConvertFromGMPointer<Ogre::ManualObject*>(man_obj_ptr);
@@ -121,7 +164,7 @@ GMFN double SetManualObjectBoundingBox(double man_obj_ptr, double mx, double mz,
    if (man_obj == NULL)
       return FALSE;
 
-   Ogre::AxisAlignedBox aabb(mx, mz, my, Mx, Mz, My);
+   Ogre::AxisAlignedBox aabb((Ogre::Real)mx, (Ogre::Real)mz, (Ogre::Real)my, (Ogre::Real)Mx, (Ogre::Real)Mz, (Ogre::Real)My);
 
    if (mx == -1.0 && mz == -1.0 && my == -1.0 && Mx == -1.0 && Mz == -1.0 && My == -1.0)
       aabb.setInfinite();
@@ -191,7 +234,7 @@ GMFN double BeginUpdateManualObjectSection(double man_obj_ptr, double index)
    if (man_obj == NULL)
       return FALSE;
    
-   man_obj->beginUpdate(index);
+   man_obj->beginUpdate((size_t)index);
 
    return TRUE;
 }
@@ -230,7 +273,7 @@ GMFN double ManualObjectTriangle(double man_obj_ptr, double i1, double i2, doubl
    if (man_obj == NULL)
       return FALSE;
 
-   man_obj->triangle(i1, i2, i3);
+   man_obj->triangle((Ogre::uint32)i1, (Ogre::uint32)i2, (Ogre::uint32)i3);
 
    return TRUE;
 }
@@ -243,7 +286,7 @@ GMFN double ManualObjectQuad(double man_obj_ptr, double i1, double i2, double i3
    if (man_obj == NULL)
       return FALSE;
 
-   man_obj->quad(i1, i2, i3, i4);
+   man_obj->quad((Ogre::uint32)i1, (Ogre::uint32)i2, (Ogre::uint32)i3, (Ogre::uint32)i4);
 
    return TRUE;
 }
@@ -256,7 +299,7 @@ GMFN double ManualObjectTextureCoord1(double man_obj_ptr, double u)
    if (man_obj == NULL)
       return FALSE;
 
-   man_obj->textureCoord(u);
+   man_obj->textureCoord((Ogre::Real)u);
 
    return TRUE;
 }
@@ -269,7 +312,7 @@ GMFN double ManualObjectTextureCoord2(double man_obj_ptr, double u, double v)
    if (man_obj == NULL)
       return FALSE;
 
-   man_obj->textureCoord(u, v);
+   man_obj->textureCoord((Ogre::Real)u, (Ogre::Real)v);
 
    return TRUE;
 }
@@ -282,7 +325,7 @@ GMFN double ManualObjectTextureCoord3(double man_obj_ptr, double u, double v, do
    if (man_obj == NULL)
       return FALSE;
 
-   man_obj->textureCoord(u, v, w);
+   man_obj->textureCoord((Ogre::Real)u, (Ogre::Real)v, (Ogre::Real)w);
 
    return TRUE;
 }
@@ -295,7 +338,7 @@ GMFN double ManualObjectTextureCoord4(double man_obj_ptr, double x, double z, do
    if (man_obj == NULL)
       return FALSE;
 
-   man_obj->textureCoord(ConvertFromGMAxis(x, y, z).x, ConvertFromGMAxis(x, y, z).y, ConvertFromGMAxis(x, y, z).z, w);
+   man_obj->textureCoord(ConvertFromGMAxis(x, y, z).x, ConvertFromGMAxis(x, y, z).y, ConvertFromGMAxis(x, y, z).z, (Ogre::Real)w);
 
    return TRUE;
 }
@@ -308,7 +351,7 @@ GMFN double ManualObjectColor(double man_obj_ptr, double clr, double alpha)
    if (man_obj == NULL)
       return FALSE;
 
-   man_obj->colour(Ogre::ColourValue(GetRedFromGMColor(clr), GetGreenFromGMColor(clr), GetBlueFromGMColor(clr), alpha));
+   man_obj->colour(Ogre::ColourValue(GetRedFromGMColor(clr), GetGreenFromGMColor(clr), GetBlueFromGMColor(clr), (Ogre::Real)alpha));
 
    return TRUE;
 }
@@ -321,7 +364,7 @@ GMFN double ManualObjectIndex(double man_obj_ptr, double index)
    if (man_obj == NULL)
       return FALSE;
 
-   man_obj->index(index);
+   man_obj->index((Ogre::uint32)index);
 
    return TRUE;
 }
@@ -424,7 +467,7 @@ GMFN double AttachManualObjectToEntityBone2(double x, double y, double z, double
    if (entity == NULL)
       return FALSE;
 
-   entity->attachObjectToBone(manual_object_entity_bone_name, man_obj, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree(pitch), Ogre::Degree(roll)), ConvertFromGMAxis(x, y, z));
+   entity->attachObjectToBone(manual_object_entity_bone_name, man_obj, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)), ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }

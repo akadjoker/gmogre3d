@@ -74,7 +74,7 @@ GMFN double CreateSkeletonAnimation(double skel_ptr, char *anim_name, double len
    Ogre::Animation *anim = NULL;
    
    TRY
-      anim = skel->createAnimation(anim_name, length);
+      anim = skel->createAnimation(anim_name, (Ogre::Real)length);
    CATCH("CreateSkeletonAnimation")
 
    return ConvertToGMPointer(anim);
@@ -112,7 +112,7 @@ GMFN double GetSkeletonAnimation(double skel_ptr, double index)
    if (skel == NULL)
       return 0;
 
-   Ogre::Animation *anim = skel->getAnimation(index);
+   Ogre::Animation *anim = skel->getAnimation((unsigned short)index);
 
    return ConvertToGMPointer(anim);
 }

@@ -60,7 +60,7 @@ typedef enum BillboardMethod {
 	billboards to the camera. This is more compatible with old video cards,
 	although it can result in poor performance with high amounts of billboards.*/
 	BB_METHOD_COMPATIBLE = 0,
-};
+} BillboardMethod;
 
 /**
 \brief A faster alternative to Ogre's built-in BillboardSet class.

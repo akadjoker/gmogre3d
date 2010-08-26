@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -176,7 +175,7 @@ namespace Ogre {
 	}
 	//-----------------------------------------------------------------------------
 	void ManualObject::begin(const String& materialName,
-		RenderOperation::OperationType opType)
+		RenderOperation::OperationType opType, const String & groupName)
 	{
 		if (mCurrentSection)
 		{
@@ -184,7 +183,7 @@ namespace Ogre {
 				"You cannot call begin() again until after you call end()",
 				"ManualObject::begin");
 		}
-		mCurrentSection = OGRE_NEW ManualObjectSection(this, materialName, opType);
+		mCurrentSection = OGRE_NEW ManualObjectSection(this, materialName, opType, groupName);
 		mCurrentUpdating = false;
 		mCurrentSection->setUseIdentityProjection(mUseIdentityProjection);
 		mCurrentSection->setUseIdentityView(mUseIdentityView);
@@ -287,6 +286,33 @@ namespace Ogre {
 		mTempVertex.normal.y = y;
 		mTempVertex.normal.z = z;
 	}
+
+	//-----------------------------------------------------------------------------
+	void ManualObject::tangent(const Vector3& tan)
+	{
+		tangent(tan.x, tan.y, tan.z);
+	}
+	//-----------------------------------------------------------------------------
+	void ManualObject::tangent(Real x, Real y, Real z)
+	{
+		if (!mCurrentSection)
+		{
+			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS,
+				"You must call begin() before this method",
+				"ManualObject::tangent");
+		}
+		if (mFirstVertex && !mCurrentUpdating)
+		{
+			// defining declaration
+			mCurrentSection->getRenderOperation()->vertexData->vertexDeclaration
+				->addElement(0, mDeclSize, VET_FLOAT3, VES_TANGENT);
+			mDeclSize += VertexElement::getTypeSize(VET_FLOAT3);
+		}
+		mTempVertex.tangent.x = x;
+		mTempVertex.tangent.y = y;
+		mTempVertex.tangent.z = z;
+	}
+
 	//-----------------------------------------------------------------------------
 	void ManualObject::textureCoord(Real u)
 	{
@@ -532,6 +558,11 @@ namespace Ogre {
 				*pFloat++ = mTempVertex.normal.y;
 				*pFloat++ = mTempVertex.normal.z;
 				break;
+			case VES_TANGENT:
+				*pFloat++ = mTempVertex.tangent.x;
+				*pFloat++ = mTempVertex.tangent.y;
+				*pFloat++ = mTempVertex.tangent.z;
+				break;
 			case VES_TEXTURE_COORDINATES:
 				dims = VertexElement::getTypeCount(elem.getType());
 				for (ushort t = 0; t < dims; ++t)
@@ -694,7 +725,7 @@ namespace Ogre {
 		return result;
 	}
 	//-----------------------------------------------------------------------------
-	void ManualObject::setMaterialName(size_t idx, const String& name)
+	void ManualObject::setMaterialName(size_t idx, const String& name, const String& group)
 	{
 		if (idx >= mSectionList.size())
 		{
@@ -703,7 +734,7 @@ namespace Ogre {
 				"ManualObject::setMaterialName");
 		}
 
-		mSectionList[idx]->setMaterialName(name);
+		mSectionList[idx]->setMaterialName(name, group);
 
 	}
 	//-----------------------------------------------------------------------------
@@ -731,7 +762,7 @@ namespace Ogre {
 			SubMesh* sm = m->createSubMesh();
 			sm->useSharedVertices = false;
 			sm->operationType = rop->operationType;
-			sm->setMaterialName(sec->getMaterialName());
+			sm->setMaterialName(sec->getMaterialName(), groupName);
 			// Copy vertex data; replicate buffers too
 			sm->vertexData = rop->vertexData->clone(true);
 			// Copy index data; replicate buffers too; delete the default, old one to avoid memory leaks
@@ -820,8 +851,13 @@ namespace Ogre {
 			if (rop->vertexData->vertexCount == 0 ||
 				(rop->useIndexes && rop->indexData->indexCount == 0))
 				continue;
-
-			if (mRenderQueueIDSet)
+			
+			if (mRenderQueuePrioritySet)
+			{
+				assert(mRenderQueueIDSet == true);
+				queue->addRenderable(*i, mRenderQueueID, mRenderQueuePriority);
+			}
+			else if (mRenderQueueIDSet)
 				queue->addRenderable(*i, mRenderQueueID, mKeepDeclarationOrder ? priority++ : queue->getDefaultRenderablePriority());
 			else
 				queue->addRenderable(*i, queue->getDefaultQueueGroup(), mKeepDeclarationOrder ? priority++ : queue->getDefaultRenderablePriority());
@@ -925,7 +961,7 @@ namespace Ogre {
 				mat->load();
 				bool vertexProgram = false;
 				Technique* t = mat->getBestTechnique(0, *seci);
-				for (int p = 0; p < t->getNumPasses(); ++p)
+				for (unsigned short p = 0; p < t->getNumPasses(); ++p)
 				{
 					Pass* pass = t->getPass(p);
 					if (pass->hasVertexProgram())
@@ -969,8 +1005,8 @@ namespace Ogre {
 	//-----------------------------------------------------------------------------
 	//-----------------------------------------------------------------------------
 	ManualObject::ManualObjectSection::ManualObjectSection(ManualObject* parent,
-		const String& materialName,	RenderOperation::OperationType opType)
-		: mParent(parent), mMaterialName(materialName), m32BitIndices(false)
+		const String& materialName, RenderOperation::OperationType opType, const String & groupName)
+		: mParent(parent), mMaterialName(materialName), mGroupName(groupName), m32BitIndices(false)
 	{
 		mRenderOperation.operationType = opType;
 		// default to no indexes unless we're told
@@ -997,17 +1033,17 @@ namespace Ogre {
 		{
 			// Load from default group. If user wants to use alternate groups,
 			// they can define it and preload
-			mMaterial = MaterialManager::getSingleton().load(mMaterialName,
-				ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+			mMaterial = MaterialManager::getSingleton().load(mMaterialName, mGroupName);
 		}
 		return mMaterial;
 	}
 	//-----------------------------------------------------------------------------
-	void ManualObject::ManualObjectSection::setMaterialName(const String& name)
+	void ManualObject::ManualObjectSection::setMaterialName( const String& name, const String& groupName /* = ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME */)
 	{
-		if (mMaterialName != name)
+		if (mMaterialName != name || mGroupName != groupName)
 		{
 			mMaterialName = name;
+			mGroupName = groupName;
 			mMaterial.setNull();
 		}
 	}

@@ -469,7 +469,7 @@ GMFN double AttachRibbonTrailToEntityBone2(double x, double y, double z, double 
    if (entity == NULL)
       return FALSE;
 
-   entity->attachObjectToBone(ribbon_trail_entity_bone_name, ribbon_trail, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree(pitch), Ogre::Degree(roll)), ConvertFromGMAxis(x, y, z));
+   entity->attachObjectToBone(ribbon_trail_entity_bone_name, ribbon_trail, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)), ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }

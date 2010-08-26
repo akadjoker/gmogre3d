@@ -8,7 +8,7 @@
 namespace Ogre
 {
     
-	class _OgrePrivate Win32GLSupport : public GLSupport
+	class _OgreGLExport Win32GLSupport : public GLSupport
 	{
 	public:
         Win32GLSupport();
@@ -27,7 +27,7 @@ namespace Ogre
 		String validateConfig();
 
 		virtual RenderWindow* createWindow(bool autoCreateWindow, GLRenderSystem* renderSystem, const String& windowTitle = "OGRE Render Window");
-
+		
 		/// @copydoc RenderSystem::_createRenderWindow
 		virtual RenderWindow* newWindow(const String &name, unsigned int width, unsigned int height, 
 			bool fullScreen, const NameValuePairList *miscParams = 0);
@@ -57,18 +57,32 @@ namespace Ogre
 
 		virtual bool supportsPBuffers();
 		virtual GLPBuffer *createPBuffer(PixelComponentType format, size_t width, size_t height);
+		virtual unsigned int getDisplayMonitorCount() const;
 	private:
 		// Allowed video modes
-		std::vector<DEVMODE> mDevModes;
+		vector<DEVMODE>::type mDevModes;
 		Win32Window *mInitialWindow;
-		std::vector<int> mFSAALevels;
+		vector<int>::type mFSAALevels;
 		bool mHasPixelFormatARB;
         bool mHasMultisample;
 		bool mHasHardwareGamma;
 
+		struct DisplayMonitorInfo
+		{
+			HMONITOR		hMonitor;
+			MONITORINFOEX	monitorInfoEx;
+		};
+
+		typedef vector<DisplayMonitorInfo>::type DisplayMonitorInfoList;
+		typedef DisplayMonitorInfoList::iterator DisplayMonitorInfoIterator;
+
+		DisplayMonitorInfoList mMonitorInfoList;
+
 		void refreshConfig();
 		void initialiseWGL();
 		static LRESULT CALLBACK dummyWndProc(HWND hwnd, UINT umsg, WPARAM wp, LPARAM lp);
+		static BOOL CALLBACK sCreateMonitorsInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, 
+			LPRECT lprcMonitor, LPARAM dwData);
 	};
 
 }

@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -44,8 +43,6 @@ Torus Knot Software Ltd.
 
 namespace Ogre
 {
-	#define PI 3.1415926535897932384626433832795
-
     //-----------------------------------------------------------------------
     template<> MeshManager* Singleton<MeshManager>::ms_Singleton = 0;
     MeshManager* MeshManager::getSingletonPtr(void)
@@ -136,7 +133,7 @@ namespace Ogre
     //-----------------------------------------------------------------------
     MeshPtr MeshManager::createPlane( const String& name, const String& groupName,
         const Plane& plane, Real width, Real height, int xsegments, int ysegments,
-        bool normals, int numTexCoordSets, Real xTile, Real yTile, const Vector3& upVector,
+        bool normals, unsigned short numTexCoordSets, Real xTile, Real yTile, const Vector3& upVector,
 		HardwareBuffer::Usage vertexBufferUsage, HardwareBuffer::Usage indexBufferUsage,
 		bool vertexShadowBuffer, bool indexShadowBuffer)
     {
@@ -172,7 +169,7 @@ namespace Ogre
 	//-----------------------------------------------------------------------
 	MeshPtr MeshManager::createCurvedPlane( const String& name, const String& groupName, 
         const Plane& plane, Real width, Real height, Real bow, int xsegments, int ysegments,
-        bool normals, int numTexCoordSets, Real xTile, Real yTile, const Vector3& upVector,
+        bool normals, unsigned short numTexCoordSets, Real xTile, Real yTile, const Vector3& upVector,
 			HardwareBuffer::Usage vertexBufferUsage, HardwareBuffer::Usage indexBufferUsage,
 			bool vertexShadowBuffer, bool indexShadowBuffer)
     {
@@ -211,7 +208,7 @@ namespace Ogre
         const String& name, const String& groupName, const Plane& plane,
         Real width, Real height, Real curvature,
         int xsegments, int ysegments,
-        bool normals, int numTexCoordSets,
+        bool normals, unsigned short numTexCoordSets,
         Real uTile, Real vTile, const Vector3& upVector,
 		const Quaternion& orientation, 
         HardwareBuffer::Usage vertexBufferUsage, 
@@ -252,12 +249,12 @@ namespace Ogre
 	}
 
     //-----------------------------------------------------------------------
-    void MeshManager::tesselate2DMesh(SubMesh* sm, int meshWidth, int meshHeight, 
+    void MeshManager::tesselate2DMesh(SubMesh* sm, unsigned short meshWidth, unsigned short meshHeight, 
 		bool doubleSided, HardwareBuffer::Usage indexBufferUsage, bool indexShadowBuffer)
     {
         // The mesh is built, just make a list of indexes to spit out the triangles
-        int vInc, uInc, v, u, iterations;
-        int vCount, uCount;
+        unsigned short vInc, uInc, v, u, iterations;
+        unsigned short vCount, uCount;
 
         if (doubleSided)
         {
@@ -279,7 +276,7 @@ namespace Ogre
 			createIndexBuffer(HardwareIndexBuffer::IT_16BIT,
 			sm->indexData->indexCount, indexBufferUsage, indexShadowBuffer);
 
-        int v1, v2, v3;
+        unsigned short v1, v2, v3;
         //bool firstTri = true;
 		HardwareIndexBufferSharedPtr ibuf = sm->indexData->indexBuffer;
 		// Lock the whole buffer
@@ -427,8 +424,10 @@ namespace Ogre
     //-----------------------------------------------------------------------
     void MeshManager::loadManualPlane(Mesh* pMesh, MeshBuildParams& params)
     {
-        int i;
-
+		if ((params.xsegments + 1) * (params.ysegments + 1) > 65536)
+			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
+				"Plane tesselation is too high, must generate max 65536 vertices", 
+				__FUNCTION__);
         SubMesh *pSub = pMesh->createSubMesh();
 
         // Set up vertex data
@@ -448,7 +447,7 @@ namespace Ogre
             currOffset += VertexElement::getTypeSize(VET_FLOAT3);
         }
 
-        for (i = 0; i < params.numTexCoordSets; ++i)
+        for (unsigned short i = 0; i < params.numTexCoordSets; ++i)
         {
             // Assumes 2D texture coords
             vertexDecl->addElement(0, currOffset, VET_FLOAT2, VES_TEXTURE_COORDINATES, i);
@@ -506,7 +505,7 @@ namespace Ogre
         Real xTex = (1.0f * params.xTile) / params.xsegments;
         Real yTex = (1.0f * params.yTile) / params.ysegments;
         Vector3 vec;
-        Vector3 min, max;
+        Vector3 min = Vector3::ZERO, max = Vector3::UNIT_SCALE;
         Real maxSquaredLength = 0;
         bool firstTime = true;
 
@@ -552,7 +551,7 @@ namespace Ogre
                     *pReal++ = vec.z;
                 }
 
-                for (i = 0; i < params.numTexCoordSets; ++i)
+                for (unsigned short i = 0; i < params.numTexCoordSets; ++i)
                 {
                     *pReal++ = x * xTex;
                     *pReal++ = 1 - (y * yTex);
@@ -575,7 +574,10 @@ namespace Ogre
     //-----------------------------------------------------------------------
     void MeshManager::loadManualCurvedPlane(Mesh* pMesh, MeshBuildParams& params)
     {
-        int i;
+		if ((params.xsegments + 1) * (params.ysegments + 1) > 65536)
+			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
+				"Plane tesselation is too high, must generate max 65536 vertices", 
+				__FUNCTION__);
         SubMesh *pSub = pMesh->createSubMesh();
 
         // Set options
@@ -595,7 +597,7 @@ namespace Ogre
             offset += VertexElement::getTypeSize(VET_FLOAT3);
         }
 
-        for (i = 0; i < params.numTexCoordSets; ++i)
+        for (unsigned short i = 0; i < params.numTexCoordSets; ++i)
         {
             decl->addElement(0, offset, VET_FLOAT2, VES_TEXTURE_COORDINATES, i);
             offset += VertexElement::getTypeSize(VET_FLOAT2);
@@ -650,7 +652,7 @@ namespace Ogre
         Real yTex = (1.0f * params.yTile) / params.ysegments;
         Vector3 vec;
 
-        Vector3 min, max;
+        Vector3 min = Vector3::ZERO, max = Vector3::UNIT_SCALE;
         Real maxSqLen = 0;
         bool first = true;
 
@@ -668,7 +670,7 @@ namespace Ogre
                 diff_x = (x - ((params.xsegments) / 2)) / static_cast<Real>((params.xsegments));
                 diff_y = (y - ((params.ysegments) / 2)) / static_cast<Real>((params.ysegments));
                 dist = sqrt(diff_x*diff_x + diff_y * diff_y );
-                vec.z = (-sin((1-dist) * (PI/2)) * params.curvature) + params.curvature;
+				vec.z = (-sin((1-dist) * (Math::PI/2)) * params.curvature) + params.curvature;
 
                 // Transform by orientation and distance
                 Vector3 pos = xform.transformAffine(vec);
@@ -708,7 +710,7 @@ namespace Ogre
                     *pFloat++ = vec.z;
                 }
 
-                for (i = 0; i < params.numTexCoordSets; ++i)
+                for (unsigned short i = 0; i < params.numTexCoordSets; ++i)
                 {
                     *pFloat++ = x * xTex;
                     *pFloat++ = 1 - (y * yTex);
@@ -729,10 +731,14 @@ namespace Ogre
     //-----------------------------------------------------------------------
     void MeshManager::loadManualCurvedIllusionPlane(Mesh* pMesh, MeshBuildParams& params)
     {
-        int i;
+		if (params.ySegmentsToKeep == -1) params.ySegmentsToKeep = params.ysegments;
+
+		if ((params.xsegments + 1) * (params.ySegmentsToKeep + 1) > 65536)
+			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
+				"Plane tesselation is too high, must generate max 65536 vertices", 
+				__FUNCTION__);
         SubMesh *pSub = pMesh->createSubMesh();
 
-        if (params.ySegmentsToKeep == -1) params.ySegmentsToKeep = params.ysegments;
 
         // Set up vertex data
         // Use a single shared buffer
@@ -751,7 +757,7 @@ namespace Ogre
             currOffset += VertexElement::getTypeSize(VET_FLOAT3);
         }
 
-        for (i = 0; i < params.numTexCoordSets; ++i)
+        for (unsigned short i = 0; i < params.numTexCoordSets; ++i)
         {
             // Assumes 2D texture coords
             vertexDecl->addElement(0, currOffset, VET_FLOAT2, VES_TEXTURE_COORDINATES, i);
@@ -825,7 +831,7 @@ namespace Ogre
         Real halfWidth = params.width / 2;
         Real halfHeight = params.height / 2;
         Vector3 vec, norm;
-        Vector3 min, max;
+        Vector3 min = Vector3::ZERO, max = Vector3::UNIT_SCALE;
         Real maxSquaredLength = 0;
         bool firstTime = true;
 
@@ -877,15 +883,15 @@ namespace Ogre
                 vec = params.orientation.Inverse() * vec;
                 vec.normalise();
                 // Find distance to sphere
-                sphDist = Math::Sqrt(camPos*camPos * (vec.y*vec.y-1.0) + sphereRadius*sphereRadius) - camPos*vec.y;
+                sphDist = Math::Sqrt(camPos*camPos * (vec.y*vec.y-1.0f) + sphereRadius*sphereRadius) - camPos*vec.y;
 
                 vec.x *= sphDist;
                 vec.z *= sphDist;
 
                 // Use x and y on sphere as texture coordinates, tiled
-                Real s = vec.x * (0.01 * params.xTile);
-                Real t = 1 - (vec.z * (0.01 * params.yTile));
-                for (i = 0; i < params.numTexCoordSets; ++i)
+                Real s = vec.x * (0.01f * params.xTile);
+                Real t = 1.0f - (vec.z * (0.01f * params.yTile));
+                for (unsigned short i = 0; i < params.numTexCoordSets; ++i)
                 {
                     *pFloat++ = s;
                     *pFloat++ = t;

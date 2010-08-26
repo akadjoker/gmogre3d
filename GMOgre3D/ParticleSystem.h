@@ -103,7 +103,7 @@ GMFN double SetParticleSystemQuota(double part_sys_ptr, double quota)
    if (part_sys == NULL)
       return FALSE;
 
-   part_sys->setParticleQuota(quota);
+   part_sys->setParticleQuota((size_t)quota);
 
    return TRUE;
 }
@@ -155,7 +155,7 @@ GMFN double SetParticleSystemNonVisibleTimeout(double part_sys_ptr, double timeo
    if (part_sys == NULL)
       return FALSE;
 
-   part_sys->setNonVisibleUpdateTimeout(timeout);
+   part_sys->setNonVisibleUpdateTimeout((Ogre::Real)timeout);
 
    return TRUE;
 }
@@ -168,7 +168,7 @@ GMFN double FastForwardParticleSystem(double part_sys_ptr, double time, double i
    if (part_sys == NULL)
       return FALSE;
 
-   part_sys->fastForward(time, interval);
+   part_sys->fastForward((Ogre::Real)time, (Ogre::Real)interval);
 
    return TRUE;
 }
@@ -181,7 +181,7 @@ GMFN double SetParticleSystemSpeedFactor(double part_sys_ptr, double speed)
    if (part_sys == NULL)
       return FALSE;
 
-   part_sys->setSpeedFactor(speed);
+   part_sys->setSpeedFactor((Ogre::Real)speed);
 
    return TRUE;
 }
@@ -194,7 +194,7 @@ GMFN double SetParticleSystemIterationInterval(double part_sys_ptr, double inter
    if (part_sys == NULL)
       return FALSE;
 
-   part_sys->setIterationInterval(interval);
+   part_sys->setIterationInterval((Ogre::Real)interval);
 
    return TRUE;
 }
@@ -207,7 +207,7 @@ GMFN double SetParticleSystemDimensions(double part_sys_ptr, double width, doubl
    if (part_sys == NULL)
       return FALSE;
 
-   part_sys->setDefaultDimensions(width, height);
+   part_sys->setDefaultDimensions((Ogre::Real)width, (Ogre::Real)height);
 
    return TRUE;
 }
@@ -293,7 +293,7 @@ GMFN double AttachParticleSystemToEntityBone2(double x, double y, double z, doub
    if (entity == NULL)
       return FALSE;
 
-   entity->attachObjectToBone(part_sys_entity_bone_name, part_sys, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree(pitch), Ogre::Degree(roll)), ConvertFromGMAxis(x, y, z));
+   entity->attachObjectToBone(part_sys_entity_bone_name, part_sys, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)), ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -361,7 +361,7 @@ GMFN double GetParticleSystemEmitter(double part_sys_ptr, double index)
    if (part_sys == NULL)
       return 0;
 
-   Ogre::ParticleEmitter *emit = part_sys->getEmitter(index);
+   Ogre::ParticleEmitter *emit = part_sys->getEmitter((unsigned short)index);
 
    return ConvertToGMPointer(emit);
 }
@@ -374,7 +374,7 @@ GMFN double RemoveParticleSystemEmitter(double part_sys_ptr, double index)
    if (part_sys == NULL)
       return FALSE;
 
-   part_sys->removeEmitter(index);
+   part_sys->removeEmitter((unsigned short)index);
 
    return TRUE;
 }
@@ -416,6 +416,62 @@ GMFN double SetParticleSystemQueryFlags(double part_sys_ptr, double flags)
    part_sys->setQueryFlags((Ogre::uint)flags);
 
    return TRUE;
+}
+
+
+GMFN double SetParticleSystemLightFlags(double part_sys_ptr, double flags)
+{
+   Ogre::ParticleSystem *part_sys = ConvertFromGMPointer<Ogre::ParticleSystem*>(part_sys_ptr);
+
+   if (part_sys == NULL)
+      return FALSE;
+
+   part_sys->setLightMask((Ogre::uint)flags);
+
+   return TRUE;
+}
+
+
+GMFN double SetParticleSystemVisibilityFlags(double part_sys_ptr, double flags)
+{
+   Ogre::ParticleSystem *part_sys = ConvertFromGMPointer<Ogre::ParticleSystem*>(part_sys_ptr);
+
+   if (part_sys == NULL)
+      return FALSE;
+
+   part_sys->setVisibilityFlags((Ogre::uint)flags);
+
+   return TRUE;
+}
+
+
+GMFN double SetParticleSystemUserData(double part_sys_ptr, char *key, double data)
+{
+   Ogre::ParticleSystem *part_sys = ConvertFromGMPointer<Ogre::ParticleSystem*>(part_sys_ptr);
+
+   if (part_sys == NULL)
+      return FALSE;
+
+   if (key == NULL)
+      part_sys->getUserObjectBindings().setUserAny(Ogre::Any(data));
+   else
+      part_sys->getUserObjectBindings().setUserAny(key, Ogre::Any(data));
+
+   return TRUE;
+}
+
+
+GMFN double GetParticleSystemUserData(double part_sys_ptr, char *key)
+{
+   Ogre::ParticleSystem *part_sys = ConvertFromGMPointer<Ogre::ParticleSystem*>(part_sys_ptr);
+
+   if (part_sys == NULL)
+      return FALSE;
+
+   if (key == NULL)
+      return Ogre::any_cast<double>(part_sys->getUserObjectBindings().getUserAny());
+   else
+      return Ogre::any_cast<double>(part_sys->getUserObjectBindings().getUserAny(key));
 }
 
 /*

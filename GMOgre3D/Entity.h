@@ -91,7 +91,7 @@ GMFN double CreateFloorEntity(double width, double height, double xsegments, dou
       plane.normal = Ogre::Vector3::UNIT_Y;
 
       Ogre::String plane_name = GenerateUniqueName();
-      Ogre::MeshManager::getSingleton().createPlane(plane_name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane, width, height, xsegments, ysegments, true, 1, utile, vtile, Ogre::Vector3::UNIT_Z);
+      Ogre::MeshManager::getSingleton().createPlane(plane_name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane, (Ogre::Real)width, (Ogre::Real)height, (int)xsegments, (int)ysegments, true, 1, (Ogre::Real)utile, (Ogre::Real)vtile, Ogre::Vector3::UNIT_Z);
       ent = mSceneMgr->createEntity(GenerateUniqueName(), plane_name);
    CATCH("CreateFloorEntity")
 
@@ -112,7 +112,7 @@ GMFN double CreateCeilingEntity(double width, double height, double xsegments, d
       plane.normal = Ogre::Vector3::NEGATIVE_UNIT_Y;
 
       Ogre::String plane_name = GenerateUniqueName();
-      Ogre::MeshManager::getSingleton().createPlane(plane_name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane, width, height, xsegments, ysegments, true, 1, utile, vtile, Ogre::Vector3::UNIT_Z);
+      Ogre::MeshManager::getSingleton().createPlane(plane_name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane, (Ogre::Real)width, (Ogre::Real)height, (int)xsegments, (int)ysegments, true, 1, (Ogre::Real)utile, (Ogre::Real)vtile, Ogre::Vector3::UNIT_Z);
       ent = mSceneMgr->createEntity(GenerateUniqueName(), plane_name);
    CATCH("CreateCeilingEntity")
 
@@ -133,7 +133,7 @@ GMFN double CreateWallEntity(double width, double height, double xsegments, doub
       plane.normal = Ogre::Vector3::UNIT_X;
 
       Ogre::String plane_name = GenerateUniqueName();
-      Ogre::MeshManager::getSingleton().createPlane(plane_name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane, width, height, xsegments, ysegments, true, 1, utile, vtile, Ogre::Vector3::UNIT_Z);
+      Ogre::MeshManager::getSingleton().createPlane(plane_name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane, (Ogre::Real)width, (Ogre::Real)height, (int)xsegments, (int)ysegments, true, 1, (Ogre::Real)utile, (Ogre::Real)vtile, Ogre::Vector3::UNIT_Z);
       ent = mSceneMgr->createEntity(GenerateUniqueName(), plane_name);
    CATCH("CreateWallEntity")
 
@@ -155,7 +155,7 @@ GMFN double CreatePlaneEntity(double plane_ptr, double width, double height, dou
          return FALSE;
 
       Ogre::String plane_name = GenerateUniqueName();
-      Ogre::MeshManager::getSingleton().createPlane(plane_name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, *plane, width, height, xsegments, ysegments, true, 1, utile, vtile, Ogre::Vector3(dirx, diry, dirz));
+      Ogre::MeshManager::getSingleton().createPlane(plane_name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, *plane, (Ogre::Real)width, (Ogre::Real)height, (int)xsegments, (int)ysegments, true, 1, (Ogre::Real)utile, (Ogre::Real)vtile, Ogre::Vector3((Ogre::Real)dirx, (Ogre::Real)diry, (Ogre::Real)dirz));
       ent = mSceneMgr->createEntity(GenerateUniqueName(), plane_name);
    CATCH("CreatePlaneEntity")
 
@@ -288,7 +288,7 @@ GMFN double SetEntityRenderingDistance(double entity_ptr, double distance)
    if (ent == NULL)
       return FALSE;
 
-   ent->setRenderingDistance(distance);
+   ent->setRenderingDistance((Ogre::Real)distance);
 
    return TRUE;
 }
@@ -352,7 +352,7 @@ GMFN double AttachEntityToEntityBone2(double x, double y, double z, double yaw, 
    if (entity2 == NULL)
       return FALSE;
 
-   entity2->attachObjectToBone(entity_entity_bone_name, entity, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree(pitch), Ogre::Degree(roll)), ConvertFromGMAxis(x, y, z));
+   entity2->attachObjectToBone(entity_entity_bone_name, entity, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)), ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -422,7 +422,7 @@ GMFN double GetEntitySubEntity(double ent_ptr, double sub_index)
    if (ent == NULL)
       return 0;
 
-   return ConvertToGMPointer(ent->getSubEntity(sub_index));
+   return ConvertToGMPointer(ent->getSubEntity((unsigned int)sub_index));
 }
 
 
@@ -471,6 +471,62 @@ GMFN double SetEntityQueryFlags(double ent_ptr, double flags)
    ent->setQueryFlags((Ogre::uint)flags);
 
    return TRUE;
+}
+
+
+GMFN double SetEntityLightFlags(double ent_ptr, double flags)
+{
+   Ogre::Entity *ent = ConvertFromGMPointer<Ogre::Entity*>(ent_ptr);
+
+   if (ent == NULL)
+      return FALSE;
+
+   ent->setLightMask((Ogre::uint)flags);
+
+   return TRUE;
+}
+
+
+GMFN double SetEntityVisibilityFlags(double ent_ptr, double flags)
+{
+   Ogre::Entity *ent = ConvertFromGMPointer<Ogre::Entity*>(ent_ptr);
+
+   if (ent == NULL)
+      return FALSE;
+
+   ent->setVisibilityFlags((Ogre::uint)flags);
+
+   return TRUE;
+}
+
+
+GMFN double SetEntityUserData(double ent_ptr, char *key, double data)
+{
+   Ogre::Entity *ent = ConvertFromGMPointer<Ogre::Entity*>(ent_ptr);
+
+   if (ent == NULL)
+      return FALSE;
+
+   if (key == NULL)
+      ent->getUserObjectBindings().setUserAny(Ogre::Any(data));
+   else
+      ent->getUserObjectBindings().setUserAny(key, Ogre::Any(data));
+
+   return TRUE;
+}
+
+
+GMFN double GetEntityUserData(double ent_ptr, char *key)
+{
+   Ogre::Entity *ent = ConvertFromGMPointer<Ogre::Entity*>(ent_ptr);
+
+   if (ent == NULL)
+      return FALSE;
+
+   if (key == NULL)
+      return Ogre::any_cast<double>(ent->getUserObjectBindings().getUserAny());
+   else
+      return Ogre::any_cast<double>(ent->getUserObjectBindings().getUserAny(key));
 }
 
 #endif

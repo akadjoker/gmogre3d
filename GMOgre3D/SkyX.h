@@ -35,7 +35,7 @@ GMFN double CreateSkyX(double camera_ptr)
       if (mSceneMgr == NULL)
          return FALSE;
 
-      skyx = new SkyX::SkyX(mSceneMgr, ConvertFromGMPointer<Ogre::Camera*>(camera_ptr));
+      skyx = OGRE_NEW SkyX::SkyX(mSceneMgr, ConvertFromGMPointer<Ogre::Camera*>(camera_ptr));
       skyx->create();
 
       if (mSkyX == NULL)
@@ -99,7 +99,7 @@ GMFN double SetSkyXTime(double skyx_ptr, double time_seconds)
       return FALSE;
 
    SkyX::AtmosphereManager::Options opt = skyx->getAtmosphereManager()->getOptions();
-   opt.Time.x = time_seconds / 3600;
+   opt.Time.x = (Ogre::Real)time_seconds / 3600;
 	skyx->getAtmosphereManager()->setOptions(opt);
 
    return TRUE;
@@ -113,7 +113,7 @@ GMFN double UpdateSkyXTime(double skyx_ptr, double time_seconds)
    if (skyx == NULL)
       return FALSE;
 
-   skyx->update(time_seconds);
+   skyx->update((Ogre::Real)time_seconds);
 
    return TRUE;
 }
@@ -127,7 +127,7 @@ GMFN double SetSkyXSunriseHour(double skyx_ptr, double time_hour)
       return FALSE;
 
    SkyX::AtmosphereManager::Options opt = skyx->getAtmosphereManager()->getOptions();
-   opt.Time.y = time_hour;
+   opt.Time.y = (Ogre::Real)time_hour;
 	skyx->getAtmosphereManager()->setOptions(opt);
 
    return TRUE;
@@ -142,7 +142,7 @@ GMFN double SetSkyXSunsetHour(double skyx_ptr, double time_hour)
       return FALSE;
 
    SkyX::AtmosphereManager::Options opt = skyx->getAtmosphereManager()->getOptions();
-   opt.Time.z = time_hour;
+   opt.Time.z = (Ogre::Real)time_hour;
 	skyx->getAtmosphereManager()->setOptions(opt);
 
    return TRUE;
@@ -156,7 +156,7 @@ GMFN double AddCloudLayer(double skyx_ptr, double height = 100.0, double scale =
    if (skyx == NULL)
       return FALSE;
 
-   SkyX::CloudLayer *layer = skyx->getCloudsManager()->add(SkyX::CloudLayer::Options(height, scale, Ogre::Vector2(wind_dirx, wind_diry), time_mult, distance_attenuation, detail_attenuation, normal_mult, height_vol, vol_displacement));
+   SkyX::CloudLayer *layer = skyx->getCloudsManager()->add(SkyX::CloudLayer::Options((Ogre::Real)height, (Ogre::Real)scale, Ogre::Vector2((Ogre::Real)wind_dirx, (Ogre::Real)wind_diry), (Ogre::Real)time_mult, (Ogre::Real)distance_attenuation, (Ogre::Real)detail_attenuation, (Ogre::Real)normal_mult, (Ogre::Real)height_vol, (Ogre::Real)vol_displacement));
 
    return ConvertToGMPointer(layer);
 }
@@ -175,13 +175,15 @@ GMFN double RemoveCloudLayer(double skyx_ptr, double cloud_layer_ptr)
 }
 
 
-GMFN double AddVolumetricClouds(double skyx_ptr)
+GMFN double AddVolumetricClouds(double skyx_ptr, double heightx, double heighty, double wind_speed)
 {
    SkyX::SkyX *skyx = ConvertFromGMPointer<SkyX::SkyX*>(skyx_ptr);
 
    if (skyx == NULL)
       return FALSE;
 
+   skyx->getVCloudsManager()->setHeight(Ogre::Vector2((Ogre::Real)heightx, (Ogre::Real)heighty));
+   skyx->getVCloudsManager()->setWindSpeed((Ogre::Real)wind_speed);
    skyx->getVCloudsManager()->create();
 
    return TRUE;
@@ -198,6 +200,34 @@ GMFN double RemoveVolumetricClouds(double skyx_ptr)
    skyx->getVCloudsManager()->remove();
 
    return TRUE;
+}
+
+
+GMFN double TransitionVolumetricClouds(double skyx_ptr, double humidity, double avg_cloud_size, double num_forced_updates)
+{
+   SkyX::SkyX *skyx = ConvertFromGMPointer<SkyX::SkyX*>(skyx_ptr);
+
+   if (skyx == NULL)
+      return FALSE;
+
+   skyx->getVCloudsManager()->getVClouds()->setWheater((Ogre::Real)humidity, (Ogre::Real)avg_cloud_size, (int)num_forced_updates);
+
+   return TRUE;
+}
+
+
+GMFN double GetSkyXColorAt(double skyx_ptr, double x, double z, double y)
+{
+   SkyX::SkyX *skyx = ConvertFromGMPointer<SkyX::SkyX*>(skyx_ptr);
+
+   if (skyx == NULL)
+      return FALSE;
+
+   Ogre::Vector3 vec = skyx->getAtmosphereManager()->getColorAt(ConvertFromGMAxis(x, y, z));
+
+   SetGMVectorGlobals(vec);
+
+   return ConvertColorToGMColor(vec.x, vec.z, vec.y);
 }
 
 #endif

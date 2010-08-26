@@ -13,7 +13,7 @@
 #ifndef __dList__
 #define __dList__
 
-#include <dContainersStdAfx.h>
+#include "dContainersStdAfx.h"
 
 
 // this is a small double link list contatiner similar to STL, 
@@ -91,16 +91,19 @@ class dList
 			m_prev = node;
 			node->m_next = this;
 		}
-
+/*
 		void *operator new (size_t size) 
 		{
-			return malloc(size);
+			//return malloc(size);
+			return new char[size];
 		}
 
 		void operator delete (void *ptr) 
 		{
-			free(ptr);
+			//free(ptr);
+			delete[] (char*)ptr;
 		}
+*/
 
 		public:
 		T& GetInfo()
@@ -252,13 +255,15 @@ dList<T>::~dList ()
 template<class T>
 void* dList<T>::operator new (size_t size)
 {
-	return malloc (size);
+//	return malloc (size);
+	return new char[size];
 }
 
 template<class T>
 void dList<T>::operator delete (void *ptr)
 {
-	free (ptr);
+//	free (ptr);
+	delete[] (char*)ptr;
 }
 
 

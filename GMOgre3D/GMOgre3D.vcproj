@@ -315,7 +315,7 @@
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\lib;..\Dependencies\lib\Release;..\CEGUI\dependencies\lib\static"
 				ModuleDefinitionFile=""
-				DelayLoadDLLs="d3dx9_41.dll"
+				DelayLoadDLLs="d3dx9_41.dll cg.dll"
 				GenerateDebugInformation="false"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -547,6 +547,10 @@
 			</File>
 			<File
 				RelativePath=".\CCS_PlaneBindedCameraMode.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CCS_RTSCameraMode.h"
 				>
 			</File>
 			<File
@@ -843,6 +847,10 @@
 			</File>
 			<File
 				RelativePath=".\RaySceneQuery.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Rectangle2D.h"
 				>
 			</File>
 			<File

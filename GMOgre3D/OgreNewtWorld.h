@@ -67,7 +67,6 @@ public:
 
 protected:
    OgreNewt::World *m_world;
-   void *m_userdata;
    int m_gm_leave_world_func;
    std::vector<OgreNewtBody*> m_bodies_left_world;
    Ogre::Vector3 m_default_gravity;

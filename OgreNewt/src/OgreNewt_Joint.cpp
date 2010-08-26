@@ -3,6 +3,7 @@
 #include "OgreNewt_World.h"
 #include "OgreNewt_Joint.h"
 
+#include "CustomUserBlank.h"
 
 namespace OgreNewt
 {
@@ -132,9 +133,25 @@ void Joint::setRowSpringDamper(Ogre::Real springK, Ogre::Real springD) const
 	NewtonUserJointSetRowSpringDamperAcceleration( m_joint->GetJoint(), springK, springD );
 }
 
+int Joint::getCollisionState() const
+{
+	return NewtonJointGetCollisionState( m_joint->GetJoint() );
+}
 
+void Joint::setCollisionState( int state ) const
+{
+	NewtonJointSetCollisionState( m_joint->GetJoint(), state );
+}
 
+Ogre::Real Joint::getStiffness() const
+{
+	return (Ogre::Real)NewtonJointGetStiffness( m_joint->GetJoint() );
+}
 
+void Joint::setStiffness( Ogre::Real stiffness ) const
+{
+	NewtonJointSetStiffness( m_joint->GetJoint(), stiffness );
+}
 
 //! destructor
 void _CDECL Joint::destructorCallback( const NewtonCustomJoint* me )
@@ -156,44 +173,22 @@ void _CDECL Joint::submitConstraintCallback( const NewtonCustomJoint* me, dFloat
 	jnt->submitConstraint( timestep, threadIndex );
 }
 
-
-
-
-
-
-
-
-
-
-#if 0
-CustomJoint::CustomJoint( unsigned int maxDOF, const Body* body0, const Body* body1 ) : Joint()
+CustomJoint::CustomJoint( unsigned int maxDOF, const Body* child, const Body* parent ) : Joint()
 {
-    m_maxDOF = maxDOF;
+	NewtonCustomJoint* suppportJoint;
 
-    m_body0 = body0;
-    m_body1 = body1;
+	suppportJoint = new CustomUserBlank(maxDOF, child->getNewtonBody(), parent ? parent->getNewtonBody() : NULL);
+	SetSupportJoint(suppportJoint);
 
-    m_world = m_body0->getWorld();
+	m_maxDOF = maxDOF;
 
-    if (body1)
-        m_joint = NewtonConstraintCreateUserJoint( m_world->getNewtonWorld(), m_maxDOF, 
-                                                    CustomJoint::newtonSubmitConstraint, CustomJoint::newtonGetInfo,
-                                                    m_body0->getNewtonBody(), m_body1->getNewtonBody() );
-    else
-        m_joint = NewtonConstraintCreateUserJoint( m_world->getNewtonWorld(), m_maxDOF, 
-                                                    CustomJoint::newtonSubmitConstraint, CustomJoint::newtonGetInfo,
-                                                    m_body0->getNewtonBody(), NULL );
-
-    NewtonJointSetUserData (m_joint, this);
-    NewtonJointSetDestructor (m_joint, destructor);
-    NewtonUserJointSetFeedbackCollectorCallback( m_joint, CustomJoint::newtonFeedbackCollector );
-
+    m_body0 = child;
+    m_body1 = parent;
 }
 
 CustomJoint::~CustomJoint()
 {
 }
-
 
 void CustomJoint::pinAndDirToLocal( const Ogre::Vector3& pinpt, const Ogre::Vector3& pindir, 
                                    Ogre::Quaternion& localOrient0, Ogre::Vector3& localPos0, Ogre::Quaternion& localOrient1, Ogre::Vector3& localPos1 ) const
@@ -208,10 +203,12 @@ void CustomJoint::pinAndDirToLocal( const Ogre::Vector3& pinpt, const Ogre::Vect
 
     Ogre::Quaternion pinOrient = grammSchmidt(pindir);
 
-    m_body0->getPositionOrientation( bodyPos0, bodyOrient0 );
+    getBody0()->getPositionOrientation( bodyPos0, bodyOrient0 );
 
-    if (m_body1)
-        m_body1->getPositionOrientation( bodyPos1, bodyOrient1 );
+    if (getBody1() != NULL)
+	{
+        getBody1()->getPositionOrientation( bodyPos1, bodyOrient1 );
+	}
 
     localPos0 = bodyOrient0.Inverse() * (pinpt - bodyPos0);
     localOrient0 = pinOrient * bodyOrient0.Inverse();
@@ -221,7 +218,6 @@ void CustomJoint::pinAndDirToLocal( const Ogre::Vector3& pinpt, const Ogre::Vect
 
 }
 
-
 void CustomJoint::localToGlobal( const Ogre::Quaternion& localOrient, const Ogre::Vector3& localPos, Ogre::Quaternion& globalOrient, Ogre::Vector3& globalPos, int bodyIndex ) const
 {
     globalOrient = Ogre::Quaternion::IDENTITY;
@@ -229,20 +225,21 @@ void CustomJoint::localToGlobal( const Ogre::Quaternion& localOrient, const Ogre
 
     const Body* bdy = NULL;
     if (bodyIndex == 0)
-        bdy = m_body0;
-    else if (m_body1)
-        bdy = m_body1;
+        bdy = getBody0();
+    else if (getBody1())
+        bdy = getBody1();
 
     Ogre::Quaternion bodyOrient = Ogre::Quaternion::IDENTITY;
     Ogre::Vector3 bodyPos = Ogre::Vector3::ZERO;
 
     if (bdy)
+	{
         bdy->getPositionOrientation( bodyPos, bodyOrient );
+	}
 
     globalPos = (bodyOrient * localPos) + bodyPos;
     globalOrient = bodyOrient * localOrient;
 }
-
 
 void CustomJoint::globalToLocal( const Ogre::Quaternion& globalOrient, const Ogre::Vector3& globalPos, Ogre::Quaternion& localOrient, Ogre::Vector3& localPos, int bodyIndex ) const
 {
@@ -251,9 +248,9 @@ void CustomJoint::globalToLocal( const Ogre::Quaternion& globalOrient, const Ogr
 
     const Body* bdy = NULL;
     if (bodyIndex == 0)
-        bdy = m_body0;
-    else if (m_body1)
-        bdy = m_body1;
+        bdy = getBody0();
+    else if (getBody1() != NULL)
+        bdy = getBody1();
 
     Ogre::Quaternion bodyOrient = Ogre::Quaternion::IDENTITY;
     Ogre::Vector3 bodyPos = Ogre::Vector3::ZERO;
@@ -266,31 +263,6 @@ void CustomJoint::globalToLocal( const Ogre::Quaternion& globalOrient, const Ogr
     localOrient = bodyOrientInv * globalOrient;
     localPos = bodyOrientInv * (globalPos - bodyPos);
 }
-
-
-
-
-
-void _CDECL CustomJoint::newtonSubmitConstraint( const NewtonJoint* me, float timeStep, int threadIndex )
-{
-    CustomJoint* j = (CustomJoint*)NewtonJointGetUserData( me );
-
-    j->submitConstraint( (Ogre::Real)timeStep, threadIndex );
-}
-
-void _CDECL CustomJoint::newtonFeedbackCollector( const NewtonJoint* me, float timeStep, int threadIndex )
-{
-    CustomJoint* j = (CustomJoint*)NewtonJointGetUserData( me );
-
-    j->feedbackCollector( (Ogre::Real)timeStep, threadIndex );
-}
-
-
-void _CDECL CustomJoint::newtonGetInfo(const NewtonJoint *me, NewtonJointRecord *info)
-{
-    CustomJoint* j = (CustomJoint*)NewtonJointGetUserData( me );
-}
-
 
 Ogre::Quaternion CustomJoint::grammSchmidt( const Ogre::Vector3& pin ) const
 {
@@ -313,10 +285,6 @@ Ogre::Quaternion CustomJoint::grammSchmidt( const Ogre::Vector3& pin ) const
 
     return quat;
 }
-
-
-
-#endif
 
 }   // end NAMESPACE OgreNewt
 

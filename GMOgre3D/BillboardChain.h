@@ -69,7 +69,7 @@ GMFN double SetBillboardChainMaxChainElements(double bb_chain_ptr, double max)
    if (bb_chain == NULL)
       return FALSE;
 
-   bb_chain->setMaxChainElements(max);
+   bb_chain->setMaxChainElements((size_t)max);
 
    return TRUE;
 }
@@ -82,7 +82,7 @@ GMFN double SetBillboardChainNumberOfChains(double bb_chain_ptr, double num)
    if (bb_chain == NULL)
       return FALSE;
 
-   bb_chain->setNumberOfChains(num);
+   bb_chain->setNumberOfChains((size_t)num);
 
    return TRUE;
 }
@@ -121,7 +121,7 @@ GMFN double SetBillboardChainOtherTextureCoordRange(double bb_chain_ptr, double 
    if (bb_chain == NULL)
       return FALSE;
    
-   bb_chain->setOtherTextureCoordRange(start, end);
+   bb_chain->setOtherTextureCoordRange((Ogre::Real)start, (Ogre::Real)end);
 
    return TRUE;
 }
@@ -162,11 +162,11 @@ GMFN double AddBillboardChainChainElement(double bb_chain_ptr, double index, dou
    
    Ogre::BillboardChain::Element element;
    element.position = ConvertFromGMAxis(x, y, z);
-   element.width = width;
-   element.texCoord = tex_coord;
-   element.colour = Ogre::ColourValue(GetRedFromGMColor(clr), GetGreenFromGMColor(clr), GetBlueFromGMColor(clr), alpha);
+   element.width = (Ogre::Real)width;
+   element.texCoord = (Ogre::Real)tex_coord;
+   element.colour = Ogre::ColourValue(GetRedFromGMColor(clr), GetGreenFromGMColor(clr), GetBlueFromGMColor(clr), (float)alpha);
    
-   bb_chain->addChainElement(index, element);
+   bb_chain->addChainElement((size_t)index, element);
 
    return TRUE;
 }
@@ -179,7 +179,7 @@ GMFN double RemoveBillboardChainChainElement(double bb_chain_ptr, double index)
    if (bb_chain == NULL)
       return FALSE;
 
-   bb_chain->removeChainElement(index);
+   bb_chain->removeChainElement((size_t)index);
 
    return TRUE;
 }
@@ -194,11 +194,11 @@ GMFN double UpdateBillboardChainChainElement(double bb_chain_ptr, double index, 
    
    Ogre::BillboardChain::Element element;
    element.position = ConvertFromGMAxis(x, y, z);
-   element.width = width;
-   element.texCoord = tex_coord;
-   element.colour = Ogre::ColourValue(GetRedFromGMColor(clr), GetGreenFromGMColor(clr), GetBlueFromGMColor(clr), alpha);
+   element.width = (Ogre::Real)width;
+   element.texCoord = (Ogre::Real)tex_coord;
+   element.colour = Ogre::ColourValue(GetRedFromGMColor(clr), GetGreenFromGMColor(clr), GetBlueFromGMColor(clr), (float)alpha);
    
-   bb_chain->updateChainElement(index, elementindex, element);
+   bb_chain->updateChainElement((size_t)index, (size_t)elementindex, element);
 
    return TRUE;
 }
@@ -211,7 +211,7 @@ GMFN double ClearBillboardChainChain(double bb_chain_ptr, double index)
    if (bb_chain == NULL)
       return FALSE;
 
-   bb_chain->clearChain(index);
+   bb_chain->clearChain((size_t)index);
 
    return TRUE;
 }
@@ -301,7 +301,7 @@ GMFN double AttachBillboardChainToEntityBone2(double x, double y, double z, doub
    if (entity == NULL)
       return FALSE;
 
-   entity->attachObjectToBone(bb_chain_entity_bone_name, bb_chain, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree(pitch), Ogre::Degree(roll)), ConvertFromGMAxis(x, y, z));
+   entity->attachObjectToBone(bb_chain_entity_bone_name, bb_chain, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)), ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -348,6 +348,62 @@ GMFN double SetBillboardChainQueryFlags(double bb_chain_ptr, double flags)
    bb_chain->setQueryFlags((Ogre::uint)flags);
 
    return TRUE;
+}
+
+
+GMFN double SetBillboardChainLightFlags(double bb_chain_ptr, double flags)
+{
+   Ogre::BillboardChain *bb_chain = ConvertFromGMPointer<Ogre::BillboardChain*>(bb_chain_ptr);
+
+   if (bb_chain == NULL)
+      return FALSE;
+
+   bb_chain->setLightMask((Ogre::uint)flags);
+
+   return TRUE;
+}
+
+
+GMFN double SetBillboardChainVisibilityFlags(double bb_chain_ptr, double flags)
+{
+   Ogre::BillboardChain *bb_chain = ConvertFromGMPointer<Ogre::BillboardChain*>(bb_chain_ptr);
+
+   if (bb_chain == NULL)
+      return FALSE;
+
+   bb_chain->setVisibilityFlags((Ogre::uint)flags);
+
+   return TRUE;
+}
+
+
+GMFN double SetBillboardChainUserData(double bb_chain_ptr, char *key, double data)
+{
+   Ogre::BillboardChain *bb_chain = ConvertFromGMPointer<Ogre::BillboardChain*>(bb_chain_ptr);
+
+   if (bb_chain == NULL)
+      return FALSE;
+
+   if (key == NULL)
+      ((Ogre::MovableObject*)bb_chain)->getUserObjectBindings().setUserAny(Ogre::Any(data));
+   else
+      ((Ogre::MovableObject*)bb_chain)->getUserObjectBindings().setUserAny(key, Ogre::Any(data));
+
+   return TRUE;
+}
+
+
+GMFN double GetBillboardChainUserData(double bb_chain_ptr, char *key)
+{
+   Ogre::BillboardChain *bb_chain = ConvertFromGMPointer<Ogre::BillboardChain*>(bb_chain_ptr);
+
+   if (bb_chain == NULL)
+      return FALSE;
+
+   if (key == NULL)
+      return Ogre::any_cast<double>(((Ogre::MovableObject*)bb_chain)->getUserObjectBindings().getUserAny());
+   else
+      return Ogre::any_cast<double>(((Ogre::MovableObject*)bb_chain)->getUserObjectBindings().getUserAny(key));
 }
 
 #endif

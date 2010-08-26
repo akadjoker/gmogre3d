@@ -55,7 +55,7 @@ class ImpostorTexture;
 typedef enum ImpostorBlendMode {
 	ALPHA_REJECT_IMPOSTOR,
 	ALPHA_BLEND_IMPOSTOR
-};
+} ImpostorBlendMode;
 
 //-------------------------------------------------------------------------------------
 /**

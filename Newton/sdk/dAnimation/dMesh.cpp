@@ -9,16 +9,20 @@
 * freely
 */
 
+
 // dMesh.cpp: implementation of the dMesh class.
 //
 //////////////////////////////////////////////////////////////////////
 #include "dAnimationStdAfx.h"
-#include "dTree.h"
-#include "dCRC.h"
 #include "dMesh.h"
 #include "dBone.h"
 #include "dModel.h"
-#include "tinyxml.h"
+
+#ifdef D_LOAD_SAVE_XML
+#include <tinyxml.h>
+#endif
+
+dInitRtti(dMesh);
 
 //#define EXPORT_ASCI_FILE 
 
@@ -50,81 +54,22 @@ void dSubMesh::AllocIndexData (int indexCount)
 	if (m_indexes) {
 		free (m_indexes);
 	}
-//	m_indexes = (unsigned short *) malloc (m_indexCount * sizeof (unsigned short )); 
 	m_indexes = (unsigned *) malloc (m_indexCount * sizeof (unsigned)); 
 }
 
 
 
-
-
-dMesh::dWeightList::dWeightList(int vertexCount)
+dMesh::dMesh(const char* name)
+	:dList<dSubMesh>(), dClassInfo()
 {
-	m_rootBone = NULL;
-	m_bindingMatrices = NULL;
-	m_vertexWeight = (dVector*) malloc (vertexCount * sizeof (dVector));
-	m_boneWeightIndex = (dBoneWeightIndex*) malloc (vertexCount * sizeof (dBoneWeightIndex));
-	memset (m_vertexWeight, 0, vertexCount * sizeof (dVector));
-	memset (m_boneWeightIndex, 0, vertexCount * sizeof (dBoneWeightIndex));
-}
-
-dMesh::dWeightList::~dWeightList()
-{
-	free (m_boneWeightIndex);
-	free (m_vertexWeight);
-	if (m_bindingMatrices) {
-		free (m_bindingMatrices);
-	}
-}
-
-
-void dMesh::dWeightList::SetBindingPose(dMesh* mesh, const dModel& model)  
-{
-	int bonesCount;
-
-	bonesCount = 0;
-//	for (dModel::dSkeleton::dListNode* node = model.m_skeleton.GetFirst(); node; node = node->GetNext()) {
-	for (ModelComponentList<dList<dBone*> >::dListNode* list = model.m_skeleton.GetFirst(); list; list = list->GetNext()) {
-		for (dList<dBone*>::dListNode* node = list->GetInfo().m_data.GetFirst(); node; node = node->GetNext()) { 
-			for (dBone* bone = node->GetInfo()->GetFirst(); bone; bone = bone->GetNext()) {
-				bonesCount ++;
-			}
-		}
-	}
-
-	m_bonesCount = bonesCount;
-	m_rootBone = model.FindBone (mesh->m_boneID);
-	m_boneNodes = (const dBone**) malloc (bonesCount * sizeof (dBone*));
-	m_bindingMatrices = (dMatrix*) malloc (bonesCount * sizeof (dMatrix));
-
-//	for (dModel::dSkeleton::dListNode* node = model.m_skeleton.GetFirst(); node; node = node->GetNext()) {
-	for (ModelComponentList<dList<dBone*> >::dListNode* list = model.m_skeleton.GetFirst(); list; list = list->GetNext()) {
-		for (dList<dBone*>::dListNode* node = list->GetInfo().m_data.GetFirst(); node; node = node->GetNext()) { 
-			for (dBone* bone = node->GetInfo()->GetFirst(); bone; bone = bone->GetNext()) {
-				int boneID;
-				boneID = bone->GetBoneID();
-				m_boneNodes[boneID] = bone;
-				dMatrix matrix (bone->CalcGlobalMatrix ());
-				m_bindingMatrices[boneID] = matrix.Inverse();
-			}
-		}
-	}
-}
-
-
-
-dMesh::dMesh(dMesh::dMeshType type)
-	:dList<dSubMesh>()
-{
-	m_type = type;
+//	m_boneID = 0;
+	m_hasBone = 0;
 	m_boneID = 0;
 	m_vertexCount = 0;
 	m_uv = NULL;
 	m_vertex = NULL;
 	m_normal = NULL;
-	m_weighList = NULL;
-	m_name[0] = 0;
-
+	strcpy (m_name, name);
 }
 
 dMesh::~dMesh()
@@ -134,10 +79,17 @@ dMesh::~dMesh()
 		free (m_normal);
 		free (m_uv);
 	}
+}
 
-	if (m_weighList) {
-		delete m_weighList;
-	}
+void dMesh::GetName (char* nameOut) const
+{
+	strcpy (nameOut, m_name);
+}
+
+
+void dMesh::GetTextureName (const dSubMesh* subMesh, char* nameOut) const
+{
+	strcpy (nameOut, subMesh->m_textureName);
 }
 
 
@@ -149,22 +101,56 @@ void dMesh::AllocVertexData (int vertexCount)
 	m_normal = (dFloat*) malloc (3 * m_vertexCount * sizeof (dFloat)); 
 	m_uv = (dFloat*) malloc (2 * m_vertexCount * sizeof (dFloat)); 
 	memset (m_uv, 0, 2 * m_vertexCount * sizeof (dFloat));
-
-	if (m_type == D_SKIN_MESH) {
-		m_weighList = new dWeightList (vertexCount);
-	}
 }
 
-dMesh::dMeshType dMesh::GetType() const
-{
-	return m_type;
-}
 
 dSubMesh* dMesh::AddSubMesh()
 {
 	return &Append()->GetInfo();
 }
 
+
+void dMesh::CalculateAABB (dVector& minBox, dVector& maxBox) const
+{
+	minBox = dVector (1.0e10f, 1.0e10f, 1.0e10f, 0.0f);
+	maxBox = dVector (-1.0e10f, -1.0e10f, -1.0e10f, 0.0f);
+	for (int i = 0; i < m_vertexCount; i ++) {
+		minBox.m_x = (minBox.m_x < m_vertex[i * 3 + 0]) ? minBox.m_x : m_vertex[i * 3 + 0];
+		maxBox.m_x = (maxBox.m_x > m_vertex[i * 3 + 0]) ? maxBox.m_x : m_vertex[i * 3 + 0];
+
+		minBox.m_y = (minBox.m_y < m_vertex[i * 3 + 1]) ? minBox.m_y : m_vertex[i * 3 + 1];
+		maxBox.m_y = (maxBox.m_y > m_vertex[i * 3 + 1]) ? maxBox.m_y : m_vertex[i * 3 + 1];
+
+		minBox.m_z = (minBox.m_z < m_vertex[i * 3 + 2]) ? minBox.m_z : m_vertex[i * 3 + 2];
+		maxBox.m_z = (maxBox.m_z > m_vertex[i * 3 + 2]) ? maxBox.m_z : m_vertex[i * 3 + 2];
+	}
+}
+
+void dMesh::ApplyGlobalScale (dFloat scale)
+{
+	dMatrix scaleMatrix (GetIdentityMatrix());
+	scaleMatrix[0][0] = scale;
+	scaleMatrix[1][1] = scale;
+	scaleMatrix[2][2] = scale;
+
+	scaleMatrix.TransformTriplex (m_vertex, 3 * sizeof (dFloat), m_vertex, 3 * sizeof (dFloat), m_vertexCount);
+}
+
+void dMesh::ApplyGlobalTransform (const dMatrix& transform)
+{
+	dMatrix rotation (transform);
+	rotation.m_posit = dVector (0.0f, 0.0f, 0.0f, 1.0f);
+
+	transform.TransformTriplex (m_vertex, 3 * sizeof (dFloat), m_vertex, 3 * sizeof (dFloat), m_vertexCount);
+	rotation.TransformTriplex (m_normal, 3 * sizeof (dFloat), m_normal, 3 * sizeof (dFloat), m_vertexCount);
+}
+
+
+
+
+
+
+#ifdef D_LOAD_SAVE_XML
 
 TiXmlElement* dMesh::ConvertToXMLNode () const
 {
@@ -176,7 +162,7 @@ TiXmlElement* dMesh::ConvertToXMLNode () const
 
 	geometry = new TiXmlElement( "mesh" );
 
-	geometry->SetAttribute("type", (GetType() == D_STATIC_MESH) ? "static" : "skinMesh");
+//	geometry->SetAttribute("type", (GetType() == D_STATIC_MESH) ? "static" : "skinMesh");
 	geometry->SetAttribute("name", m_name);
 	geometry->SetAttribute ("boneID", m_boneID);
 
@@ -325,7 +311,10 @@ TiXmlElement* dMesh::ConvertToXMLNode () const
 		delete[] pointList;
 		delete[] indexList;
 
-		if (GetType() == D_SKIN_MESH) {
+//		if (GetType() == D_SKIN_MESH) {
+		if (m_modifier) {
+			_ASSERTE (0);
+/*
 			int index;
 			char* buffer;
 			int* indexArray;
@@ -403,72 +392,16 @@ TiXmlElement* dMesh::ConvertToXMLNode () const
 				delete[] floatArray;
 				delete[] buffer;
 			}
+*/
 		}
 	}
 
 	return geometry;
-
 }
 
 
-void dMesh::Save(const char* fileName, const dList<dMesh*>& list)
-{
-	TiXmlText* header;
-	TiXmlElement *root;
-	
-	TiXmlDeclaration* decl;
 
-	TiXmlDocument out (fileName);
-	decl = new TiXmlDeclaration( "1.0", "", "" );
-	out.LinkEndChild( decl );
-
-	root = new TiXmlElement( "root" );
-	out.LinkEndChild(root);
-
-	header = new TiXmlText (XML_HEADER);
-	root->LinkEndChild(header);
-	for (dList<dMesh*>::dListNode* node = list.GetFirst(); node; node = node->GetNext()) {
-		TiXmlElement *geometry;
-		geometry = node->GetInfo()->ConvertToXMLNode();
-		root->LinkEndChild(geometry);
-	}
-	out.SaveFile (fileName);
-
-#ifdef EXPORT_ASCI_FILE 
-	char* ptr;
-	char name[1024];
-	FILE *file;
-	sprintf (name, "%s", fileName);
-	ptr = strrchr (name, '.');
-	ptr[0] = 0;
-	strcat (name, ".dat");
-	file = fopen (name, "wb");
-
-	dMesh* mesh = list.GetFirst()->GetInfo();
-	fprintf (file, "vertexCount %d\n", mesh->m_vertexCount);
-	for (int i = 0; i < mesh->m_vertexCount; i ++) 
-	{
-		fprintf (file, "%f %f %f ", mesh->m_vertex[i * 3], mesh->m_vertex[i * 3 + 1], mesh->m_vertex[i * 3 + 2]);
-		fprintf (file, "%f %f %f ", mesh->m_normal[i * 3], mesh->m_normal[i * 3 + 1], mesh->m_normal[i * 3 + 2]);
-		fprintf (file, "%f %f\n", mesh->m_uv[i * 2], mesh->m_uv[i * 2 + 1]);
-	}
-
-	fprintf (file, "subMeshCount %d\n", mesh->GetCount());
-	for (dList<dSubMesh>::dListNode* node = mesh->GetFirst(); node; node = node->GetNext()) {
-		fprintf (file, "textureName %s\n", node->GetInfo().m_textureName);
-		fprintf (file, "indexCount %d\n", node->GetInfo().m_indexCount);
-		for (int i = 0; i < node->GetInfo().m_indexCount; i ++) {
-			fprintf (file, "%d ", node->GetInfo().m_indexes[i]);
-		}
-		fprintf (file, "\n");
-	}
-
-	fclose (file);
-#endif
-
-}
-
-void dMesh::Load(const char* fileName, dList<dMesh*>& list, dLoaderContext& context)
+void dMesh::LoadXML(const char* fileName, dList<dMesh*>& list, dLoaderContext& context)
 {
 	dBone* rootBone;
 	const TiXmlElement* root;
@@ -483,8 +416,9 @@ void dMesh::Load(const char* fileName, dList<dMesh*>& list, dLoaderContext& cont
 			dMesh* mesh;
 			
 			mesh = NULL;
+			_ASSERTE (0);
 			type = meshNode->Attribute ("type");
-			mesh = context.CreateMesh (strcmp (type, "static") ? D_SKIN_MESH : D_STATIC_MESH);
+//			mesh = context.CreateMesh (strcmp (type, "static") ? D_SKIN_MESH : D_STATIC_MESH);
 
 			meshNode->Attribute ("boneID", &mesh->m_boneID);
 			strcpy (mesh->m_name, meshNode->Attribute ("name"));
@@ -573,6 +507,8 @@ void dMesh::Load(const char* fileName, dList<dMesh*>& list, dLoaderContext& cont
 				free (data);
 			}
 
+			_ASSERTE (0);
+/*
 			if (mesh->GetType() == dMesh::D_SKIN_MESH) {
 				int weightCount;
 				int* boneIndex;
@@ -582,7 +518,7 @@ void dMesh::Load(const char* fileName, dList<dMesh*>& list, dLoaderContext& cont
 				const TiXmlElement* vertexs;
 				const TiXmlElement* weights;
 				const TiXmlElement* weightsMap;
-				dMesh::dWeightList::dBoneWeightIndex* boneIndexWeight;
+				dMesh::dSkinModifier::dBoneWeightIndex* boneIndexWeight;
 				dVector*  weightsPtr;
 
 				weightsPtr = mesh->m_weighList->m_vertexWeight;
@@ -622,6 +558,7 @@ void dMesh::Load(const char* fileName, dList<dMesh*>& list, dLoaderContext& cont
 				free (vertexIndex);
 				free (boneIndex);
 			}
+*/
 
 			// add the triangles to the mesh 
 			const TiXmlElement* segments;
@@ -670,20 +607,61 @@ void dMesh::Load(const char* fileName, dList<dMesh*>& list, dLoaderContext& cont
 	}
 }
 
-void dMesh::CalculateAABB (dVector& minBox, dVector& maxBox) const
+void dMesh::SaveXML(const char* fileName, const dList<dMesh*>& list)
 {
-	minBox = dVector (1.0e10f, 1.0e10f, 1.0e10f, 0.0f);
-	maxBox = dVector (-1.0e10f, -1.0e10f, -1.0e10f, 0.0f);
-	for (int i = 0; i < m_vertexCount; i ++) {
-		minBox.m_x = (minBox.m_x < m_vertex[i * 3 + 0]) ? minBox.m_x : m_vertex[i * 3 + 0];
-		maxBox.m_x = (maxBox.m_x > m_vertex[i * 3 + 0]) ? maxBox.m_x : m_vertex[i * 3 + 0];
-																						 	
-		minBox.m_y = (minBox.m_y < m_vertex[i * 3 + 1]) ? minBox.m_y : m_vertex[i * 3 + 1];
-		maxBox.m_y = (maxBox.m_y > m_vertex[i * 3 + 1]) ? maxBox.m_y : m_vertex[i * 3 + 1];
-																						 	
-		minBox.m_z = (minBox.m_z < m_vertex[i * 3 + 2]) ? minBox.m_z : m_vertex[i * 3 + 2];
-		maxBox.m_z = (maxBox.m_z > m_vertex[i * 3 + 2]) ? maxBox.m_z : m_vertex[i * 3 + 2];
+	TiXmlText* header;
+	TiXmlElement *root;
+
+	TiXmlDeclaration* decl;
+
+	TiXmlDocument out (fileName);
+	decl = new TiXmlDeclaration( "1.0", "", "" );
+	out.LinkEndChild( decl );
+
+	root = new TiXmlElement( "root" );
+	out.LinkEndChild(root);
+
+	header = new TiXmlText (XML_HEADER);
+	root->LinkEndChild(header);
+	for (dList<dMesh*>::dListNode* node = list.GetFirst(); node; node = node->GetNext()) {
+		TiXmlElement *geometry;
+		geometry = node->GetInfo()->ConvertToXMLNode();
+		root->LinkEndChild(geometry);
 	}
+	out.SaveFile (fileName);
+
+#ifdef EXPORT_ASCI_FILE 
+	char* ptr;
+	char name[1024];
+	FILE *file;
+	sprintf (name, "%s", fileName);
+	ptr = strrchr (name, '.');
+	ptr[0] = 0;
+	strcat (name, ".dat");
+	file = fopen (name, "wb");
+
+	dMesh* mesh = list.GetFirst()->GetInfo();
+	fprintf (file, "vertexCount %d\n", mesh->m_vertexCount);
+	for (int i = 0; i < mesh->m_vertexCount; i ++) 
+	{
+		fprintf (file, "%f %f %f ", mesh->m_vertex[i * 3], mesh->m_vertex[i * 3 + 1], mesh->m_vertex[i * 3 + 2]);
+		fprintf (file, "%f %f %f ", mesh->m_normal[i * 3], mesh->m_normal[i * 3 + 1], mesh->m_normal[i * 3 + 2]);
+		fprintf (file, "%f %f\n", mesh->m_uv[i * 2], mesh->m_uv[i * 2 + 1]);
+	}
+
+	fprintf (file, "subMeshCount %d\n", mesh->GetCount());
+	for (dList<dSubMesh>::dListNode* node = mesh->GetFirst(); node; node = node->GetNext()) {
+		fprintf (file, "textureName %s\n", node->GetInfo().m_textureName);
+		fprintf (file, "indexCount %d\n", node->GetInfo().m_indexCount);
+		for (int i = 0; i < node->GetInfo().m_indexCount; i ++) {
+			fprintf (file, "%d ", node->GetInfo().m_indexes[i]);
+		}
+		fprintf (file, "\n");
+	}
+
+	fclose (file);
+#endif
 
 }
 
+#endif

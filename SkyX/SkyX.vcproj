@@ -286,6 +286,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
+				FavorSizeOrSpeed="1"
 				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="..\OgreMain\Include;.\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;HYDRAX_EXPORTS;SKYX_LIB;OGRE_STATIC_LIB"

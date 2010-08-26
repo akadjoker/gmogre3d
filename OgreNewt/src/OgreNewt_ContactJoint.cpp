@@ -66,8 +66,7 @@ Ogre::Vector3 Contact::getForce() const
 
 void Contact::remove()
 {
-    if (m_parent != NULL && m_contact != NULL)
-        NewtonContactJointRemoveContact(m_parent->_getNewtonContactJoint(), m_contact);
+    NewtonContactJointRemoveContact(m_parent->_getNewtonContactJoint(), m_contact);
     m_parent = NULL;
     m_material = NULL;
     m_contact = NULL;

@@ -11,11 +11,7 @@
 
 #ifndef _dPoseGenerator_
 #define _dPoseGenerator_
-
-#include <dList.h>
-#include <dVector.h>
-#include <dQuaternion.h>
-#include <dRefCounter.h>
+#include <dClassInfo.h>
 
 class dKeyFrames;
 class dAnimationClip;
@@ -30,7 +26,7 @@ class dPoseTransform
     dKeyFrames* m_source;
 };
 
-class dPoseGenerator: public dList<dPoseTransform>, virtual public dRefCounter
+class dPoseGenerator: public dList<dPoseTransform>, virtual public dClassInfo
 {
     public:
     dPoseGenerator(dAnimationClip* clip);
@@ -44,6 +40,8 @@ class dPoseGenerator: public dList<dPoseTransform>, virtual public dRefCounter
     ~dPoseGenerator(void);
 
     dAnimationClip* m_clip;
+
+	dAddRtti(dClassInfo);
     friend class dPoseGeneratorBind;
 };
 

@@ -14,12 +14,7 @@
 #define _D_MESH_H_
 
 #include <dAnimationStdAfx.h>
-#include <dList.h>
-#include <dModel.h>
-#include <dVector.h>
-#include <dBaseHierarchy.h>
-#include <dMathDefines.h>
-#include <dRefCounter.h>
+#include <dClassInfo.h>
 
 class TiXmlElement;
 class dModel;
@@ -33,7 +28,6 @@ class dSubMesh
 
 	void AllocIndexData (int indexCount);
 	int m_indexCount;
-//	unsigned short *m_indexes;
 	unsigned *m_indexes;
 	unsigned m_textureHandle;
 
@@ -41,65 +35,101 @@ class dSubMesh
 	dVector m_ambient;
 	dVector m_diffuse;
 	dVector m_specular;
-	char m_textureName[64];
+	char m_textureName[D_NAME_STRING_LENGTH];
 };
 
 
-class dMesh: public dList<dSubMesh>, virtual public dRefCounter  
+class dMesh: public dList<dSubMesh>, virtual public dClassInfo  
 {
 	public:
-	enum dMeshType
-	{
-		D_STATIC_MESH,
-		D_SKIN_MESH,
-	};
-
-	class dWeightList
-	{
-		public: 
-		struct dBoneWeightIndex
-		{
-			int m_index[4];
-		};
-
-		dWeightList(int vertexCoiunt);
-		~dWeightList();
-		void SetBindingPose(dMesh* mesh, const dModel& model); 
-
-		int m_bonesCount;
-		const dBone* m_rootBone;
-		const dBone** m_boneNodes;
-		dVector* m_vertexWeight;
-		dBoneWeightIndex* m_boneWeightIndex;
-		dMatrix* m_bindingMatrices;
-	};
-
-	dMesh(dMeshType type);
+	dMesh(const char* name);
 
 	void AllocVertexData (int vertexCount);
-	dMeshType GetType() const;
-
 	void CalculateAABB (dVector& min, dVector& max) const;
 
-	static void Load(const char* fileName, dList<dMesh*>& list, dLoaderContext& context);
-	static void Save(const char* fileName, const dList<dMesh*>& list);
-
+#ifdef D_LOAD_SAVE_XML
+	static void LoadXML(const char* fileName, dList<dMesh*>& list, dLoaderContext& context);
+	static void SaveXML(const char* fileName, const dList<dMesh*>& list);
 	TiXmlElement* ConvertToXMLNode () const;
+#endif
+
 	dSubMesh* AddSubMesh();
 
+	virtual void GetName (char* nameOut) const;
+	virtual void GetTextureName (const dSubMesh* subMesh, char* nameOut) const;
+
+	virtual void ApplyGlobalScale (dFloat scale);
+	virtual void ApplyGlobalTransform (const dMatrix& transform);
+
 	protected:
-	~dMesh();
+	virtual ~dMesh();
+
+	dAddRtti(dClassInfo);
 
 	public:
-	dMeshType m_type;
+	int m_hasBone;
 	int m_boneID;
 	int m_vertexCount;
 	dFloat *m_uv;
 	dFloat *m_vertex;
 	dFloat *m_normal;
-	dWeightList* m_weighList;
-
 	char m_name[D_NAME_STRING_LENGTH];
+};
+
+
+class dMeshInstance
+{
+	public:
+	class dModifier
+	{
+		public:
+		dModifier() {};
+		virtual ~dModifier() {}
+		virtual dModifier* CreateCopy (const dMeshInstance& instance, const dModel& model) const {return NULL;}
+
+		virtual void ApplyGlobalScale(dFloat scale) {}
+		virtual void ApplyGlobalTransform (const dMatrix& transform) {}
+	};
+
+	dMeshInstance (dMesh* mesh)
+		: m_boneID (0), m_mesh (mesh),m_modifier(NULL)
+	{
+		m_mesh->AddRef();
+	}
+
+	dMeshInstance (const dMeshInstance& meshIntansce)
+		: m_boneID (0), m_mesh (meshIntansce.m_mesh),m_modifier(NULL)
+	{
+		m_mesh->AddRef();
+	}
+
+	~dMeshInstance ()
+	{
+		m_mesh->Release();
+		if (m_modifier) {
+			delete m_modifier;
+		}
+	}
+
+	void SetModifier(dModifier* modifier)
+	{
+		m_modifier = modifier;
+	}
+
+	dModifier* GetModifier() const
+	{
+		return m_modifier;
+	}
+
+	bool IsIntance () const
+	{
+		return (m_boneID != m_mesh->m_boneID);
+	}
+
+
+	int m_boneID;
+	dMesh* m_mesh;
+	dModifier* m_modifier;
 };
 
 

@@ -38,7 +38,7 @@ GMFN double CreateAnimationNodeTrackNodeKeyFrame(double anim_node_ptr, double ti
    Ogre::TransformKeyFrame *key_frm = NULL;
    
    TRY
-      key_frm = node_anim->createNodeKeyFrame(time);
+      key_frm = node_anim->createNodeKeyFrame((Ogre::Real)time);
       SetTransformKeyFrameRotation(ConvertToGMPointer(key_frm), 0, 0, 0);
    CATCH("CreateAnimationNodeTrackNodeKeyFrame")
 
@@ -56,7 +56,7 @@ GMFN double CreateAnimationNodeTrackKeyFrame(double anim_node_ptr, double time)
    Ogre::KeyFrame *key_frm = NULL;
    
    TRY
-      key_frm = node_anim->createKeyFrame(time);
+      key_frm = node_anim->createKeyFrame((Ogre::Real)time);
    CATCH("CreateAnimationNodeTrackKeyFrame")
 
    return ConvertToGMPointer(key_frm);
@@ -70,7 +70,7 @@ GMFN double RemoveAnimationNodeTrackKeyFrame(double anim_node_ptr, double index)
    if (node_anim == NULL)
       return FALSE;
 
-   node_anim->removeKeyFrame(index);
+   node_anim->removeKeyFrame((unsigned short)index);
 
    return TRUE;
 }
@@ -107,7 +107,7 @@ GMFN double GetAnimationNodeNodeTrackKeyFrame(double anim_node_ptr, double index
    if (node_anim == NULL)
       return FALSE;
 
-   return ConvertToGMPointer(node_anim->getNodeKeyFrame(index));
+   return ConvertToGMPointer(node_anim->getNodeKeyFrame((unsigned short)index));
 }
 
 
@@ -118,8 +118,8 @@ GMFN double AcquireAnimationNodeTrackInterpolatedKeyFrame(double anim_node_ptr, 
    if (node_anim == NULL)
       return FALSE;
 
-   Ogre::KeyFrame *kf = new Ogre::KeyFrame(0, 0);
-   node_anim->getInterpolatedKeyFrame(index, kf);
+   Ogre::KeyFrame *kf = OGRE_NEW Ogre::KeyFrame(0, 0);
+   node_anim->getInterpolatedKeyFrame((Ogre::Real)index, kf);
 
    return ConvertToGMPointer(kf);
 }

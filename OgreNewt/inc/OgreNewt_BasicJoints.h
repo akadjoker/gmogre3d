@@ -92,13 +92,53 @@ namespace OgreNewt
 		void setLimits(Ogre::Radian minAngle, Ogre::Radian maxAngle);
 
 		//! get the relative joint angle around the hinge pin.
-		Ogre::Real getJointAngle () const;
+		Ogre::Radian getJointAngle () const;
 
 		//! get the relative joint angle around the hinge pin.
-		Ogre::Real getJointAngulatVelocity () const;
+		Ogre::Radian getJointAngularVelocity () const;
 
 		//! get the joint pin in global space
 		Ogre::Vector3 getJointPin () const;
+
+		//! sets desired rotational velocity of the joint
+		void setDesiredOmega(Ogre::Radian omega, Ogre::Real strength = 0.5f);
+
+		//! set desired angle and optionally minimum and maximum friction
+		void setDesiredAngle(Ogre::Radian angle, Ogre::Real minFriction = 0, Ogre::Real maxFriction = 0);
+
+		//! sets hinge torque
+		/*!
+			torque can be applied at the same time as other constraints (omega/angle/brake)
+			\param torque torque to apply
+		*/
+		void setTorque(Ogre::Real torque);
+
+		//! apply hinge brake for one frame.
+		//   0: brake with infinite force
+		// > 0: brake with limited force
+		void setBrake(Ogre::Real maxForce = 0);
+
+		//! clears the motor constraints
+		void clearConstraints() { m_constraintType = CONSTRAINT_NONE; m_torqueOn = false; }
+
+		virtual void submitConstraint(Ogre::Real timestep, int threadindex);
+
+	protected:
+		enum ConstraintType { CONSTRAINT_NONE, CONSTRAINT_OMEGA, CONSTRAINT_ANGLE, CONSTRAINT_BRAKE };
+
+		ConstraintType m_constraintType;
+		ConstraintType m_lastConstraintType;
+
+		Ogre::Radian m_desiredOmega;
+		Ogre::Radian m_desiredAngle;
+
+		Ogre::Real m_motorStrength;
+		Ogre::Real m_motorTorque;
+		Ogre::Real m_motorMinFriction;
+		Ogre::Real m_motorMaxFriction;
+		Ogre::Real m_brakeMaxForce;
+		
+		bool m_torqueOn;
 	};
 
 
@@ -129,6 +169,37 @@ namespace OgreNewt
 		void setLimis(Ogre::Real minStopDist, Ogre::Real maxStopDist);
 	};
 
+
+	//! UpVector joint.
+	/*!
+	simple upvector joint.  upvectors remove all rotation except for a single pin.  useful for character controllers, etc.
+	*/
+	class _OgreNewtExport UpVector : public Joint
+	{
+	public:
+		//! constructor
+		/*
+		\param world pointer to the OgreNewt::World.
+		\param body pointer to the body to apply the upvector to.
+		\param pin direction of the upvector in global space.
+		*/
+		UpVector( const Body* body, const Ogre::Vector3& pin );
+
+		//! destructor
+		~UpVector();
+
+		//! set the pin direction.
+		/*
+		by calling this function in realtime, you can effectively "animate" the pin.
+		*/
+		void setPin( const Ogre::Vector3& pin );
+
+		//! get the current pin direction.
+		const Ogre::Vector3& getPin() const;
+
+	private:
+		Ogre::Vector3 m_pin;
+	};
 
 #if 0
 	//! this class represents a Universal joint.

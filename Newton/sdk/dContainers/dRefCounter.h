@@ -9,7 +9,10 @@
 * freely
 */
 
-#pragma once
+
+#ifndef __DREF_COUNTER_H__
+#define __DREF_COUNTER_H__
+
 
 class dRefCounter
 {
@@ -26,3 +29,4 @@ class dRefCounter
 	int m_refCount;
 };
 
+#endif

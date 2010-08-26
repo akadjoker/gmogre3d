@@ -4,26 +4,25 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 /***************************************************************************
@@ -114,7 +113,7 @@ namespace Ogre
 
         if ( mOptions->maxGeoMipMapLevel != 0 )
         {
-            int i = ( int ) 1 << ( mOptions->maxGeoMipMapLevel - 1 ) ;
+            unsigned int i = ( int ) 1 << ( mOptions->maxGeoMipMapLevel - 1 ) ;
 
             if ( ( i + 1 ) > mOptions->tileSize )
             {
@@ -345,7 +344,7 @@ namespace Ogre
 
         mRenderLevel = -1;
 
-        for ( int i = 0; i < mOptions->maxGeoMipMapLevel; i++ )
+        for ( unsigned int i = 0; i < mOptions->maxGeoMipMapLevel; i++ )
         {
             if ( mMinLevelDistSqr[ i ] > L )
             {
@@ -462,13 +461,13 @@ namespace Ogre
 
         int i, j;
 
-        for ( int level = 1; level < mOptions->maxGeoMipMapLevel; level++ )
+        for ( unsigned int level = 1; level < mOptions->maxGeoMipMapLevel; level++ )
         {
             mMinLevelDistSqr[ level ] = 0;
 
             int step = 1 << level;
             // The step of the next higher LOD
-            int higherstep = step >> 1;
+//            int higherstep = step >> 1;
 
             float* pDeltas = 0;
             if (mOptions->lodMorph)
@@ -480,9 +479,9 @@ namespace Ogre
                     mDeltaBuffers[level - 1]->lock(HardwareBuffer::HBL_NORMAL));
             }
 
-            for ( j = 0; j < mOptions->tileSize - step; j += step )
+            for ( j = 0; j < (int) mOptions->tileSize - step; j += step )
             {
-                for ( i = 0; i < mOptions->tileSize - step; i += step )
+                for ( i = 0; i < (int) mOptions->tileSize - step; i += step )
                 {
                     /* Form planes relating to the lower detail tris to be produced
                     For tri lists and even tri strip rows, they are this shape:
@@ -515,15 +514,15 @@ namespace Ogre
                     }
 
                     // include the bottommost row of vertices if this is the last row
-                    int zubound = (j == (mOptions->tileSize - step)? step : step - 1);
+                    int zubound = (j == ((int) mOptions->tileSize - step)? step : step - 1);
                     for ( int z = 0; z <= zubound; z++ )
                     {
                         // include the rightmost col of vertices if this is the last col
-                        int xubound = (i == (mOptions->tileSize - step)? step : step - 1);
+                        int xubound = (i == ((int) mOptions->tileSize - step)? step : step - 1);
                         for ( int x = 0; x <= xubound; x++ )
                         {
-                            int fulldetailx = i + x;
-                            int fulldetailz = j + z;
+                            unsigned int fulldetailx = i + x;
+                            unsigned int fulldetailz = j + z;
                             if ( fulldetailx % step == 0 && 
                                 fulldetailz % step == 0 )
                             {
@@ -594,7 +593,7 @@ namespace Ogre
 
 
         // Post validate the whole set
-        for ( i = 1; i < mOptions->maxGeoMipMapLevel; i++ )
+        for ( i = 1; i < (int) mOptions->maxGeoMipMapLevel; i++ )
         {
 
             // Make sure no LOD transition within the tile
@@ -615,10 +614,10 @@ namespace Ogre
 
         // Now reverse traverse the list setting the 'next level down'
         Real lastDist = -1;
-        int lastIndex = 0;
+        unsigned int lastIndex = 0;
         for (i = mOptions->maxGeoMipMapLevel - 1; i >= 0; --i)
         {
-            if (i == mOptions->maxGeoMipMapLevel - 1)
+            if (i == (int) mOptions->maxGeoMipMapLevel - 1)
             {
                 // Last one is always 0
                 lastIndex = i;
@@ -735,8 +734,8 @@ namespace Ogre
         float x_pt = x_pct * ( float ) ( mOptions->tileSize - 1 );
         float z_pt = z_pct * ( float ) ( mOptions->tileSize - 1 );
 
-        int x_index = ( int ) x_pt;
-        int z_index = ( int ) z_pt;
+        uint x_index = ( int ) x_pt;
+        uint z_index = ( int ) z_pt;
 
         // If we got to the far right / bottom edge, move one back
         if (x_index == mOptions->tileSize - 1)
@@ -936,7 +935,7 @@ namespace Ogre
         if (mLightListDirty)
         {
             getParentSceneNode()->getCreator()->_populateLightList(
-                mCenter, this->getBoundingRadius(), mLightList);
+                mCenter, this->getBoundingRadius(), mLightList, getLightMask());
             mLightListDirty = false;
         }
         return mLightList;
@@ -1006,7 +1005,7 @@ namespace Ogre
     IndexData* TerrainRenderable::generateTriStripIndexes(unsigned int stitchFlags)
     {
         // The step used for the current level
-        int step = 1 << mRenderLevel;
+        uint step = 1 << mRenderLevel;
         // The step used for the lower level
         int lowstep = 1 << (mRenderLevel + 1);
 
@@ -1034,9 +1033,9 @@ namespace Ogre
             HardwareBuffer::HBL_DISCARD));
 
         // Stripified mesh
-        for ( int j = 0; j < mOptions->tileSize - 1; j += step )
+        for ( uint j = 0; j < mOptions->tileSize - 1; j += step )
         {
-            int i;
+            uint i;
             // Forward strip
             // We just do the |/ here, final | done after
             for ( i = 0; i < mOptions->tileSize - 1; i += step )
@@ -1226,9 +1225,9 @@ namespace Ogre
             HardwareBuffer::HBL_DISCARD));
 
         // Do the core vertices, minus stitches
-        for ( int j = north; j < mOptions->tileSize - 1 - south; j += step )
+        for ( uint j = north; j < mOptions->tileSize - 1 - south; j += step )
         {
-            for ( int i = west; i < mOptions->tileSize - 1 - east; i += step )
+            for ( uint i = west; i < mOptions->tileSize - 1 - east; i += step )
             {
                 //triangles
                 *pIdx++ = _index( i, j ); numIndexes++;
@@ -1353,8 +1352,8 @@ namespace Ogre
 
         // Work out the starting points and sign of increments
         // We always work the strip clockwise
-        int startx, starty, endx, rowstep;
-        bool horizontal;
+        int startx = 0, starty = 0, endx = 0, rowstep = 0;
+        bool horizontal = false;
         switch(neighbor)
         {
         case NORTH:
@@ -1389,6 +1388,8 @@ namespace Ogre
             superstep = -superstep;
             halfsuperstep = -halfsuperstep;
             horizontal = false;
+            break;
+        case HERE:
             break;
         };
 

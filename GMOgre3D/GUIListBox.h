@@ -55,7 +55,7 @@ GMFN double AddGUIListBoxItem(double gui_list_box_ptr, char *text, double id)
    if (list_box == NULL)
       return FALSE;
 
-   CEGUI::ListboxTextItem *item = new CEGUI::ListboxTextItem(text, id, 0, false, true);
+   CEGUI::ListboxTextItem *item = OGRE_NEW CEGUI::ListboxTextItem(text, id, 0, false, true);
    
    list_box->addItem(item);
 
@@ -115,7 +115,7 @@ GMFN double GetGUIListBoxIndexFromID(double gui_list_box_ptr, double id)
    if (list_box == NULL)
       return -1;
 
-   for (int x = 0; x < list_box->getItemCount(); x++)
+   for (size_t x = 0; x < list_box->getItemCount(); x++)
    {
       CEGUI::ListboxItem *item = list_box->getListboxItemFromIndex(x);
 

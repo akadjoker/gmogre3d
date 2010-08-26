@@ -32,8 +32,20 @@ GMFN double CreatePlane(double normalx, double normalz, double normaly, double d
    Ogre::Plane *plane = NULL;
    
    TRY
-      plane = new Ogre::Plane(ConvertFromGMAxis(normalx, normaly, normalz), depth);
+      plane = OGRE_NEW Ogre::Plane(ConvertFromGMAxis(normalx, normaly, normalz), depth);
    CATCH("CreatePlane")
+
+   return ConvertToGMPointer(plane);
+}
+
+
+GMFN double CreateMovablePlane(double normalx, double normalz, double normaly, double depth)
+{
+   Ogre::Plane *plane = NULL;
+   
+   TRY
+      plane = OGRE_NEW Ogre::MovablePlane(ConvertFromGMAxis(normalx, normaly, normalz), depth);
+   CATCH("CreateMovablePlane")
 
    return ConvertToGMPointer(plane);
 }

@@ -36,8 +36,9 @@ unsigned long BatchPage::refCount = 0;
 unsigned long BatchPage::GUID = 0;
 
 
-void BatchPage::init(PagedGeometry *geom, const Any &data)
+void BatchPage::init(PagedGeometry *_geom, const Any &data)
 {
+	geom = _geom;
 	int datacast = data.isEmpty() ? 0 : Ogre::any_cast<int>(data);
 #ifdef _DEBUG
 	if ( datacast < 0)
@@ -145,16 +146,22 @@ void BatchPage::setFade(bool enabled, Real visibleDist, Real invisibleDist)
 		return;
 
 	//If fade status has changed...
-	if (fadeEnabled != enabled){
+	if (fadeEnabled != enabled)
+	{
 		fadeEnabled = enabled;
 
-// 		if (enabled) {
+ 		if (enabled)
+		{
 			//Transparent batches should render after impostors
-			batch->setRenderQueueGroup(RENDER_QUEUE_6);
-// 		} else {
-// 			//Opaque batches should render in the normal render queue
-// 			batch->setRenderQueueGroup(RENDER_QUEUE_MAIN);
-// 		}
+			if(geom)
+				batch->setRenderQueueGroup(geom->getRenderQueue());
+			else
+				batch->setRenderQueueGroup(RENDER_QUEUE_6);
+
+ 		} else {
+ 			//Opaque batches should render in the normal render queue
+ 			batch->setRenderQueueGroup(RENDER_QUEUE_MAIN);
+ 		}
 
 		this->visibleDist = visibleDist;
 		this->invisibleDist = invisibleDist;

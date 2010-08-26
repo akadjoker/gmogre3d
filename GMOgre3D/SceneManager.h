@@ -44,16 +44,16 @@ GMFN double CreateSceneManager(double type)
       if (mSceneMgr == NULL)
          mSceneMgr = scene_mgr;
 
-      GMFrameListener *fl = new GMFrameListener;
+      GMFrameListener *fl = OGRE_NEW GMFrameListener;
       mRoot->addFrameListener(fl);
       fl->Create2DManager(mSceneMgr);
       mSceneListener[scene_mgr] = fl;
 
-      GMSceneManagerListener *sml = new GMSceneManagerListener;
+      GMSceneManagerListener *sml = OGRE_NEW GMSceneManagerListener;
       scene_mgr->addListener(sml);
       mSceneManagerListener[scene_mgr] = sml;
 
-      MOC::CollisionTools *ct = new MOC::CollisionTools(scene_mgr);
+      MOC::CollisionTools *ct = OGRE_NEW MOC::CollisionTools(scene_mgr);
       mSceneCollisionMap[scene_mgr] = ct;
    CATCH("CreateSceneManager")
 
@@ -139,7 +139,7 @@ GMFN double SetVisibilityMask(double mask)
    if (mSceneMgr == NULL)
       return FALSE;
 
-   mSceneMgr->setVisibilityMask(mask);
+   mSceneMgr->setVisibilityMask((Ogre::uint32)mask);
 
    return TRUE;
 }
@@ -155,7 +155,7 @@ GMFN double SetShadowTextureCasterPreViewProjCallback(double func)
    if (sml == NULL)
       return false;
 
-   sml->SetShadowTextureCasterPreViewProjCallback(func);
+   sml->SetShadowTextureCasterPreViewProjCallback((int)func);
 
    return TRUE;
 }
@@ -171,7 +171,7 @@ GMFN double SetStartFrameCallback(double func)
    if (fl == NULL)
       return false;
 
-   fl->SetStartFrameCallback(func);
+   fl->SetStartFrameCallback((int)func);
 
    return TRUE;
 }
@@ -187,7 +187,7 @@ GMFN double SetFrameQueuedCallback(double func)
    if (fl == NULL)
       return false;
 
-   fl->SetFrameQueuedCallback(func);
+   fl->SetFrameQueuedCallback((int)func);
 
    return TRUE;
 }
@@ -203,7 +203,7 @@ GMFN double SetEndFrameCallback(double func)
    if (fl == NULL)
       return false;
 
-   fl->SetEndFrameCallback(func);
+   fl->SetEndFrameCallback((int)func);
 
    return TRUE;
 }
@@ -214,7 +214,7 @@ GMFN double EnableSkyBox(double enable, char *material_name, double distance, do
    if (mSceneMgr == NULL)
       return FALSE;
 
-   mSceneMgr->setSkyBox((enable != 0), material_name, distance, (drawlast == 0.0));
+   mSceneMgr->setSkyBox((enable != 0), material_name, (Ogre::Real)distance, (drawlast == 0.0));
 
    return TRUE;
 }
@@ -234,7 +234,7 @@ GMFN double EnableSkyDome2(double curvature, double tiling, double distance, dou
    if (mSceneMgr == NULL)
       return FALSE;
 
-   mSceneMgr->setSkyDome((scene_mgr_enable != 0), scene_mgr_mat_name, curvature, tiling, distance, (drawlast == 0.0));
+   mSceneMgr->setSkyDome((scene_mgr_enable != 0), scene_mgr_mat_name, (Ogre::Real)curvature, (Ogre::Real)tiling, (Ogre::Real)distance, (drawlast == 0.0));
 
    return TRUE;
 }
@@ -252,13 +252,13 @@ GMFN double EnableSkyPlane1(double enable, char *material_name)
 GMFN double EnableSkyPlane2(double scale, double tiling, double distance, double drawlast, double bow, double xsegments, double ysegments)
 {
    Ogre::Plane plane;
-   plane.d = distance;
+   plane.d = (Ogre::Real)distance;
    plane.normal = -Ogre::Vector3::UNIT_Y;
 
    if (mSceneMgr == NULL)
       return FALSE;
 
-   mSceneMgr->setSkyPlane((scene_mgr_enable != 0), plane, scene_mgr_mat_name, scale, tiling, (drawlast == 0.0), bow, xsegments, ysegments);
+   mSceneMgr->setSkyPlane((scene_mgr_enable != 0), plane, scene_mgr_mat_name, (Ogre::Real)scale, (Ogre::Real)tiling, (drawlast == 0.0), (Ogre::Real)bow, (int)xsegments, (int)ysegments);
 
    return TRUE;
 }
@@ -302,7 +302,7 @@ GMFN double SetShadowFarDistance(double distance)
    if (mSceneMgr == NULL)
       return FALSE;
 
-   mSceneMgr->setShadowFarDistance(distance);
+   mSceneMgr->setShadowFarDistance((Ogre::Real)distance);
 
    return TRUE;
 }
@@ -313,7 +313,7 @@ GMFN double SetShadowDirectionalLightExtrusionDistance(double distance)
    if (mSceneMgr == NULL)
       return FALSE;
 
-   mSceneMgr->setShadowDirectionalLightExtrusionDistance(distance);
+   mSceneMgr->setShadowDirectionalLightExtrusionDistance((Ogre::Real)distance);
 
    return TRUE;
 }
@@ -324,7 +324,7 @@ GMFN double SetShadowTextureCountPerLightType(double light_types, double count)
    if (mSceneMgr == NULL)
       return FALSE;
 
-   mSceneMgr->setShadowTextureCountPerLightType(static_cast<Ogre::Light::LightTypes>((int)light_types), count);
+   mSceneMgr->setShadowTextureCountPerLightType(static_cast<Ogre::Light::LightTypes>((int)light_types), (size_t)count);
 
    return TRUE;
 }
@@ -335,7 +335,7 @@ GMFN double SetShadowTextureSettings(double size, double count, double pixel_for
    if (mSceneMgr == NULL)
       return FALSE;
 
-   mSceneMgr->setShadowTextureSettings(size, count, static_cast<Ogre::PixelFormat>((int)pixel_format));
+   mSceneMgr->setShadowTextureSettings((unsigned short)size, (unsigned short)count, static_cast<Ogre::PixelFormat>((int)pixel_format));
 
    return TRUE;
 }
@@ -346,8 +346,8 @@ GMFN double SetShadowTextureFade(double fade_start, double fade_end)
    if (mSceneMgr == NULL)
       return FALSE;
 
-   mSceneMgr->setShadowTextureFadeStart(fade_start);
-   mSceneMgr->setShadowTextureFadeEnd(fade_end);
+   mSceneMgr->setShadowTextureFadeStart((Ogre::Real)fade_start);
+   mSceneMgr->setShadowTextureFadeEnd((Ogre::Real)fade_end);
 
    return TRUE;
 }
@@ -358,7 +358,7 @@ GMFN double SetShadowDirLightTextureOffset(double offset)
    if (mSceneMgr == NULL)
       return FALSE;
 
-   mSceneMgr->setShadowDirLightTextureOffset(offset);
+   mSceneMgr->setShadowDirLightTextureOffset((Ogre::Real)offset);
 
    return TRUE;
 }
@@ -369,7 +369,7 @@ GMFN char *GetShadowTexture(double shadow_index)
    if (mSceneMgr == NULL)
       return FALSE;
 
-   Ogre::TexturePtr tex = mSceneMgr->getShadowTexture(shadow_index);
+   Ogre::TexturePtr tex = mSceneMgr->getShadowTexture((size_t)shadow_index);
 
    return const_cast<char*>(tex->getName().c_str());
 }
@@ -462,7 +462,7 @@ GMFN double SetFog(double type, double color, double density, double start, doub
    if (mSceneMgr == NULL)
       return FALSE;
 
-   mSceneMgr->setFog(static_cast<Ogre::FogMode>((int)type), Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color)), density, start, end);
+   mSceneMgr->setFog(static_cast<Ogre::FogMode>((int)type), Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color)), (Ogre::Real)density, (Ogre::Real)start, (Ogre::Real)end);
 
    return TRUE;
 }

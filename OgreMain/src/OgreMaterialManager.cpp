@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -42,6 +41,9 @@ Torus Knot Software Ltd.
 #if OGRE_USE_NEW_COMPILERS == 1
 #  include "OgreScriptCompiler.h"
 #endif
+#include "OgreLodStrategyManager.h"
+#include "OgreLodStrategyManager.h"
+
 
 namespace Ogre {
 
@@ -57,7 +59,7 @@ namespace Ogre {
     }
 	String MaterialManager::DEFAULT_SCHEME_NAME = "Default";
     //-----------------------------------------------------------------------
-    MaterialManager::MaterialManager()
+    MaterialManager::MaterialManager() : OGRE_THREAD_POINTER_INIT(mSerializer)
     {
 	    mDefaultMinFilter = FO_LINEAR;
 	    mDefaultMagFilter = FO_LINEAR;
@@ -99,9 +101,8 @@ namespace Ogre {
 		ResourceGroupManager::getSingleton()._unregisterScriptLoader(this);
 
 		// delete primary thread instances directly, other threads will delete
-		// theirs automatically when the threads end (part of boost::thread_specific_ptr)
+		// theirs automatically when the threads end.
 		OGRE_THREAD_POINTER_DELETE(mSerializer);
-
     }
 	//-----------------------------------------------------------------------
 	Resource* MaterialManager::createImpl(const String& name, ResourceHandle handle,
@@ -117,6 +118,9 @@ namespace Ogre {
 		mDefaultSettings = create("DefaultSettings", ResourceGroupManager::INTERNAL_RESOURCE_GROUP_NAME);
         // Add a single technique and pass, non-programmable
         mDefaultSettings->createTechnique()->createPass();
+
+        // Set the default lod strategy
+        mDefaultSettings->setLodStrategy(LodStrategyManager::getSingleton().getDefaultStrategy());
 
 	    // Set up a lit base white material
 	    create("BaseWhite", ResourceGroupManager::INTERNAL_RESOURCE_GROUP_NAME);
@@ -135,14 +139,14 @@ namespace Ogre {
 #  if OGRE_THREAD_SUPPORT
 		// Delegate to serializer
 		// check we have an instance for this thread (should always have one for main thread)
-		if (!mSerializer.get())
+		if (!OGRE_THREAD_POINTER_GET(mSerializer))
 		{
 			// create a new instance for this thread - will get deleted when
 			// the thread dies
-			mSerializer.reset(OGRE_NEW MaterialSerializer());
+			OGRE_THREAD_POINTER_SET(OGRE_NEW MaterialSerializer());
 		}
 #  endif
-        mSerializer->parseScript(stream, groupName);
+        OGRE_THREAD_POINTER_GET(mSerializer)->parseScript(stream, groupName);
 #endif // OGRE_USE_NEW_COMPILERS
 
     }
@@ -261,26 +265,47 @@ namespace Ogre {
 		mActiveSchemeName = schemeName;
 	}
     //-----------------------------------------------------------------------
-	void MaterialManager::addListener(Listener* l)
+	void MaterialManager::addListener(Listener* l, const Ogre::String& schemeName)
 	{
-		mListenerList.push_back(l);
+		mListenerMap[schemeName].push_back(l);
 	}
 	//---------------------------------------------------------------------
-	void MaterialManager::removeListener(Listener* l)
+	void MaterialManager::removeListener(Listener* l, const Ogre::String& schemeName)
 	{
-		mListenerList.remove(l);
+		mListenerMap[schemeName].remove(l);
 	}
 	//---------------------------------------------------------------------
 	Technique* MaterialManager::_arbitrateMissingTechniqueForActiveScheme(
 		Material* mat, unsigned short lodIndex, const Renderable* rend)
 	{
-		for (ListenerList::iterator i = mListenerList.begin(); i != mListenerList.end(); ++i)
+		//First, check the scheme specific listeners
+		ListenerMap::iterator it = mListenerMap.find(mActiveSchemeName);
+		if (it != mListenerMap.end()) 
 		{
-			Technique* t = (*i)->handleSchemeNotFound(mActiveSchemeIndex, 
-				mActiveSchemeName, mat, lodIndex, rend);
-			if (t)
-				return t;
+			ListenerList& listenerList = it->second;
+			for (ListenerList::iterator i = listenerList.begin(); i != listenerList.end(); ++i)
+			{
+				Technique* t = (*i)->handleSchemeNotFound(mActiveSchemeIndex, 
+					mActiveSchemeName, mat, lodIndex, rend);
+				if (t)
+					return t;
+			}
 		}
+
+		//If no success, check generic listeners
+		it = mListenerMap.find(StringUtil::BLANK);
+		if (it != mListenerMap.end()) 
+		{
+			ListenerList& listenerList = it->second;
+			for (ListenerList::iterator i = listenerList.begin(); i != listenerList.end(); ++i)
+			{
+				Technique* t = (*i)->handleSchemeNotFound(mActiveSchemeIndex, 
+					mActiveSchemeName, mat, lodIndex, rend);
+				if (t)
+					return t;
+			}
+		}
+		
 
 		return 0;
 

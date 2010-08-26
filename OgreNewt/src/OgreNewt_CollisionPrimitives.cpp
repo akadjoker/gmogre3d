@@ -556,7 +556,7 @@ namespace OgreNewt
             // parse the individual nodes.
             Ogre::Quaternion rootOrient = Ogre::Quaternion::IDENTITY;
             Ogre::Vector3 rootPos = Ogre::Vector3::ZERO;
-            Ogre::Vector3 rootScale = Ogre::Vector3::UNIT_SCALE;
+            Ogre::Vector3 rootScale = startNode->getScale();;
 
             _parseNode( startNode, rootOrient, rootPos, rootScale, fw );
 
@@ -780,12 +780,50 @@ namespace OgreNewt
             delete []vertices;
         }
 
+		/*
+		HeightField::HeightField(const OgreNewt::World *world, int width, int height, int gridsDiagonals, unsigned short *elevationMap, char *attributeMap, Ogre::Real horizontalScale, Ogre::Real verticleScale, int shapeID) : OgreNewt::Collision (world)
+		{
+			m_col = NewtonCreateHeightFieldCollision(world->getNewtonWorld(),width,height,gridsDiagonals,elevationMap,attributeMap,float(horizontalScale),float(verticleScale),shapeID);
+		}
 
+		HeightField::HeightField(const OgreNewt::World *world, Ogre::Terrain *terrain, int shapeID) : OgreNewt::Collision (world)
+		{
+			int width = terrain->getSize();
+			int height = width;
+			int gridsDiagonals = 0;
 
+			char *attributes;
+			unsigned short *elevations;
+
+			float *hData = terrain->getHeightData();
+			float verticleScale = 65535 / (terrain->getMaxHeight() - terrain->getMinHeight());
+			Ogre::Real horizontalScale = terrain->getWorldSize() / (terrain->getSize() - 1);
+
+			elevations = (unsigned short*) malloc (width * height * sizeof (unsigned short));
+			attributes = (char*) malloc (width * height * sizeof (char));
+			memset (attributes, 1, width * height * sizeof (char));
+
+			//HeightData reversed and mirror on X axis
+			int x = 0;
+
+			for (int i = width * height - 1; i >= 0; i--)
+			{
+				elevations[i-width+(x*2)+1] = unsigned short(*(hData)*verticleScale);
+				hData++;
+				x++;
+				if (x == width) x = 0; 
+			}
+
+			createHeightFieldCollision(world, width, height, gridsDiagonals, elevations, attributes, horizontalScale, float(1 / verticleScale), shapeID);
+
+			free (elevations);
+			free (attributes);
+		}
+
+		void HeightField::createHeightFieldCollision(const OgreNewt::World *world, int width, int height, int gridsDiagonals, unsigned short *elevationMap, char *attributeMap, Ogre::Real horizontalScale, Ogre::Real verticleScale, int shapeID) 
+		{
+			m_col = NewtonCreateHeightFieldCollision(world->getNewtonWorld(), width, height, gridsDiagonals, elevationMap, attributeMap, float(horizontalScale), float(verticleScale), shapeID);
+		}
+		*/
     }   // end namespace CollisionPrimitives
-
 }   // end namespace OgreNewt
-
-
-
-

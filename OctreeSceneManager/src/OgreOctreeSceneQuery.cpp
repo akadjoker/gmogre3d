@@ -3,27 +3,26 @@
 This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
- 
-Copyright  2000-2005 The OGRE Team
-Also see acknowledgements in Readme.html
- 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
- 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
- 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
 
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+Copyright (c) 2000-2009 Torus Knot Software Ltd
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 /***************************************************************************
@@ -76,11 +75,11 @@ void OctreeIntersectionSceneQuery::execute(IntersectionSceneQueryListener* liste
 
 			MovableObject * e = it.getNext();
 
-			std::list < SceneNode * > list;
+			Ogre::list< SceneNode * >::type list;
 			//find the nodes that intersect the AAB
 			static_cast<OctreeSceneManager*>( mParentSceneMgr ) -> findNodesIn( e->getWorldBoundingBox(), list, 0 );
 			//grab all moveables from the node that intersect...
-			std::list < SceneNode * >::iterator nit = list.begin();
+			Ogre::list< SceneNode * >::type::iterator nit = list.begin();
 			while( nit != list.end() )
 			{
 				SceneNode::ObjectIterator oit = (*nit) -> getAttachedObjectIterator();
@@ -134,13 +133,13 @@ OctreeAxisAlignedBoxSceneQuery::~OctreeAxisAlignedBoxSceneQuery()
 /** Finds any entities that intersect the AAB for the query. */
 void OctreeAxisAlignedBoxSceneQuery::execute(SceneQueryListener* listener)
 {
-    std::list < SceneNode * > list;
+    list< SceneNode * >::type _list;
     //find the nodes that intersect the AAB
-    static_cast<OctreeSceneManager*>( mParentSceneMgr ) -> findNodesIn( mAABB, list, 0 );
+    static_cast<OctreeSceneManager*>( mParentSceneMgr ) -> findNodesIn( mAABB, _list, 0 );
 
     //grab all moveables from the node that intersect...
-    std::list < SceneNode * >::iterator it = list.begin();
-    while( it != list.end() )
+    list< SceneNode * >::type::iterator it = _list.begin();
+    while( it != _list.end() )
     {
         SceneNode::ObjectIterator oit = (*it) -> getAttachedObjectIterator();
         while( oit.hasMoreElements() )
@@ -185,13 +184,13 @@ OctreeRaySceneQuery::~OctreeRaySceneQuery()
 //---------------------------------------------------------------------
 void OctreeRaySceneQuery::execute(RaySceneQueryListener* listener)
 {
-    std::list < SceneNode * > list;
+    list< SceneNode * >::type _list;
     //find the nodes that intersect the AAB
-    static_cast<OctreeSceneManager*>( mParentSceneMgr ) -> findNodesIn( mRay, list, 0 );
+    static_cast<OctreeSceneManager*>( mParentSceneMgr ) -> findNodesIn( mRay, _list, 0 );
 
     //grab all moveables from the node that intersect...
-    std::list < SceneNode * >::iterator it = list.begin();
-    while( it != list.end() )
+    list< SceneNode * >::type::iterator it = _list.begin();
+    while( it != _list.end() )
     {
         SceneNode::ObjectIterator oit = (*it) -> getAttachedObjectIterator();
         while( oit.hasMoreElements() )
@@ -244,13 +243,13 @@ OctreeSphereSceneQuery::~OctreeSphereSceneQuery()
 //---------------------------------------------------------------------
 void OctreeSphereSceneQuery::execute(SceneQueryListener* listener)
 {
-    std::list < SceneNode * > list;
+    list< SceneNode * >::type _list;
     //find the nodes that intersect the AAB
-    static_cast<OctreeSceneManager*>( mParentSceneMgr ) -> findNodesIn( mSphere, list, 0 );
+    static_cast<OctreeSceneManager*>( mParentSceneMgr ) -> findNodesIn( mSphere, _list, 0 );
 
     //grab all moveables from the node that intersect...
-    std::list < SceneNode * >::iterator it = list.begin();
-    while( it != list.end() )
+    list< SceneNode * >::type::iterator it = _list.begin();
+    while( it != _list.end() )
     {
         SceneNode::ObjectIterator oit = (*it) -> getAttachedObjectIterator();
         while( oit.hasMoreElements() )
@@ -296,20 +295,20 @@ OctreePlaneBoundedVolumeListSceneQuery::~OctreePlaneBoundedVolumeListSceneQuery(
 //---------------------------------------------------------------------
 void OctreePlaneBoundedVolumeListSceneQuery::execute(SceneQueryListener* listener)
 {
-    std::set<SceneNode*> checkedSceneNodes;
+    set<SceneNode*>::type checkedSceneNodes;
 
     PlaneBoundedVolumeList::iterator pi, piend;
     piend = mVolumes.end();
     for (pi = mVolumes.begin(); pi != piend; ++pi)
     {
-        std::list < SceneNode * > list;
+        list< SceneNode * >::type _list;
         //find the nodes that intersect the AAB
-        static_cast<OctreeSceneManager*>( mParentSceneMgr ) -> findNodesIn( *pi, list, 0 );
+        static_cast<OctreeSceneManager*>( mParentSceneMgr ) -> findNodesIn( *pi, _list, 0 );
 
         //grab all moveables from the node that intersect...
-        std::list < SceneNode * >::iterator it, itend;
-        itend = list.end();
-        for (it = list.begin(); it != itend; ++it)
+        list< SceneNode * >::type::iterator it, itend;
+        itend = _list.end();
+        for (it = _list.begin(); it != itend; ++it)
         {
             // avoid double-check same scene node
             if (!checkedSceneNodes.insert(*it).second)

@@ -11,10 +11,8 @@
 
 #ifndef _dBonesToPoseBinding_
 #define _dBonesToPoseBinding_
+#include <dClassInfo.h>
 
-#include <dList.h>
-#include <dVector.h>
-#include <dRefCounter.h>
 
 class dAnimationClip;
 class dPoseGenerator;
@@ -29,7 +27,7 @@ class dBindFrameToNode
     dPoseTransform* m_sourceTranform;
 };
 
-class dBonesToPoseBinding: public dList<dBindFrameToNode>, virtual public dRefCounter
+class dBonesToPoseBinding: public dList<dBindFrameToNode>, virtual public dClassInfo
 {
     public:
 	dBonesToPoseBinding(dAnimationClip* clip);
@@ -44,8 +42,9 @@ class dBonesToPoseBinding: public dList<dBindFrameToNode>, virtual public dRefCo
     void SetUpdateCallback (PosetUpdateCallback callback);
     
     protected:
-    ~dBonesToPoseBinding(void);
+	dAddRtti(dClassInfo);
 
+    ~dBonesToPoseBinding(void);
     dPoseGenerator* m_pose;
     PosetUpdateCallback m_updateCallback;
 };

@@ -80,7 +80,7 @@ void GMFrameListener::UpdateFPSStats(void)
 
 void GMFrameListener::Create2DManager(Ogre::SceneManager *scene_mgr)
 {
-   //mOgre2DManager = new Ogre2dManager;
+   //mOgre2DManager = OGRE_NEW Ogre2dManager;
    //mOgre2DManager->init(scene_mgr, Ogre::RENDER_QUEUE_OVERLAY, true);
 }
 

@@ -39,6 +39,9 @@ Body::Body( const World* W, const OgreNewt::CollisionPtr& col, int bodytype )
     NewtonBodySetUserData( m_body, this );
     NewtonBodySetDestructorCallback( m_body, newtonDestructor );
 	NewtonBodySetTransformCallback( m_body, newtonTransformCallback );
+
+	setLinearDamping(m_world->getDefaultLinearDamping() * (60.0f / m_world->getUpdateFPS()));
+	setAngularDamping(m_world->getDefaultAngularDamping() * (60.0f / m_world->getUpdateFPS()));
 }
 
 Body::~Body()
@@ -122,6 +125,13 @@ void Body::standardForceCallback( OgreNewt::Body* me, float timestep, int thread
 
     me->addForce( force );
 
+	while (me->m_accumulatedGlobalForces.size() > 0)
+	{
+		std::pair<Ogre::Vector3, Ogre::Vector3> forceInfo = me->m_accumulatedGlobalForces.back();
+		me->m_accumulatedGlobalForces.pop_back();
+
+		me->addGlobalForce(forceInfo.first, forceInfo.second);
+	}
 }
 
 
@@ -260,11 +270,33 @@ void Body::getPositionOrientation( Ogre::Vector3& pos, Ogre::Quaternion& orient 
 	orient = m_curRotation;
 }
 
+Ogre::Vector3 Body::getPosition() const
+{
+	return m_curPosit;
+}
+
+
+Ogre::Quaternion Body::getOrientation() const
+{
+	return m_curRotation;
+}
+
 //! get the node position and orientation in form of an Ogre::Vector(position) and Ogre::Quaternion(orientation)
 void Body::getVisualPositionOrientation( Ogre::Vector3& pos, Ogre::Quaternion& orient ) const
 {
 	pos = m_nodePosit;
 	orient = m_nodeRotation;
+}
+
+Ogre::Vector3 Body::getVisualPosition() const
+{
+	return m_nodePosit;
+}
+
+
+Ogre::Quaternion Body::getVisualOrientation() const
+{
+	return m_nodeRotation;
 }
 
 Ogre::AxisAlignedBox Body::getAABB() const
@@ -382,6 +414,11 @@ void Body::addGlobalForce( const Ogre::Vector3& force, const Ogre::Vector3& pos 
     addTorque( torque );
 }
 
+void Body::addGlobalForceAccumulate( const Ogre::Vector3& force, const Ogre::Vector3& pos )
+{
+	m_accumulatedGlobalForces.push_back(std::pair<Ogre::Vector3,Ogre::Vector3>(force, pos));
+}
+
 void Body::addLocalForce( const Ogre::Vector3& force, const Ogre::Vector3& pos )
 {
     Ogre::Vector3 bodypos;
@@ -419,10 +456,8 @@ void Body::updateNode(Ogre::Real interpolatParam)
 		#ifndef WIN32
 			m_world->ogreCriticalSectionLock();
 		#endif
-      m_node->setPosition(m_node->getParent()->_getDerivedOrientation().Inverse() * (m_nodePosit - m_node->getParent()->_getDerivedPosition()) / m_node->getParent()->_getDerivedScale());
-      m_node->setOrientation(m_node->getParent()->_getDerivedOrientation().Inverse() * m_nodeRotation);
-		//m_node->setPosition(m_nodePosit);
-		//m_node->setOrientation(m_nodeRotation);
+		m_node->setPosition(m_nodePosit);
+		m_node->setOrientation(m_nodeRotation);
 
 		if (m_nodeupdatenotifycallback) {
 			m_nodeupdatenotifycallback (this);

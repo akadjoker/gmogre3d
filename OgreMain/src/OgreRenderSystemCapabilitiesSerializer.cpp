@@ -4,26 +4,25 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -99,6 +98,7 @@ namespace Ogre
         file << "\t" << "texture_compression " << StringConverter::toString(caps->hasCapability(RSC_TEXTURE_COMPRESSION)) << endl;
         file << "\t" << "texture_compression_dxt " << StringConverter::toString(caps->hasCapability(RSC_TEXTURE_COMPRESSION_DXT)) << endl;
         file << "\t" << "texture_compression_vtc " << StringConverter::toString(caps->hasCapability(RSC_TEXTURE_COMPRESSION_VTC)) << endl;
+        file << "\t" << "texture_compression_pvrtc " << StringConverter::toString(caps->hasCapability(RSC_TEXTURE_COMPRESSION_PVRTC)) << endl;
         file << "\t" << "gl1_5_novbo " << StringConverter::toString(caps->hasCapability(RSC_GL1_5_NOVBO)) << endl;
         file << "\t" << "fbo " << StringConverter::toString(caps->hasCapability(RSC_FBO)) << endl;
         file << "\t" << "fbo_arb " << StringConverter::toString(caps->hasCapability(RSC_FBO_ARB)) << endl;
@@ -134,6 +134,9 @@ namespace Ogre
         file << "\t" << "fragment_program_constant_float_count " << StringConverter::toString(caps->getFragmentProgramConstantFloatCount()) << endl;
         file << "\t" << "fragment_program_constant_int_count " << StringConverter::toString(caps->getFragmentProgramConstantIntCount()) << endl;
         file << "\t" << "fragment_program_constant_bool_count " << StringConverter::toString(caps->getFragmentProgramConstantBoolCount()) << endl;
+        file << "\t" << "geometry_program_constant_float_count " << StringConverter::toString(caps->getGeometryProgramConstantFloatCount()) << endl;
+        file << "\t" << "geometry_program_constant_int_count " << StringConverter::toString(caps->getGeometryProgramConstantIntCount()) << endl;
+        file << "\t" << "geometry_program_constant_bool_count " << StringConverter::toString(caps->getGeometryProgramConstantBoolCount()) << endl;
         file << "\t" << "num_vertex_texture_units " << StringConverter::toString(caps->getNumVertexTextureUnits()) << endl;
 
         file << endl;
@@ -330,6 +333,9 @@ namespace Ogre
         addSetIntMethod("fragment_program_constant_float_count", &RenderSystemCapabilities::setFragmentProgramConstantFloatCount);
         addSetIntMethod("fragment_program_constant_int_count", &RenderSystemCapabilities::setFragmentProgramConstantIntCount);
         addSetIntMethod("fragment_program_constant_bool_count", &RenderSystemCapabilities::setFragmentProgramConstantBoolCount);
+        addSetIntMethod("geometry_program_constant_float_count", &RenderSystemCapabilities::setGeometryProgramConstantFloatCount);
+        addSetIntMethod("geometry_program_constant_int_count", &RenderSystemCapabilities::setGeometryProgramConstantIntCount);
+        addSetIntMethod("geometry_program_constant_bool_count", &RenderSystemCapabilities::setGeometryProgramConstantBoolCount);
         addSetIntMethod("num_vertex_texture_units", &RenderSystemCapabilities::setNumVertexTextureUnits);
 
         // initialize bool types
@@ -379,6 +385,7 @@ namespace Ogre
         addKeywordType("texture_compression", SET_CAPABILITY_ENUM_BOOL);
         addKeywordType("texture_compression_dxt", SET_CAPABILITY_ENUM_BOOL);
         addKeywordType("texture_compression_vtc", SET_CAPABILITY_ENUM_BOOL);
+        addKeywordType("texture_compression_pvrtc", SET_CAPABILITY_ENUM_BOOL);
         addKeywordType("glew1_5_novbo", SET_CAPABILITY_ENUM_BOOL);
         addKeywordType("fbo", SET_CAPABILITY_ENUM_BOOL);
         addKeywordType("fbo_arb", SET_CAPABILITY_ENUM_BOOL);
@@ -416,6 +423,7 @@ namespace Ogre
         addCapabilitiesMapping("texture_compression", RSC_TEXTURE_COMPRESSION);
         addCapabilitiesMapping("texture_compression_dxt", RSC_TEXTURE_COMPRESSION_DXT);
         addCapabilitiesMapping("texture_compression_vtc", RSC_TEXTURE_COMPRESSION_VTC);
+        addCapabilitiesMapping("texture_compression_pvrtc", RSC_TEXTURE_COMPRESSION_PVRTC);
 		addCapabilitiesMapping("hwrender_to_vertex_buffer", RSC_HWRENDER_TO_VERTEX_BUFFER);
         addCapabilitiesMapping("gl1_5_novbo", RSC_GL1_5_NOVBO);
         addCapabilitiesMapping("fbo", RSC_FBO);
@@ -467,7 +475,7 @@ namespace Ogre
                     break;
                 case SET_INT_METHOD:
                 {
-                    int integer = StringConverter::parseInt(tokens[1]);
+                    ushort integer = (ushort)StringConverter::parseInt(tokens[1]);
                     callSetIntMethod(keyword, integer);
                     break;
                 }

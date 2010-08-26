@@ -79,6 +79,38 @@ namespace OgreNewt
 		return height;
 	}
 
+   void PlayerController::setStairHeight(Ogre::Real height)
+   {
+      CustomPlayerController* joint = (CustomPlayerController*) m_joint;
+		if (joint) {
+			joint->SetPlayerStairHeight(height);
+		}
+   }
+
+   void PlayerController::setPlayerState(Ogre::uint32 state)
+   {
+      CustomPlayerController* joint = (CustomPlayerController*) m_joint;
+		if (joint) {
+         joint->SetPlayerState((CustomPlayerController::PlayerState)state);
+		}
+   }
+
+   Ogre::uint32 PlayerController::getPlayerState()
+   {
+      CustomPlayerController* joint = (CustomPlayerController*) m_joint;
+		if (joint) {
+         return (Ogre::uint32)joint->GetPlayerState();
+		}
+      return 0;
+   }
+
+   void PlayerController::addImpulse(Ogre::Real xdelta, Ogre::Real ydelta, Ogre::Real zdelta, bool jump)
+   {
+      CustomPlayerController* joint = (CustomPlayerController*) m_joint;
+		if (joint) {
+         joint->AddImpulse(xdelta, ydelta, zdelta, jump);
+		}
+   }
 
 	void PlayerController::showDebugData(Ogre::SceneNode* debugRootNode)
 	{

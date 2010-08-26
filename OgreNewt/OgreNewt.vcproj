@@ -256,6 +256,7 @@
 				AdditionalOptions=" /Zm1000"
 				Optimization="2"
 				InlineFunctionExpansion="2"
+				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="..\Newton\sdk;..\Newton\sdk\dMath;..\Newton\sdk\dCustomJoints;..\Newton\include;..\OgreMain\include;&quot;$(BOOST_HOME)&quot;;.\inc;../Dependencies/include"
 				PreprocessorDefinitions="_OGRENEWT_EXPORTS;_OGRENEWT_DYNAMIC;WIN32;OGRE_STATIC_LIB;_NEWTON_USE_LIB;OGRENEWT_NO_OGRE_ANY"
 				ExceptionHandling="1"
@@ -456,6 +457,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\OgreNewt_RayCastVehicle.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\OgreNewt_Stdafx.cpp"
 				>
 				<FileConfiguration
@@ -577,6 +582,10 @@
 			</File>
 			<File
 				RelativePath=".\inc\OgreNewt_RayCast.h"
+				>
+			</File>
+			<File
+				RelativePath=".\inc\OgreNewt_RayCastVehicle.h"
 				>
 			</File>
 			<File

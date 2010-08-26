@@ -32,7 +32,7 @@ GMFN double CreateSprite(char *mat_name, double width, double height, double met
    OgreSprite *sprite = NULL;
    
    TRY
-      sprite = new OgreSprite;
+      sprite = OGRE_NEW OgreSprite;
 
       sprite->SetMaterial(mat_name);
       sprite->SetMetrics(metrics);

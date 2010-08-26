@@ -124,7 +124,7 @@ GMFN double AddAnimationStateTime(double anim_ptr, double time)
    if (anim == NULL)
       return FALSE;
 
-   anim->addTime(time);
+   anim->addTime((Ogre::Real)time);
 
    return TRUE;
 }
@@ -137,7 +137,7 @@ GMFN double SetAnimationStateWeight(double anim_ptr, double weight)
    if (anim == NULL)
       return FALSE;
 
-   anim->setWeight(weight);
+   anim->setWeight((Ogre::Real)weight);
 
    return TRUE;
 }
@@ -161,7 +161,7 @@ GMFN double SetAnimationStateTimePosition(double anim_ptr, double pos)
    if (anim == NULL)
       return FALSE;
 
-   anim->setTimePosition(pos);
+   anim->setTimePosition((Ogre::Real)pos);
 
    return TRUE;
 }
@@ -185,7 +185,7 @@ GMFN double SetAnimationStateLength(double anim_ptr, double length)
    if (anim == NULL)
       return FALSE;
 
-   anim->setLength(length);
+   anim->setLength((Ogre::Real)length);
 
    return TRUE;
 }
@@ -209,7 +209,7 @@ GMFN double SetAnimationStateBlendMaskEntry(double anim_ptr, double bone_handle,
    if (anim == NULL)
       return FALSE;
 
-   anim->setBlendMaskEntry((size_t)bone_handle, weight);
+   anim->setBlendMaskEntry((size_t)bone_handle, (float)weight);
 
    return TRUE;
 }
@@ -222,7 +222,7 @@ GMFN double CreateAnimationStateBlendMask(double anim_ptr, double size, double w
    if (anim == NULL)
       return FALSE;
 
-   anim->createBlendMask((size_t)size, weight);
+   anim->createBlendMask((size_t)size, (float)weight);
 
    return TRUE;
 }	

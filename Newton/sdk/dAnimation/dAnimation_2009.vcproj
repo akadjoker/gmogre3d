@@ -110,6 +110,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="./;../;../dMath;../dContainers;../tinyxml"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
 				RuntimeLibrary="2"
@@ -482,6 +483,14 @@
 			>
 		</File>
 		<File
+			RelativePath=".\dClassInfo.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\dClassInfo.h"
+			>
+		</File>
+		<File
 			RelativePath=".\dMesh.cpp"
 			>
 		</File>
@@ -503,6 +512,18 @@
 		</File>
 		<File
 			RelativePath=".\dPoseGenerator.h"
+			>
+		</File>
+		<File
+			RelativePath=".\dRtti.h"
+			>
+		</File>
+		<File
+			RelativePath=".\dSkinModifier.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\dSkinModifier.h"
 			>
 		</File>
 	</Files>

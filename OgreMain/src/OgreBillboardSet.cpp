@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -68,7 +67,9 @@ namespace Ogre {
         mPointRendering(false),
         mBuffersCreated(false),
         mPoolSize(0),
-		mExternalData(false)
+		mExternalData(false),
+		mAutoUpdate(true),
+		mBillboardDataChanged(true)
     {
         setDefaultDimensions( 100, 100 );
         setMaterialName( "BaseWhite" );
@@ -100,7 +101,9 @@ namespace Ogre {
 		mPointRendering(false),
         mBuffersCreated(false),
         mPoolSize(poolSize),
-        mExternalData(externalData)
+        mExternalData(externalData),
+		mAutoUpdate(true),
+		mBillboardDataChanged(true)
     {
         setDefaultDimensions( 100, 100 );
         setMaterialName( "BaseWhite" );
@@ -298,11 +301,11 @@ namespace Ogre {
         return mDefaultHeight;
     }
     //-----------------------------------------------------------------------
-    void BillboardSet::setMaterialName( const String& name )
+    void BillboardSet::setMaterialName( const String& name , const String& groupName /* = ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME */ )
     {
         mMaterialName = name;
 
-        mpMaterial = MaterialManager::getSingleton().getByName(name);
+        mpMaterial = MaterialManager::getSingleton().getByName(name, groupName);
 
 		if (mpMaterial.isNull())
 			OGRE_EXCEPT( Exception::ERR_ITEM_NOT_FOUND, "Could not find material " + name,
@@ -463,11 +466,13 @@ namespace Ogre {
 
 			mLockPtr = static_cast<float*>(
 				mMainBuf->lock(0, numBillboards * billboardSize, 
-				HardwareBuffer::HBL_DISCARD) );
+				mMainBuf->getUsage() & HardwareBuffer::HBU_DYNAMIC ?
+				HardwareBuffer::HBL_DISCARD : HardwareBuffer::HBL_NORMAL) );
 		}
 		else // lock the entire thing
 			mLockPtr = static_cast<float*>(
-				mMainBuf->lock(HardwareBuffer::HBL_DISCARD) );
+			mMainBuf->lock(mMainBuf->getUsage() & HardwareBuffer::HBU_DYNAMIC ?
+			HardwareBuffer::HBL_DISCARD : HardwareBuffer::HBL_NORMAL) );
 
     }
     //-----------------------------------------------------------------------
@@ -597,8 +602,8 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void BillboardSet::_updateRenderQueue(RenderQueue* queue)
     {
-        // If we're driving this from our own data, update geometry now
-        if (!mExternalData)
+        // If we're driving this from our own data, update geometry if need to.
+        if (!mExternalData && (mAutoUpdate || mBillboardDataChanged || !mBuffersCreated))
         {
             if (mSortingEnabled)
             {
@@ -614,10 +619,16 @@ namespace Ogre {
                 injectBillboard(*(*it));
             }
             endBillboards();
+			mBillboardDataChanged = false;
         }
 
         //only set the render queue group if it has been explicitly set.
-        if( mRenderQueueIDSet )
+		if (mRenderQueuePrioritySet)
+		{
+			assert(mRenderQueueIDSet == true);
+			queue->addRenderable(this, mRenderQueueID, mRenderQueuePriority);
+		}
+        else if( mRenderQueueIDSet )
         {
            queue->addRenderable(this, mRenderQueueID);
         } else {
@@ -773,7 +784,8 @@ namespace Ogre {
             HardwareBufferManager::getSingleton().createVertexBuffer(
                 decl->getVertexSize(0),
                 mVertexData->vertexCount,
-                HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY_DISCARDABLE);
+				mAutoUpdate ? HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY_DISCARDABLE : 
+				HardwareBuffer::HBU_STATIC_WRITE_ONLY);
         // bind position and diffuses
         binding->setBinding(0, mMainBuf);
 
@@ -1446,6 +1458,19 @@ namespace Ogre {
 			_destroyBuffers();
 		}
 	}
+
+	//-----------------------------------------------------------------------
+	void BillboardSet::setAutoUpdate(bool autoUpdate)
+	{
+		// Case auto update buffers changed we have to destroy the current buffers
+		// since their usage will be different.
+		if (autoUpdate != mAutoUpdate)
+		{
+			mAutoUpdate = autoUpdate;
+			_destroyBuffers();
+		}
+	}
+
 	//-----------------------------------------------------------------------
 	//-----------------------------------------------------------------------
 	String BillboardSetFactory::FACTORY_TYPE_NAME = "BillboardSet";

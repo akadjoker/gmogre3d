@@ -58,7 +58,7 @@ GMFN double CreateTexture1(char *name, char *group, double type)
 GMFN char *CreateTexture2(double width, double height, double depth, double num_mips, double pixel_format, double usage = Ogre::TU_DEFAULT)
 {
    TRY
-      Ogre::TextureManager::getSingleton().createManual(tex_name, tex_group, static_cast<Ogre::TextureType>((int)tex_type), width, height, num_mips, static_cast<Ogre::PixelFormat>((int)pixel_format), static_cast<Ogre::TextureUsage>((int)usage));
+      Ogre::TextureManager::getSingleton().createManual(tex_name, tex_group, static_cast<Ogre::TextureType>((int)tex_type), (Ogre::uint)width, (Ogre::uint)height, (Ogre::uint)num_mips, static_cast<Ogre::PixelFormat>((int)pixel_format), static_cast<Ogre::TextureUsage>((int)usage));
    CATCH("CreateTexture")
 
    return const_cast<char*>(tex_name.c_str());
@@ -125,7 +125,7 @@ GMFN double CopyTexture(char *source_name, char *dest_name)
 GMFN double SaveTextureToFile(char *name, char *filename)
 {
    Ogre::TexturePtr tex = Ogre::TextureManager::getSingleton().getByName(name);
-   
+
    if (tex.isNull())
       return FALSE;
 
@@ -138,12 +138,11 @@ GMFN double SaveTextureToFile(char *name, char *filename)
    Ogre::Image img;
    img = img.loadDynamicImage(readrefdata, tex->getWidth(), tex->getHeight(), tex->getFormat());	
    img.save(filename);
-    
+
    readbuffer->unlock();
 
    return TRUE;
 }
-
 
 
 GMFN double CreateTextureViewport(char *name)
@@ -186,12 +185,31 @@ GMFN double GetTextureViewport(char *name, double index)
    if (render_tex == NULL)
       return NULL;
 
-   Ogre::Viewport *view = render_tex->getViewport(index);
+   Ogre::Viewport *view = render_tex->getViewport((unsigned short)index);
 
    if (view == NULL)
       return NULL;
 
    return ConvertToGMPointer(view);
+}
+
+
+GMFN double SaveTextureRendererContentsToFile(char *name, char *filename)
+{
+   Ogre::TexturePtr tex = Ogre::TextureManager::getSingleton().getByName(name);
+
+   if (tex.isNull())
+      return NULL;
+
+   Ogre::RenderTexture *render_tex = tex->getBuffer()->getRenderTarget();
+
+   if (render_tex == NULL)
+      return NULL;
+
+   render_tex->update();
+   render_tex->writeContentsToFile(filename);
+
+   return TRUE;
 }
 
 
@@ -217,14 +235,19 @@ GMFN double GetTextureHeight(char *name)
 }
 
 
-GMFN double SetTextureFSAA(char *name, double fsaa)
+GMFN double SetTextureFSAA(char *name, double fsaa, double fsaa_hint)
 {
    Ogre::TexturePtr tex = Ogre::TextureManager::getSingleton().getByName(name);
    
    if (tex.isNull())
       return NULL;
 
-   tex->setFSAA(fsaa);
+   Ogre::String fsaa_hint_value;
+
+   if (fsaa_hint == 1)
+      fsaa_hint_value = "Quality";
+
+   tex->setFSAA((Ogre::uint)fsaa, fsaa_hint_value);
 
    return TRUE;
 }
@@ -258,9 +281,9 @@ GMFN double WriteTextToTexture2(double left, double top, double right, double bo
 
    String str = tex_text;
 
-   Image::Box destRectangle(left, top, right, bottom);
+   Image::Box destRectangle((size_t)left, (size_t)top, (size_t)right, (size_t)bottom);
 
-   Ogre::ColourValue color = Ogre::ColourValue(GetRedFromGMColor(clr), GetGreenFromGMColor(clr), GetBlueFromGMColor(clr), alpha);
+   Ogre::ColourValue color = Ogre::ColourValue(GetRedFromGMColor(clr), GetGreenFromGMColor(clr), GetBlueFromGMColor(clr), (float)alpha);
 
 	if (destTexture->getHeight() < destRectangle.bottom)
 		destRectangle.bottom = destTexture->getHeight();
@@ -297,7 +320,7 @@ GMFN double WriteTextToTexture2(double left, double top, double right, double bo
 	const size_t destRowPitchBytes = destPb.rowPitch * destPixelSize;
 
 	Box *GlyphTexCoords;
-	GlyphTexCoords = new Box[str.size()];
+	GlyphTexCoords = OGRE_NEW Box[str.size()];
 
 	Font::UVRect glypheTexRect;
 	size_t charheight = 0;
@@ -308,10 +331,10 @@ GMFN double WriteTextToTexture2(double left, double top, double right, double bo
 		if ((str[i] != '\t') && (str[i] != '\n') && (str[i] != ' '))
 		{
 			glypheTexRect = font->getGlyphTexCoords(str[i]);
-			GlyphTexCoords[i].left = glypheTexRect.left * fontTexture->getSrcWidth();
-			GlyphTexCoords[i].top = glypheTexRect.top * fontTexture->getSrcHeight();
-			GlyphTexCoords[i].right = glypheTexRect.right * fontTexture->getSrcWidth();
-			GlyphTexCoords[i].bottom = glypheTexRect.bottom * fontTexture->getSrcHeight();
+			GlyphTexCoords[i].left = (size_t)(glypheTexRect.left * fontTexture->getSrcWidth());
+			GlyphTexCoords[i].top = (size_t)(glypheTexRect.top * fontTexture->getSrcHeight());
+			GlyphTexCoords[i].right = (size_t)(glypheTexRect.right * fontTexture->getSrcWidth());
+			GlyphTexCoords[i].bottom = (size_t)(glypheTexRect.bottom * fontTexture->getSrcHeight());
 
 			if (GlyphTexCoords[i].getHeight() > charheight)
 				charheight = GlyphTexCoords[i].getHeight();
@@ -408,8 +431,8 @@ GMFN double WriteTextToTexture2(double left, double top, double right, double bo
 				for (size_t i = 0; i < GlyphTexCoords[strindex].getHeight(); i++ )
 					for (size_t j = 0; j < GlyphTexCoords[strindex].getWidth(); j++)
 					{
- 						float alpha =  color.a * (fontData[(i + GlyphTexCoords[strindex].top) * fontRowPitchBytes + (j + GlyphTexCoords[strindex].left) * fontPixelSize +1 ] / 255.0);
- 						float invalpha = 1.0 - alpha;
+ 						float alpha = color.a * (fontData[(i + GlyphTexCoords[strindex].top) * fontRowPitchBytes + (j + GlyphTexCoords[strindex].left) * fontPixelSize + 1 ] / 255.0f);
+ 						float invalpha = 1.0f - (float)alpha;
  						size_t offset = (i + cursorY) * destRowPitchBytes + (j + cursorX) * destPixelSize;
   						ColourValue pix;
  						PixelUtil::unpackColour(&pix,destPb.format,&destData[offset]);

@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -44,6 +43,7 @@ namespace Ogre {
         : Node()
         , mWireBoundingBox(0)
         , mShowBoundingBox(false)
+        , mHideBoundingBox(false)
         , mCreator(creator)
         , mYawFixed(false)
         , mAutoTrackTarget(0)
@@ -56,6 +56,7 @@ namespace Ogre {
         : Node(name)
         , mWireBoundingBox(0)
         , mShowBoundingBox(false)
+        , mHideBoundingBox(false)
         , mCreator(creator)
         , mYawFixed(false)
         , mAutoTrackTarget(0)
@@ -158,7 +159,6 @@ namespace Ogre {
         {
             OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Object index out of bounds.", "SceneNode::getAttachedObject");
         }
-        return 0;
     }
     //-----------------------------------------------------------------------
     MovableObject* SceneNode::getAttachedObject(const String& name)
@@ -200,7 +200,6 @@ namespace Ogre {
         {
             OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Object index out of bounds.", "SceneNode::getAttchedEntity");
         }
-        return 0;
 
     }
     //-----------------------------------------------------------------------
@@ -311,18 +310,28 @@ namespace Ogre {
         if (displayNodes)
         {
             // Include self in the render queue
-            queue->addRenderable(this);
+            queue->addRenderable(getDebugRenderable());
         }
 
 		// Check if the bounding box should be shown.
 		// See if our flag is set or if the scene manager flag is set.
-		if (mShowBoundingBox || (mCreator && mCreator->getShowBoundingBoxes())) 
+		if ( !mHideBoundingBox &&
+             (mShowBoundingBox || (mCreator && mCreator->getShowBoundingBoxes())) )
 		{ 
 			_addBoundingBoxToQueue(queue);
 		}
 
 
     }
+
+	Node::DebugRenderable* SceneNode::getDebugRenderable()
+	{
+		Vector3 hs = mWorldAABB.getHalfSize();
+		Real sz = std::min(hs.x, hs.y);
+		sz = std::min(sz, hs.z);
+		sz = std::max(sz, (Real)1.0);
+		return Node::getDebugRenderable(sz);
+	}
 
 
 	void SceneNode::_addBoundingBoxToQueue(RenderQueue* queue) {
@@ -342,6 +351,9 @@ namespace Ogre {
 		return mShowBoundingBox;
 	}
 
+	void SceneNode::hideBoundingBox(bool bHide) {
+		mHideBoundingBox = bHide;
+	}
 
     //-----------------------------------------------------------------------
     void SceneNode::updateFromParentImpl(void) const
@@ -432,7 +444,7 @@ namespace Ogre {
 		return static_cast<SceneNode*>(this->createChild(name, translate, rotate));
 	}
     //-----------------------------------------------------------------------
-    void SceneNode::findLights(LightList& destList, Real radius) const
+    void SceneNode::findLights(LightList& destList, Real radius, uint32 lightMask) const
     {
         // No any optimisation here, hope inherits more smart for that.
         //
@@ -444,7 +456,7 @@ namespace Ogre {
         if (mCreator)
         {
             // Use SceneManager to calculate
-            mCreator->_populateLightList(this->_getDerivedPosition(), radius, destList);
+            mCreator->_populateLightList(this, radius, destList, lightMask);
         }
         else
         {

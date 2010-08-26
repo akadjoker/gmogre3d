@@ -48,7 +48,7 @@ GMFN double CreateNewtonBallAndSocketJoint(double newton_child_body_ptr, double 
    OgreNewt::Joint *joint;
 
    TRY
-      joint = new OgreNewt::BallAndSocket(newton_child_body->getOgreNewtBody(), newton_parent_body ? newton_parent_body->getOgreNewtBody() : NULL, Ogre::Vector3(x, y, z));
+      joint = OGRE_NEW OgreNewt::BallAndSocket(newton_child_body->getOgreNewtBody(), newton_parent_body ? newton_parent_body->getOgreNewtBody() : NULL, Ogre::Vector3(x, y, z));
    CATCH("CreateNewtonBallAndSocketJoint")
 
    return ConvertToGMPointer(joint);

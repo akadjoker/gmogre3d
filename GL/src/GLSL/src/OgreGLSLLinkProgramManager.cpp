@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
@@ -194,106 +193,87 @@ namespace Ogre {
 		{
 		case GL_FLOAT:
 			defToUpdate.constType = GCT_FLOAT1;
-			defToUpdate.elementSize = 1;
 			break;
 		case GL_FLOAT_VEC2:
 			defToUpdate.constType = GCT_FLOAT2;
-			defToUpdate.elementSize = 2;
 			break;
 
 		case GL_FLOAT_VEC3:
 			defToUpdate.constType = GCT_FLOAT3;
-			defToUpdate.elementSize = 3;
 			break;
 
 		case GL_FLOAT_VEC4:
 			defToUpdate.constType = GCT_FLOAT4;
-			defToUpdate.elementSize = 4;
 			break;
 		case GL_SAMPLER_1D:
 			// need to record samplers for GLSL
 			defToUpdate.constType = GCT_SAMPLER1D;
-			defToUpdate.elementSize = 1;
 			break;
 		case GL_SAMPLER_2D:
 		case GL_SAMPLER_2D_RECT_ARB:
 			defToUpdate.constType = GCT_SAMPLER2D;
-			defToUpdate.elementSize = 1;
 			break;
 		case GL_SAMPLER_3D:
 			defToUpdate.constType = GCT_SAMPLER3D;
-			defToUpdate.elementSize = 1;
 			break;
 		case GL_SAMPLER_CUBE:
 			defToUpdate.constType = GCT_SAMPLERCUBE;
-			defToUpdate.elementSize = 1;
 			break;
 		case GL_SAMPLER_1D_SHADOW:
 			defToUpdate.constType = GCT_SAMPLER1DSHADOW;
-			defToUpdate.elementSize = 1;
 			break;
 		case GL_SAMPLER_2D_SHADOW:
 		case GL_SAMPLER_2D_RECT_SHADOW_ARB:
 			defToUpdate.constType = GCT_SAMPLER2DSHADOW;
-			defToUpdate.elementSize = 1;
 			break;
 		case GL_INT:
 			defToUpdate.constType = GCT_INT1;
-			defToUpdate.elementSize = 1;
 			break;
 		case GL_INT_VEC2:
 			defToUpdate.constType = GCT_INT2;
-			defToUpdate.elementSize = 2;
 			break;
 		case GL_INT_VEC3:
 			defToUpdate.constType = GCT_INT3;
-			defToUpdate.elementSize = 3;
 			break;
 		case GL_INT_VEC4:
 			defToUpdate.constType = GCT_INT4;
-			defToUpdate.elementSize = 4;
 			break;
 		case GL_FLOAT_MAT2:
 			defToUpdate.constType = GCT_MATRIX_2X2;
-			defToUpdate.elementSize = 4;
 			break;
 		case GL_FLOAT_MAT3:
 			defToUpdate.constType = GCT_MATRIX_3X3;
-			defToUpdate.elementSize = 9;
 			break;
 		case GL_FLOAT_MAT4:
 			defToUpdate.constType = GCT_MATRIX_4X4;
-			defToUpdate.elementSize = 16;
 			break;
 		case GL_FLOAT_MAT2x3:
 			defToUpdate.constType = GCT_MATRIX_2X3;
-			defToUpdate.elementSize = 6;
 			break;
 		case GL_FLOAT_MAT3x2:
 			defToUpdate.constType = GCT_MATRIX_3X2;
-			defToUpdate.elementSize = 6;
 			break;
 		case GL_FLOAT_MAT2x4:
 			defToUpdate.constType = GCT_MATRIX_2X4;
-			defToUpdate.elementSize = 8;
 			break;
 		case GL_FLOAT_MAT4x2:
 			defToUpdate.constType = GCT_MATRIX_4X2;
-			defToUpdate.elementSize = 8;
 			break;
 		case GL_FLOAT_MAT3x4:
 			defToUpdate.constType = GCT_MATRIX_3X4;
-			defToUpdate.elementSize = 12;
 			break;
 		case GL_FLOAT_MAT4x3:
 			defToUpdate.constType = GCT_MATRIX_4X3;
-			defToUpdate.elementSize = 12;
 			break;
 		default:
 			defToUpdate.constType = GCT_UNKNOWN;
 			break;
 
 		}
+
+		// GL doesn't pad
+		defToUpdate.elementSize = GpuConstantDefinition::getElementSize(defToUpdate.constType, false);
+
 
 	}
 	//---------------------------------------------------------------------

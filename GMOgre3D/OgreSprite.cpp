@@ -60,8 +60,8 @@ void OgreSprite::SetMetrics(double type)
 
 void OgreSprite::SetDimensions(double width, double height)
 {
-   m_width = width;
-   m_height = height;
+   m_width = (Ogre::Real)width;
+   m_height = (Ogre::Real)height;
 
    m_panel->setDimensions(m_width * m_scalex, m_height * m_scaley);
 }
@@ -69,20 +69,20 @@ void OgreSprite::SetDimensions(double width, double height)
 
 void OgreSprite::SetPosition(double x, double y)
 {
-   m_panel->setPosition(x, y);
+   m_panel->setPosition((Ogre::Real)x, (Ogre::Real)y);
 }
 
 
 void OgreSprite::Rotate(double degrees)
 {
-   m_overlay->rotate(Ogre::Degree(degrees));
+   m_overlay->rotate(Ogre::Degree((Ogre::Real)degrees));
 }
 
 
 void OgreSprite::SetScale(double x, double y)
 {
-   m_scalex = x;
-   m_scaley = y;
+   m_scalex = (Ogre::Real)x;
+   m_scaley = (Ogre::Real)y;
 
    SetDimensions(m_width, m_height);
    //m_overlay->setScale(x, y);

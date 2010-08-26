@@ -49,7 +49,7 @@ GMFN double CreateNewtonMaterialPair(double newton_world_ptr, double material1_p
    OgreNewt::MaterialPair *mat_pair;
 
    TRY
-      mat_pair = new OgreNewt::MaterialPair(world, mat1, mat2);
+      mat_pair = OGRE_NEW OgreNewt::MaterialPair(world, mat1, mat2);
    CATCH("CreateNewtonMaterialPair")
 
    return ConvertToGMPointer(mat_pair);
@@ -154,7 +154,7 @@ GMFN double SetNewtonMaterialPairContactCallback(double material_pair_ptr, doubl
    if (!mat_pair)
       return FALSE;
 
-   mat_pair->setContactCallback(new NewtonContactCallback(mat_pair, func));
+   mat_pair->setContactCallback(OGRE_NEW NewtonContactCallback(mat_pair, func));
 
    return TRUE;
 }

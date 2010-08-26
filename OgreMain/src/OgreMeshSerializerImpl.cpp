@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -44,6 +43,8 @@ Torus Knot Software Ltd.
 #include "OgreAnimationTrack.h"
 #include "OgreKeyFrame.h"
 #include "OgreRoot.h"
+#include "OgreLodStrategyManager.h"
+#include "OgreDistanceLodStrategy.h"
 
 #if OGRE_COMPILER == OGRE_COMPILER_MSVC
 // Disable conversion warnings, we do a lot of them, intentionally
@@ -60,7 +61,7 @@ namespace Ogre {
     {
 
         // Version number
-        mVersion = "[MeshSerializer_v1.40]";
+        mVersion = "[MeshSerializer_v1.41]";
     }
     //---------------------------------------------------------------------
     MeshSerializerImpl::~MeshSerializerImpl()
@@ -138,7 +139,7 @@ namespace Ogre {
             writeGeometry(pMesh->sharedVertexData);
 
         // Write Submeshes
-        for (int i = 0; i < pMesh->getNumSubMeshes(); ++i)
+        for (unsigned short i = 0; i < pMesh->getNumSubMeshes(); ++i)
         {
             LogManager::getSingleton().logMessage("Writing submesh...");
             writeSubMesh(pMesh->getSubMesh(i));
@@ -302,7 +303,7 @@ namespace Ogre {
     void MeshSerializerImpl::writeExtremes(const Mesh *pMesh)
     {
         bool has_extremes = false;
-        for (int i = 0; i < pMesh->getNumSubMeshes(); ++i)
+        for (unsigned short i = 0; i < pMesh->getNumSubMeshes(); ++i)
         {
             SubMesh *sm = pMesh->getSubMesh(i);
             if (sm->extremityPoints.empty())
@@ -329,7 +330,7 @@ namespace Ogre {
         float *vertices = OGRE_ALLOC_T(float, s->extremityPoints.size() * 3, MEMCATEGORY_GEOMETRY);
 		float *pVert = vertices;
 
-        for (std::vector<Vector3>::const_iterator i = s->extremityPoints.begin();
+        for (vector<Vector3>::type::const_iterator i = s->extremityPoints.begin();
              i != s->extremityPoints.end(); ++i)
         {
 			*pVert++ = i->x;
@@ -783,7 +784,7 @@ namespace Ogre {
 	void MeshSerializerImpl::readSubMeshNameTable(DataStreamPtr& stream, Mesh* pMesh)
 	{
 		// The map for
-		std::map<unsigned short, String> subMeshNames;
+		map<unsigned short, String>::type subMeshNames;
 		unsigned short streamID, subMeshIndex;
 
 		// Need something to store the index, and the objects name
@@ -818,7 +819,7 @@ namespace Ogre {
 		// ?
 
 		// Loop through and save out the index and names.
-		std::map<unsigned short, String>::const_iterator it = subMeshNames.begin();
+		map<unsigned short, String>::type::const_iterator it = subMeshNames.begin();
 
 		while(it != subMeshNames.end())
 		{
@@ -940,7 +941,7 @@ namespace Ogre {
         String materialName = readString(stream);
 		if(listener)
 			listener->processMaterialName(pMesh, &materialName);
-        sm->setMaterialName(materialName);
+        sm->setMaterialName(materialName, pMesh->getGroup());
 
         // bool useSharedVertices
         readBools(stream,&sm->useSharedVertices, 1);
@@ -1163,9 +1164,10 @@ namespace Ogre {
     //---------------------------------------------------------------------
     void MeshSerializerImpl::writeLodInfo(const Mesh* pMesh)
     {
+        const LodStrategy *strategy = pMesh->getLodStrategy();
         unsigned short numLods = pMesh->getNumLodLevels();
         bool manual = pMesh->isLodManual();
-        writeLodSummary(numLods, manual);
+        writeLodSummary(numLods, manual, strategy);
 
 		// Loop from LOD 1 (not 0, this is full detail)
         for (unsigned short i = 1; i < numLods; ++i)
@@ -1185,7 +1187,7 @@ namespace Ogre {
 
     }
     //---------------------------------------------------------------------
-    void MeshSerializerImpl::writeLodSummary(unsigned short numLevels, bool manual)
+    void MeshSerializerImpl::writeLodSummary(unsigned short numLevels, bool manual, const LodStrategy *strategy)
     {
         // Header
         size_t size = STREAM_OVERHEAD_SIZE;
@@ -1196,6 +1198,8 @@ namespace Ogre {
         writeChunkHeader(M_MESH_LOD, size);
 
         // Details
+        // string strategyName;
+        writeString(strategy->getName());
         // unsigned short numLevels;
         writeShorts(&numLevels, 1);
         // bool manual;  (true for manual alternate meshes, false for generated)
@@ -1209,7 +1213,7 @@ namespace Ogre {
         // Header
         size_t size = STREAM_OVERHEAD_SIZE;
         size_t manualSize = STREAM_OVERHEAD_SIZE;
-        // float fromDepthSquared;
+        // float lodValue;
         size += sizeof(float);
         // Manual part size
 
@@ -1219,7 +1223,7 @@ namespace Ogre {
         size += manualSize;
 
         writeChunkHeader(M_MESH_LOD_USAGE, size);
-        writeFloats(&(usage.fromDepthSquared), 1);
+        writeFloats(&(usage.userValue), 1);
 
         writeChunkHeader(M_MESH_LOD_MANUAL, manualSize);
         writeString(usage.manualName);
@@ -1265,7 +1269,7 @@ namespace Ogre {
 		}
 
         writeChunkHeader(M_MESH_LOD_USAGE, size);
-        writeFloats(&(usage.fromDepthSquared), 1);
+        writeFloats(&(usage.userValue), 1);
 
 		// Now write sections
         // Calc generated SubMesh sections size
@@ -1370,6 +1374,11 @@ namespace Ogre {
 	{
 		unsigned short streamID, i;
 
+        // Read the strategy to be used for this mesh
+        String strategyName = readString(stream);
+        LodStrategy *strategy = LodStrategyManager::getSingleton().getStrategy(strategyName);
+        pMesh->setLodStrategy(strategy);
+
         // unsigned short numLevels;
 		readShorts(stream, &(pMesh->mNumLods), 1);
         // bool manual;  (true for manual alternate meshes, false for generated)
@@ -1398,7 +1407,7 @@ namespace Ogre {
 			}
 			// Read depth
 			MeshLodUsage usage;
-			readFloats(stream, &(usage.fromDepthSquared), 1);
+			readFloats(stream, &(usage.userValue), 1);
 
 			if (pMesh->isLodManual())
 			{
@@ -1792,13 +1801,13 @@ namespace Ogre {
                             else
                             {
                                 edgeGroup.vertexData = pMesh->getSubMesh(
-                                    edgeGroup.vertexSet-1)->vertexData;
+                                    (unsigned short)edgeGroup.vertexSet-1)->vertexData;
                             }
                         }
                         else
                         {
                             edgeGroup.vertexData = pMesh->getSubMesh(
-                                edgeGroup.vertexSet)->vertexData;
+                                (unsigned short)edgeGroup.vertexSet)->vertexData;
                         }
                     }
                 }
@@ -1973,8 +1982,6 @@ namespace Ogre {
 		size_t size = STREAM_OVERHEAD_SIZE;
 		// float time
 		size += sizeof(float);
-		// bool isOriginalGeometry  // point at original geometry?
-		size += sizeof(bool);
 		// float x,y,z
 		size += sizeof(float) * 3 * vertexCount;
 
@@ -2465,6 +2472,93 @@ namespace Ogre {
     //---------------------------------------------------------------------
     //---------------------------------------------------------------------
     //---------------------------------------------------------------------
+    MeshSerializerImpl_v1_4::MeshSerializerImpl_v1_4()
+    {
+        // Version number
+        mVersion = "[MeshSerializer_v1.40]";
+    }
+    //---------------------------------------------------------------------
+    MeshSerializerImpl_v1_4::~MeshSerializerImpl_v1_4()
+    {
+    }
+    //---------------------------------------------------------------------
+    void MeshSerializerImpl_v1_4::writeLodSummary(unsigned short numLevels, bool manual, const LodStrategy *strategy)
+    {
+        // Header
+        size_t size = STREAM_OVERHEAD_SIZE;
+        // unsigned short numLevels;
+        size += sizeof(unsigned short);
+        // bool manual;  (true for manual alternate meshes, false for generated)
+        size += sizeof(bool);
+        writeChunkHeader(M_MESH_LOD, size);
+
+        // Details
+        // unsigned short numLevels;
+        writeShorts(&numLevels, 1);
+        // bool manual;  (true for manual alternate meshes, false for generated)
+        writeBools(&manual, 1);
+
+
+    }
+    //---------------------------------------------------------------------
+    void MeshSerializerImpl_v1_4::readMeshLodInfo(DataStreamPtr& stream, Mesh* pMesh)
+    {
+        unsigned short streamID, i;
+
+        // Use the old strategy for this mesh
+        LodStrategy *strategy = DistanceLodStrategy::getSingletonPtr();
+        pMesh->setLodStrategy(strategy);
+
+        // unsigned short numLevels;
+        readShorts(stream, &(pMesh->mNumLods), 1);
+        // bool manual;  (true for manual alternate meshes, false for generated)
+        readBools(stream, &(pMesh->mIsLodManual), 1);
+
+        // Preallocate submesh lod face data if not manual
+        if (!pMesh->mIsLodManual)
+        {
+            unsigned short numsubs = pMesh->getNumSubMeshes();
+            for (i = 0; i < numsubs; ++i)
+            {
+                SubMesh* sm = pMesh->getSubMesh(i);
+                sm->mLodFaceList.resize(pMesh->mNumLods-1);
+            }
+        }
+
+        // Loop from 1 rather than 0 (full detail index is not in file)
+        for (i = 1; i < pMesh->mNumLods; ++i)
+        {
+            streamID = readChunk(stream);
+            if (streamID != M_MESH_LOD_USAGE)
+            {
+                OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND,
+                    "Missing M_MESH_LOD_USAGE stream in " + pMesh->getName(),
+                    "MeshSerializerImpl::readMeshLodInfo");
+            }
+            // Read depth
+            MeshLodUsage usage;
+            readFloats(stream, &(usage.value), 1);
+            usage.userValue = Math::Sqrt(usage.value);
+
+            if (pMesh->isLodManual())
+            {
+                readMeshLodUsageManual(stream, pMesh, i, usage);
+            }
+            else //(!pMesh->isLodManual)
+            {
+                readMeshLodUsageGenerated(stream, pMesh, i, usage);
+            }
+            usage.edgeData = NULL;
+
+            // Save usage
+            pMesh->mMeshLodUsageList.push_back(usage);
+        }
+
+
+	}
+    //---------------------------------------------------------------------
+    //---------------------------------------------------------------------
+    //---------------------------------------------------------------------
     MeshSerializerImpl_v1_3::MeshSerializerImpl_v1_3()
     {
         // Version number
@@ -2648,7 +2742,7 @@ namespace Ogre {
                 }
 
                 // The map used to mapping original triangle index to new index
-                typedef std::vector<size_t> TriangleIndexRemap;
+                typedef vector<size_t>::type TriangleIndexRemap;
                 TriangleIndexRemap triangleIndexRemap(numTriangles);
 
                 // New triangles information that should be group by vertex set.
@@ -2916,7 +3010,7 @@ namespace Ogre {
             for (size_t i = 0; i < dest->vertexCount; ++i)
             {
                 ++pFloat; // skip u
-                *pFloat = 1.0 - *pFloat; // v = 1 - v
+                *pFloat = 1.0f - *pFloat; // v = 1 - v
                 ++pFloat;
             }
 
@@ -2932,4 +3026,5 @@ namespace Ogre {
 
 
 }
+
 

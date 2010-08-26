@@ -39,7 +39,7 @@ GMFN double CreateBillboardSet(double size = 20.0)
    Ogre::BillboardSet *bb_set = NULL;
    
    TRY
-      bb_set = mSceneMgr->createBillboardSet(GenerateUniqueName(), size);
+      bb_set = mSceneMgr->createBillboardSet(GenerateUniqueName(), (unsigned int)size);
    CATCH("CreateBillboardSet")
 
    return ConvertToGMPointer(bb_set);
@@ -69,7 +69,7 @@ GMFN double SetBillboardSetPoolSize(double bb_set_ptr, double size)
    if (bb_set == NULL)
       return FALSE;
    
-   bb_set->setPoolSize(size);
+   bb_set->setPoolSize((size_t)size);
 
    return TRUE;
 }
@@ -106,7 +106,7 @@ GMFN double SetBillboardSetDefaultDimensions(double bb_set_ptr, double width, do
    if (bb_set == NULL)
       return FALSE;
    
-   bb_set->setDefaultDimensions(width, height);
+   bb_set->setDefaultDimensions((Ogre::Real)width, (Ogre::Real)height);
 
    return TRUE;
 }
@@ -167,7 +167,7 @@ GMFN double CreateBillboardSetBillboard(double bb_set_ptr, double x, double z, d
    if (bb_set == NULL)
       return FALSE;
    
-   Ogre::Billboard *bb = bb_set->createBillboard(ConvertFromGMAxis(x, y, z), Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), alpha));
+   Ogre::Billboard *bb = bb_set->createBillboard(ConvertFromGMAxis(x, y, z), Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), (float)alpha));
 
    return ConvertToGMPointer(bb);
 }
@@ -262,7 +262,7 @@ GMFN double AttachBillboardSetToEntityBone2(double x, double y, double z, double
    if (entity == NULL)
       return FALSE;
 
-   entity->attachObjectToBone(bb_set_entity_bone_name, bb_set, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree(pitch), Ogre::Degree(roll)), ConvertFromGMAxis(x, y, z));
+   entity->attachObjectToBone(bb_set_entity_bone_name, bb_set, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)), ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -309,6 +309,62 @@ GMFN double SetBillboardSetQueryFlags(double bb_set_ptr, double flags)
    bb_set->setQueryFlags((Ogre::uint)flags);
 
    return TRUE;
+}
+
+
+GMFN double SetBillboardSetLightFlags(double bb_set_ptr, double flags)
+{
+   Ogre::BillboardSet *bb_set = ConvertFromGMPointer<Ogre::BillboardSet*>(bb_set_ptr);
+
+   if (bb_set == NULL)
+      return FALSE;
+
+   bb_set->setLightMask((Ogre::uint)flags);
+
+   return TRUE;
+}
+
+
+GMFN double SetBillboardSetVisibilityFlags(double bb_set_ptr, double flags)
+{
+   Ogre::BillboardSet *bb_set = ConvertFromGMPointer<Ogre::BillboardSet*>(bb_set_ptr);
+
+   if (bb_set == NULL)
+      return FALSE;
+
+   bb_set->setVisibilityFlags((Ogre::uint)flags);
+
+   return TRUE;
+}
+
+
+GMFN double SetBillboardSetUserData(double bb_set_ptr, char *key, double data)
+{
+   Ogre::BillboardSet *bb_set = ConvertFromGMPointer<Ogre::BillboardSet*>(bb_set_ptr);
+
+   if (bb_set == NULL)
+      return FALSE;
+
+   if (key == NULL)
+      ((Ogre::MovableObject*)bb_set)->getUserObjectBindings().setUserAny(Ogre::Any(data));
+   else
+      ((Ogre::MovableObject*)bb_set)->getUserObjectBindings().setUserAny(key, Ogre::Any(data));
+
+   return TRUE;
+}
+
+
+GMFN double GetBillboardSetUserData(double bb_set_ptr, char *key)
+{
+   Ogre::BillboardSet *bb_set = ConvertFromGMPointer<Ogre::BillboardSet*>(bb_set_ptr);
+
+   if (bb_set == NULL)
+      return FALSE;
+
+   if (key == NULL)
+      return Ogre::any_cast<double>(((Ogre::MovableObject*)bb_set)->getUserObjectBindings().getUserAny());
+   else
+      return Ogre::any_cast<double>(((Ogre::MovableObject*)bb_set)->getUserObjectBindings().getUserAny(key));
 }
 
 #endif

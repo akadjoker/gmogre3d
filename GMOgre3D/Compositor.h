@@ -150,7 +150,7 @@ GMFN double GetCompositorTechnique(char *name, double technique_index)
    if (com.isNull())
       return 0;
 
-   return ConvertToGMPointer(com->getTechnique(technique_index));
+   return ConvertToGMPointer(com->getTechnique((size_t)technique_index));
 }
 
 
@@ -179,11 +179,11 @@ GMFN double SetCompositorMaterialSetupCallback(char *name, double func)
       cl = iter->second;
    else
    {
-      GMCompositorListener *cl = new GMCompositorListener;
+      GMCompositorListener *cl = OGRE_NEW GMCompositorListener;
       mCompositorListener[name] = cl;
    }
 
-   cl->SetNotifyMaterialSetupCallback(func);
+   cl->SetNotifyMaterialSetupCallback((int)func);
 
    return TRUE;
 }
@@ -203,11 +203,11 @@ GMFN double SetCompositorMaterialRenderCallback(char *name, double func)
       cl = iter->second;
    else
    {
-      GMCompositorListener *cl = new GMCompositorListener;
+      GMCompositorListener *cl = OGRE_NEW GMCompositorListener;
       mCompositorListener[name] = cl;
    }
 
-   cl->SetNotifyMaterialRenderCallback(func);
+   cl->SetNotifyMaterialRenderCallback((int)func);
 
    return TRUE;
 }

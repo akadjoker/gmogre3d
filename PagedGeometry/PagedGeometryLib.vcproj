@@ -364,11 +364,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\include\MersenneTwister.h"
+				>
+			</File>
+			<File
 				RelativePath=".\include\PagedGeometry.h"
 				>
 			</File>
 			<File
 				RelativePath=".\include\PropertyMaps.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\RandomTable.h"
 				>
 			</File>
 			<File

@@ -110,7 +110,27 @@ namespace OgreNewt
             matrix_out[15] = matrix_in[3][3];
         }
 
+		Ogre::Quaternion grammSchmidt( const Ogre::Vector3& pin )
+		{
+			Ogre::Vector3 front, up, right;
+			front = pin;
 
+			front.normalise();
+			if (Ogre::Math::Abs( front.z ) > 0.577f)
+				right = front.crossProduct( Ogre::Vector3(-front.y, front.z, 0.0f) );
+			else
+				right = front.crossProduct( Ogre::Vector3(-front.y, front.x, 0.0f) );
+			right.normalise();
+			up = right.crossProduct( front );
+
+			Ogre::Matrix3 ret;
+			ret.FromAxes( front, up, right );
+
+			Ogre::Quaternion quat;
+			quat.FromRotationMatrix( ret );
+
+			return quat;
+		}
     } // end namespace "converters"
 
     

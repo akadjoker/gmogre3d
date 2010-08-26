@@ -47,7 +47,7 @@ GMFN double SetCompositionPassIdentifier(double pass_ptr, double id)
    if (pass == NULL)
       return FALSE;
 
-   pass->setIdentifier(id);
+   pass->setIdentifier((Ogre::uint32)id);
 
    return TRUE;
 }
@@ -73,7 +73,7 @@ GMFN double SetCompositionPassFirstRenderQueue(double pass_ptr, double id)
    if (pass == NULL)
       return FALSE;
 
-   pass->setFirstRenderQueue(id);
+   pass->setFirstRenderQueue((Ogre::uint8)id);
 
    return TRUE;
 }
@@ -86,7 +86,7 @@ GMFN double SetCompositionPassLastRenderQueue(double pass_ptr, double id)
    if (pass == NULL)
       return FALSE;
 
-   pass->setLastRenderQueue(id);
+   pass->setLastRenderQueue((Ogre::uint8)id);
 
    return TRUE;
 }
@@ -99,7 +99,7 @@ GMFN double SetCompositionPassClearBuffers(double pass_ptr, double val)
    if (pass == NULL)
       return FALSE;
 
-   pass->setClearBuffers(val);
+   pass->setClearBuffers((Ogre::uint32)val);
 
    return TRUE;
 }
@@ -112,7 +112,7 @@ GMFN double SetCompositionPassClearDepth(double pass_ptr, double depth)
    if (pass == NULL)
       return FALSE;
 
-   pass->setClearDepth(depth);
+   pass->setClearDepth((Ogre::Real)depth);
 
    return TRUE;
 }
@@ -125,7 +125,7 @@ GMFN double SetCompositionPassClearColor(double pass_ptr, double clr, double alp
    if (pass == NULL)
       return FALSE;
 
-   pass->setClearColour(Ogre::ColourValue(GetRedFromGMColor(clr), GetGreenFromGMColor(clr), GetBlueFromGMColor(clr), alpha));
+   pass->setClearColour(Ogre::ColourValue(GetRedFromGMColor(clr), GetGreenFromGMColor(clr), GetBlueFromGMColor(clr), (float)alpha));
 
    return TRUE;
 }
@@ -138,7 +138,7 @@ GMFN double SetCompositionPassClearStencil(double pass_ptr, double val)
    if (pass == NULL)
       return FALSE;
 
-   pass->setClearStencil(val);
+   pass->setClearStencil((Ogre::uint32)val);
 
    return TRUE;
 }
@@ -177,7 +177,7 @@ GMFN double SetCompositionPassStencilRefValue(double pass_ptr, double val)
    if (pass == NULL)
       return FALSE;
 
-   pass->setStencilRefValue(val);
+   pass->setStencilRefValue((Ogre::uint32)val);
 
    return TRUE;
 }
@@ -190,7 +190,7 @@ GMFN double SetCompositionPassStencilMask(double pass_ptr, double val)
    if (pass == NULL)
       return FALSE;
 
-   pass->setStencilMask(val);
+   pass->setStencilMask((Ogre::uint32)val);
 
    return TRUE;
 }
@@ -255,7 +255,7 @@ GMFN double SetCompositionPassInput(double pass_ptr, double id, char *tex_name, 
    if (pass == NULL)
       return FALSE;
 
-   pass->setInput(id, tex_name, (size_t)mrt_index);
+   pass->setInput((size_t)id, tex_name, (size_t)mrt_index);
 
    return TRUE;
 }

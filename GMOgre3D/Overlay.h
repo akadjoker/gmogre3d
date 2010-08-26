@@ -93,7 +93,7 @@ GMFN double RotateOverlay(double overlay_ptr, double degrees)
    if (overlay == NULL)
       return FALSE;
 
-   overlay->rotate(Ogre::Degree(degrees));
+   overlay->rotate(Ogre::Degree((Ogre::Real)degrees));
 
    return TRUE;
 }
@@ -106,7 +106,7 @@ GMFN double SetOverlayScale(double overlay_ptr, double x, double y)
    if (overlay == NULL)
       return FALSE;
 
-   overlay->setScale(x, y);
+   overlay->setScale((Ogre::Real)x, (Ogre::Real)y);
 
    return TRUE;
 }
@@ -119,7 +119,7 @@ GMFN double SetOverlayZOrder(double overlay_ptr, double index)
    if (overlay == NULL)
       return FALSE;
 
-   overlay->setZOrder(index);
+   overlay->setZOrder((Ogre::ushort)index);
 
    return TRUE;
 }

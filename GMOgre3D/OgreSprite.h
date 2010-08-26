@@ -50,11 +50,11 @@ protected:
 	Ogre::OverlayContainer *m_panel;
 	Ogre::Overlay *m_overlay;
 
-   double m_scalex;
-   double m_scaley;
+   Ogre::Real m_scalex;
+   Ogre::Real m_scaley;
 
-   double m_width;
-   double m_height;
+   Ogre::Real m_width;
+   Ogre::Real m_height;
 };
 
 #endif

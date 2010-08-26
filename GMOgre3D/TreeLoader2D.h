@@ -35,7 +35,7 @@ GMFN double CreateTreeLoader2D(double pg_ptr, double left, double top, double ri
    if (pg == NULL)
       return 0;
 
-   Forests::TreeLoader2D *tl = new Forests::TreeLoader2D(pg, Forests::TBounds(left, top, right, bottom));
+   Forests::TreeLoader2D *tl = OGRE_NEW Forests::TreeLoader2D(pg, Forests::TBounds(left, top, right, bottom));
 
    tl->setHeightFunction(CalcTerrainHeight);
 

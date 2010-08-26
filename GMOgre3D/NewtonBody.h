@@ -47,7 +47,7 @@ GMFN double CreateNewtonBody(double newton_world_ptr, double newton_collision_pt
    TRY
       OgreNewt::CollisionPtr col = mNewtonCollisionMap[collision];
 
-      body = new OgreNewtBody(world, col, type);
+      body = OGRE_NEW OgreNewtBody(world, col, (int)type);
       body->setPositionOrientation(Ogre::Vector3(0,0,0), Euler(Ogre::Degree(ConvertFromGMYaw(0)), Ogre::Degree(0), Ogre::Degree(0)));
    CATCH("CreateNewtonBody")
 
@@ -114,7 +114,7 @@ GMFN double SetNewtonBodyOrientation(double newton_body_ptr, double yaw, double 
    Ogre::Quaternion orient;
 
    newton_body->getPositionOrientation(pos, orient);
-   newton_body->setPositionOrientation(pos, Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)));
+   newton_body->setPositionOrientation(pos, Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)));
 
    return TRUE;
 }
@@ -269,7 +269,7 @@ GMFN double SetNewtonBodyMassMatrix(double newton_body_ptr, double mass, double 
    if (!newton_body)
       return FALSE;
 
-   newton_body->setMassMatrix(mass, ConvertFromGMAxis(x, y, z));
+   newton_body->setMassMatrix((Ogre::Real)mass, ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -282,7 +282,7 @@ GMFN double SetNewtonBodyLinearDamping(double newton_body_ptr, double damp)
    if (!newton_body)
       return FALSE;
 
-   newton_body->setLinearDamping(damp);
+   newton_body->setLinearDamping((Ogre::Real)damp);
 
    return TRUE;
 }
@@ -421,27 +421,27 @@ GMFN double UnfreezeNewtonBody(double newton_body_ptr)
 }
 
 
-GMFN double SetNewtonBodyUserData(double newton_body_ptr, double data)
+GMFN double SetNewtonBodyUserData(double newton_body_ptr, char *key, double data)
 {
    OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return FALSE;
 
-   newton_body->setUserData(ConvertFromGMPointer<void*>(data));
+   newton_body->setUserData(key, ConvertFromGMPointer<void*>(data));
 
    return TRUE;
 }
 
 
-GMFN double GetNewtonBodyUserData(double newton_body_ptr)
+GMFN double GetNewtonBodyUserData(double newton_body_ptr, char *key)
 {
    OgreNewtBody *newton_body = ConvertFromGMPointer<OgreNewtBody*>(newton_body_ptr);
 
    if (!newton_body)
       return 0;
 
-   return ConvertToGMPointer(newton_body->getUserData());
+   return ConvertToGMPointer(newton_body->getUserData(key));
 }
 
 /*

@@ -187,7 +187,7 @@ int xsymbol = 0;
 
 HANDLE gMutex = NULL;
 
-Ogre::Material::LodDistanceList mLODLevels;
+Ogre::Material::LodValueList mLODLevels;
 Ogre::String mCubeTextureNames[6];
 //MOC::CollisionTools mCollisionTools;
 
@@ -230,19 +230,24 @@ Ogre::String GenerateUniqueName()
    return base_name + Ogre::StringConverter::toString(index++);
 }
 
-float GetRedFromGMColor(double color)
+Ogre::Real GetRedFromGMColor(double color)
 {
-   return (float)(((int)color & 0xFF)) / 255;
+   return (Ogre::Real)(((int)color & 0xFF)) / 255;
 }
 
-float GetGreenFromGMColor(double color)
+Ogre::Real GetGreenFromGMColor(double color)
 {
-   return (float)((((int)color >> 8) & 0xFF)) / 255;
+   return (Ogre::Real)((((int)color >> 8) & 0xFF)) / 255;
 }
 
-float GetBlueFromGMColor(double color)
+Ogre::Real GetBlueFromGMColor(double color)
 {
-   return (float)((((int)color >> 16) & 0xFF)) / 255;
+   return (Ogre::Real)((((int)color >> 16) & 0xFF)) / 255;
+}
+
+double ConvertColorToGMColor(double r, double g, double b)
+{
+   return (int)(r*255.0) + ((int)(g*255.0) << 8) + ((int)(b*255.0) << 16);
 }
 
 template<typename T>
@@ -278,7 +283,7 @@ double ConvertToGMYaw(Ogre::Real yaw)
 
 Ogre::Real ConvertFromGMYaw(double yaw)
 {
-   Ogre::Real ogre_yaw = yaw;
+   Ogre::Real ogre_yaw = (Ogre::Real)yaw;
 
    // We may have passed in values that are greater or less than
    // the yaw constraints, so wrap these around.

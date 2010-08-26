@@ -41,34 +41,34 @@ int mRotationMode = XYZ_ROTATION;
 Ogre::Vector3 ConvertFromGMAxis(double x, double y, double z)
 {
    if (mRotationMode == XYZ_ROTATION)
-      return Ogre::Vector3(x, y, z);
+      return Ogre::Vector3((Ogre::Real)x, (Ogre::Real)y, (Ogre::Real)z);
    else if (mRotationMode == XZY_ROTATION)
-      return Ogre::Vector3(x, z, y);
+      return Ogre::Vector3((Ogre::Real)x, (Ogre::Real)z, (Ogre::Real)y);
    else if (mRotationMode == ZXY_ROTATION)
-      return Ogre::Vector3(z, x, y);
+      return Ogre::Vector3((Ogre::Real)z, (Ogre::Real)x, (Ogre::Real)y);
    else if (mRotationMode == ZYX_ROTATION)
-      return Ogre::Vector3(z, y, x);
+      return Ogre::Vector3((Ogre::Real)z, (Ogre::Real)y, (Ogre::Real)x);
    else if (mRotationMode == YZX_ROTATION)
-      return Ogre::Vector3(y, z, x);
+      return Ogre::Vector3((Ogre::Real)y, (Ogre::Real)z, (Ogre::Real)x);
    else
-      return Ogre::Vector3(y, x, z);
+      return Ogre::Vector3((Ogre::Real)y, (Ogre::Real)x, (Ogre::Real)z);
 }
 
 
 Ogre::Vector3 ConvertToGMAxis(double x, double z, double y)
 {
    if (mRotationMode == XYZ_ROTATION)
-      return Ogre::Vector3(x, y, z);
+      return Ogre::Vector3((Ogre::Real)x, (Ogre::Real)y, (Ogre::Real)z);
    else if (mRotationMode == XZY_ROTATION)
-      return Ogre::Vector3(x, z, y);
+      return Ogre::Vector3((Ogre::Real)x, (Ogre::Real)z, (Ogre::Real)y);
    else if (mRotationMode == ZXY_ROTATION)
-      return Ogre::Vector3(z, x, y);
+      return Ogre::Vector3((Ogre::Real)z, (Ogre::Real)x, (Ogre::Real)y);
    else if (mRotationMode == ZYX_ROTATION)
-      return Ogre::Vector3(y, x, z);
+      return Ogre::Vector3((Ogre::Real)y, (Ogre::Real)x, (Ogre::Real)z);
    else if (mRotationMode == YZX_ROTATION)
-      return Ogre::Vector3(y, z, x);
+      return Ogre::Vector3((Ogre::Real)y, (Ogre::Real)z, (Ogre::Real)x);
    else
-      return Ogre::Vector3(z, y, x);
+      return Ogre::Vector3((Ogre::Real)z, (Ogre::Real)y, (Ogre::Real)x);
 }
 
 

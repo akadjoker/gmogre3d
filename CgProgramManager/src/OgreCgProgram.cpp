@@ -1,33 +1,33 @@
 /*
 -----------------------------------------------------------------------------
 This source file is part of OGRE
-    (Object-oriented Graphics Rendering Engine)
+(Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreCgProgram.h"
 #include "OgreGpuProgramManager.h"
+#include "OgreHighLevelGpuProgramManager.h"
 #include "OgreStringConverter.h"
 #include "OgreLogManager.h"
 
@@ -130,7 +130,7 @@ namespace Ogre {
 		}
         buildArgs();
 		// deal with includes
-		String sourceToUse = preprocess(mSource);
+		String sourceToUse = resolveCgIncludes(mSource, this, mFilename);
         mCgProgram = cgCreateProgram(mCgContext, CG_SOURCE, sourceToUse.c_str(), 
             mSelectedCgProfile, mEntryPoint.c_str(), const_cast<const char**>(mCgArguments));
 
@@ -149,15 +149,47 @@ namespace Ogre {
 		if (mSelectedCgProfile != CG_PROFILE_UNKNOWN && !mCompileError)
 		{
 
-			// Create a low-level program, give it the same name as us
-			mAssemblerProgram = 
-				GpuProgramManager::getSingleton().createProgramFromString(
+			if ( false
+// the hlsl 4 profiles are only supported in OGRE from CG 2.2
+#if(CG_VERSION_NUM >= 2200)
+				|| mSelectedCgProfile == CG_PROFILE_VS_4_0
+				 || mSelectedCgProfile == CG_PROFILE_PS_4_0
+#endif
+				 )
+			{
+				// Create a high-level program, give it the same name as us
+				HighLevelGpuProgramPtr vp = 
+					HighLevelGpuProgramManager::getSingleton().createProgram(
+					mName, mGroup, "hlsl", mType);
+				String hlslSourceFromCg = cgGetProgramString(mCgProgram, CG_COMPILED_PROGRAM);
+				
+				vp->setSource(hlslSourceFromCg);
+				vp->setParameter("target", mSelectedProfile);
+				vp->setParameter("entry_point", "main");
+
+				vp->load();
+
+				mAssemblerProgram = vp;
+			}
+			else
+			{
+
+				String shaderAssemblerCode = cgGetProgramString(mCgProgram, CG_COMPILED_PROGRAM);
+
+                if (mType == GPT_FRAGMENT_PROGRAM) {
+                    //HACK : http://developer.nvidia.com/forums/index.php?showtopic=1063&pid=2378&mode=threaded&start=#entry2378
+                    //Still happens in CG 2.2. Remove hack when fixed.
+                    shaderAssemblerCode = StringUtil::replaceAll(shaderAssemblerCode, "oDepth.z", "oDepth");
+                }
+				// Create a low-level program, give it the same name as us
+				mAssemblerProgram = 
+					GpuProgramManager::getSingleton().createProgramFromString(
 					mName, 
 					mGroup,
-					cgGetProgramString(mCgProgram, CG_COMPILED_PROGRAM),
+					shaderAssemblerCode,
 					mType, 
 					mSelectedProfile);
-
+			}
 			// Shader params need to be forwarded to low level implementation
 			mAssemblerProgram->setAdjacencyInfoRequired(isAdjacencyInfoRequired());
 		}
@@ -180,11 +212,7 @@ namespace Ogre {
     void CgProgram::buildConstantDefinitions() const
     {
         // Derive parameter names from Cg
-
-		mFloatLogicalToPhysical.bufferSize = 0;
-		mIntLogicalToPhysical.bufferSize = 0;
-		mConstantDefs.floatBufferSize = 0;
-		mConstantDefs.intBufferSize = 0;
+		createParameterMappingStructures(true);
 
 		if (!mCgProgram)
 			return;
@@ -280,40 +308,40 @@ namespace Ogre {
 						// base position on existing buffer contents
 						if (def.isFloat())
 						{
-							def.physicalIndex = mFloatLogicalToPhysical.bufferSize;
+							def.physicalIndex = mFloatLogicalToPhysical->bufferSize;
 						}
 						else
 						{
-							def.physicalIndex = mIntLogicalToPhysical.bufferSize;
+							def.physicalIndex = mIntLogicalToPhysical->bufferSize;
 						}
 					}
 
 
 					def.logicalIndex = logicalIndex;
-					mConstantDefs.map.insert(GpuConstantDefinitionMap::value_type(paramName, def));
+					mConstantDefs->map.insert(GpuConstantDefinitionMap::value_type(paramName, def));
 
 					// Record logical / physical mapping
 					if (def.isFloat())
 					{
-						OGRE_LOCK_MUTEX(mFloatLogicalToPhysical.mutex)
-						mFloatLogicalToPhysical.map.insert(
+						OGRE_LOCK_MUTEX(mFloatLogicalToPhysical->mutex)
+						mFloatLogicalToPhysical->map.insert(
 							GpuLogicalIndexUseMap::value_type(logicalIndex, 
-								GpuLogicalIndexUse(def.physicalIndex, def.arraySize * def.elementSize)));
-						mFloatLogicalToPhysical.bufferSize += def.arraySize * def.elementSize;
-						mConstantDefs.floatBufferSize = mFloatLogicalToPhysical.bufferSize;
+								GpuLogicalIndexUse(def.physicalIndex, def.arraySize * def.elementSize, GPV_GLOBAL)));
+						mFloatLogicalToPhysical->bufferSize += def.arraySize * def.elementSize;
+						mConstantDefs->floatBufferSize = mFloatLogicalToPhysical->bufferSize;
 					}
 					else
 					{
-						OGRE_LOCK_MUTEX(mIntLogicalToPhysical.mutex)
-						mIntLogicalToPhysical.map.insert(
+						OGRE_LOCK_MUTEX(mIntLogicalToPhysical->mutex)
+						mIntLogicalToPhysical->map.insert(
 							GpuLogicalIndexUseMap::value_type(logicalIndex, 
-								GpuLogicalIndexUse(def.physicalIndex, def.arraySize * def.elementSize)));
-						mIntLogicalToPhysical.bufferSize += def.arraySize * def.elementSize;
-						mConstantDefs.intBufferSize = mIntLogicalToPhysical.bufferSize;
+								GpuLogicalIndexUse(def.physicalIndex, def.arraySize * def.elementSize, GPV_GLOBAL)));
+						mIntLogicalToPhysical->bufferSize += def.arraySize * def.elementSize;
+						mConstantDefs->intBufferSize = mIntLogicalToPhysical->bufferSize;
 					}
 
 					// Deal with array indexing
-					mConstantDefs.generateConstantDefinitionArrayEntries(paramName, def);
+					mConstantDefs->generateConstantDefinitionArrayEntries(paramName, def);
 
 					break;
 		
@@ -345,89 +373,74 @@ namespace Ogre {
 			case CG_HALF:
 			case CG_HALF1:
 				def.constType = GCT_FLOAT1;
-				def.elementSize = 4; // padded to 4 elements
 				break;
 			case CG_FLOAT2:
 			case CG_HALF2:
 				def.constType = GCT_FLOAT2;
-				def.elementSize = 4; // padded to 4 elements
 				break;
 			case CG_FLOAT3:
 			case CG_HALF3:
 				def.constType = GCT_FLOAT3;
-				def.elementSize = 4; // padded to 4 elements
 				break;
 			case CG_FLOAT4:
 			case CG_HALF4:
 				def.constType = GCT_FLOAT4;
-				def.elementSize = 4; 
 				break;
 			case CG_FLOAT2x2:
 			case CG_HALF2x2:
 				def.constType = GCT_MATRIX_2X2;
-				def.elementSize = 8; // Cg pads this to 2 float4s
 				break;
 			case CG_FLOAT2x3:
 			case CG_HALF2x3:
 				def.constType = GCT_MATRIX_2X3;
-				def.elementSize = 8; // Cg pads this to 2 float4s
 				break;
 			case CG_FLOAT2x4:
 			case CG_HALF2x4:
 				def.constType = GCT_MATRIX_2X4;
-				def.elementSize = 8; 
 				break;
 			case CG_FLOAT3x2:
 			case CG_HALF3x2:
-				def.constType = GCT_MATRIX_2X3;
-				def.elementSize = 12; // Cg pads this to 3 float4s
+				def.constType = GCT_MATRIX_3X2;
 				break;
 			case CG_FLOAT3x3:
 			case CG_HALF3x3:
 				def.constType = GCT_MATRIX_3X3;
-				def.elementSize = 12; // Cg pads this to 3 float4s
 				break;
 			case CG_FLOAT3x4:
 			case CG_HALF3x4:
 				def.constType = GCT_MATRIX_3X4;
-				def.elementSize = 12; 
 				break;
 			case CG_FLOAT4x2:
 			case CG_HALF4x2:
 				def.constType = GCT_MATRIX_4X2;
-				def.elementSize = 16; // Cg pads this to 4 float4s
 				break;
 			case CG_FLOAT4x3:
 			case CG_HALF4x3:
 				def.constType = GCT_MATRIX_4X3;
-				def.elementSize = 16; // Cg pads this to 4 float4s
 				break;
 			case CG_FLOAT4x4:
 			case CG_HALF4x4:
 				def.constType = GCT_MATRIX_4X4;
-				def.elementSize = 16; // Cg pads this to 4 float4s
 				break;
 			case CG_INT:
 			case CG_INT1:
 				def.constType = GCT_INT1;
-				def.elementSize = 4; // Cg pads this to int4
 				break;
 			case CG_INT2:
 				def.constType = GCT_INT2;
-				def.elementSize = 4; // Cg pads this to int4
 				break;
 			case CG_INT3:
 				def.constType = GCT_INT3;
-				def.elementSize = 4; // Cg pads this to int4
 				break;
 			case CG_INT4:
 				def.constType = GCT_INT4;
-				def.elementSize = 4; 
 				break;
 			default:
 				def.constType = GCT_UNKNOWN;
 				break;
 			}
+			// Cg pads
+			def.elementSize = GpuConstantDefinition::getElementSize(def.constType, true);
 		}
 	}
     //-----------------------------------------------------------------------
@@ -502,7 +515,7 @@ namespace Ogre {
         }
     }
 	//-----------------------------------------------------------------------
-	String CgProgram::preprocess(const String& inSource)
+	String CgProgram::resolveCgIncludes(const String& inSource, Resource* resourceBeingLoaded, const String& fileName)
 	{
 		String outSource;
 		// output will be at least this big
@@ -554,7 +567,7 @@ namespace Ogre {
 				{
 					OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR,
 						"Badly formed #include directive (expected \" or <) in file "
-						+ mFilename + ": " + inSource.substr(includePos, newLineAfter-includePos),
+						+ fileName + ": " + inSource.substr(includePos, newLineAfter-includePos),
 						"CgProgram::preprocessor");
 				}
 				else
@@ -567,7 +580,7 @@ namespace Ogre {
 			{
 				OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR,
 					"Badly formed #include directive (expected " + endDelimeter + ") in file "
-					+ mFilename + ": " + inSource.substr(includePos, newLineAfter-includePos),
+					+ fileName + ": " + inSource.substr(includePos, newLineAfter-includePos),
 					"CgProgram::preprocessor");
 			}
 
@@ -576,7 +589,7 @@ namespace Ogre {
 
 			// open included file
 			DataStreamPtr resource = ResourceGroupManager::getSingleton().
-				openResource(filename, mGroup, true, this);
+				openResource(filename, resourceBeingLoaded->getGroup(), true, resourceBeingLoaded);
 
 			// replace entire include directive line
 			// copy up to just before include
@@ -601,7 +614,7 @@ namespace Ogre {
 
 			// Add #line to the end of the included file to correct the line count
 			outSource.append("\n#line " + Ogre::StringConverter::toString(lineCount) + 
-				"\"" + this->getSourceFile() + "\"\n");
+				"\"" + fileName + "\"\n");
 
 			startMarker = newLineAfter;
 

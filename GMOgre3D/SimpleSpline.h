@@ -32,7 +32,7 @@ GMFN double CreateSimpleSpline()
    Ogre::SimpleSpline *spline = NULL;
    
    TRY
-      spline = new Ogre::SimpleSpline;
+      spline = OGRE_NEW Ogre::SimpleSpline;
    CATCH("CreateSimpleSpline")
 
    return ConvertToGMPointer(spline);
@@ -114,7 +114,7 @@ GMFN double UpdateSimpleSplinePoint(double spline_ptr, double index, double x, d
    if (spline == NULL)
       return FALSE;
 
-   spline->updatePoint(index, ConvertFromGMAxis(x, y, z));
+   spline->updatePoint((unsigned short)index, ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -127,7 +127,7 @@ GMFN double GetSimpleSplineInterpolate(double spline_ptr, double t)
    if (spline == NULL)
       return FALSE;
 
-   Ogre::Vector3 vec = spline->interpolate(t);
+   Ogre::Vector3 vec = spline->interpolate((Ogre::Real)t);
 
    SetGMVectorGlobals(vec);
 
@@ -142,7 +142,7 @@ GMFN double GetSimpleSplineInterpolateFrom(double spline_ptr, double from_index,
    if (spline == NULL)
       return FALSE;
 
-   Ogre::Vector3 vec = spline->interpolate(from_index, t);
+   Ogre::Vector3 vec = spline->interpolate((unsigned int)from_index, (Ogre::Real)t);
 
    SetGMVectorGlobals(vec);
 

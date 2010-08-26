@@ -32,7 +32,7 @@ GMFN double CreatePSSMShadowCameraSetup()
    Ogre::PSSMShadowCameraSetup *cam = NULL;
 
    TRY
-      cam = new Ogre::PSSMShadowCameraSetup;
+      cam = OGRE_NEW Ogre::PSSMShadowCameraSetup;
    CATCH("CreatePSSMShadowCameraSetup")
 
    return ConvertToGMPointer(cam);
@@ -98,7 +98,7 @@ GMFN double SetPSSMShadowCameraSetupCameraLightDirectionThreshold(double ppsm_sh
    if (cam == NULL)
       return FALSE;
 
-   cam->setCameraLightDirectionThreshold(Ogre::Degree(degrees));
+   cam->setCameraLightDirectionThreshold(Ogre::Degree((Ogre::Real)degrees));
 
    return TRUE;
 }

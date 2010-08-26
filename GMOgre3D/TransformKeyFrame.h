@@ -60,7 +60,7 @@ GMFN double SetTransformKeyFrameRotation(double key_frame_ptr, double yaw, doubl
    if (key_frame == NULL)
       return FALSE;
 
-   key_frame->setRotation(Euler(Ogre::Degree((yaw * -1) - 90), Ogre::Degree(pitch), Ogre::Degree(roll)));
+   key_frame->setRotation(Euler(Ogre::Degree(((Ogre::Real)yaw * -1) - 90), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)));
 
    return TRUE;
 }

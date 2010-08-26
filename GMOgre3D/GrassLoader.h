@@ -35,7 +35,7 @@ GMFN double CreateGrassLoader(double pg_ptr)
    if (pg == NULL)
       return 0;
 
-   Forests::GrassLoader *gl = new Forests::GrassLoader(pg);
+   Forests::GrassLoader *gl = OGRE_NEW Forests::GrassLoader(pg);
 
    gl->setHeightFunction(CalcTerrainHeight);
 

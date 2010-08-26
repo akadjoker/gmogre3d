@@ -4,26 +4,25 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
@@ -117,6 +116,7 @@ namespace Ogre {
 #pragma pack ()
 #endif
 
+	const uint32 DDS_MAGIC = FOURCC('D', 'D', 'S', ' ');
 	const uint32 DDS_PIXELFORMAT_SIZE = 8 * sizeof(uint32);
 	const uint32 DDS_CAPS_SIZE = 4 * sizeof(uint32);
 	const uint32 DDS_HEADER_SIZE = 19 * sizeof(uint32) + DDS_PIXELFORMAT_SIZE + DDS_CAPS_SIZE;
@@ -197,10 +197,173 @@ namespace Ogre {
     void DDSCodec::codeToFile(MemoryDataStreamPtr& input, 
         const String& outFileName, Codec::CodecDataPtr& pData) const
     {
-		OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED,
-			"DDS encoding not supported",
-			"DDSCodec::codeToFile" ) ;
-    }
+		// Unwrap codecDataPtr - data is cleaned by calling function
+		ImageData* imgData = static_cast<ImageData* >(pData.getPointer());  
+
+
+		// Check size for cube map faces
+		bool isCubeMap = (imgData->size == 
+			Image::calculateSize(imgData->num_mipmaps, 6, imgData->width, 
+			imgData->height, imgData->depth, imgData->format));
+
+		// Establish texture attributes
+		bool isVolume = (imgData->depth > 1);		
+		bool isFloat32r = (imgData->format == PF_FLOAT32_R);
+		bool hasAlpha = false;
+		bool notImplemented = false;
+		String notImplementedString = "";
+
+		// Check for all the 'not implemented' conditions
+		if (imgData->num_mipmaps != 0)
+		{
+			// No mip map functionality yet
+			notImplemented = true;
+			notImplementedString += " mipmaps";
+		}
+
+		if ((isVolume == true)&&(imgData->width != imgData->height))
+		{
+			// Square textures only
+			notImplemented = true;
+			notImplementedString += " non square textures";
+		}
+
+		uint32 size = 1;
+		while (size < imgData->width)
+		{
+			size <<= 1;
+		}
+		if (size != imgData->width)
+		{
+			// Power two textures only
+			notImplemented = true;
+			notImplementedString += " non power two textures";
+		}
+
+		switch(imgData->format)
+		{
+		case PF_A8R8G8B8:
+		case PF_X8R8G8B8:
+		case PF_R8G8B8:
+		case PF_FLOAT32_R:
+			break;
+		default:
+			// No crazy FOURCC or 565 et al. file formats at this stage
+			notImplemented = true;
+			notImplementedString = " unsupported pixel format";
+			break;
+		}		
+
+
+
+		// Except if any 'not implemented' conditions were met
+		if (notImplemented)
+		{
+			OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED,
+				"DDS encoding for" + notImplementedString + " not supported",
+				"DDSCodec::codeToFile" ) ;
+		}
+		else
+		{
+			// Build header and write to disk
+
+			// Variables for some DDS header flags
+			uint32 ddsHeaderFlags = 0;			
+			uint32 ddsHeaderRgbBits = 0;
+			uint32 ddsHeaderSizeOrPitch = 0;
+			uint32 ddsHeaderCaps1 = 0;
+			uint32 ddsHeaderCaps2 = 0;
+			uint32 ddsMagic = DDS_MAGIC;
+
+			// Initalise the header flags
+			ddsHeaderFlags = (isVolume) ? DDSD_CAPS|DDSD_WIDTH|DDSD_HEIGHT|DDSD_DEPTH|DDSD_PIXELFORMAT :
+				DDSD_CAPS|DDSD_WIDTH|DDSD_HEIGHT|DDSD_PIXELFORMAT;	
+
+			// Initalise the rgbBits flags
+			switch(imgData->format)
+			{
+			case PF_A8R8G8B8:
+				ddsHeaderRgbBits = 8 * 4;
+				hasAlpha = true;
+				break;
+			case PF_X8R8G8B8:
+				ddsHeaderRgbBits = 8 * 4;
+				break;
+			case PF_R8G8B8:
+				ddsHeaderRgbBits = 8 * 3;
+				break;
+			case PF_FLOAT32_R:
+				ddsHeaderRgbBits = 32;
+				break;
+			default:
+				ddsHeaderRgbBits = 0;
+				break;
+			}
+
+			// Initalise the SizeOrPitch flags (power two textures for now)
+			ddsHeaderSizeOrPitch = ddsHeaderRgbBits * imgData->width;
+
+			// Initalise the caps flags
+			ddsHeaderCaps1 = (isVolume||isCubeMap) ? DDSCAPS_COMPLEX|DDSCAPS_TEXTURE : DDSCAPS_TEXTURE;
+			if (isVolume)
+			{
+				ddsHeaderCaps2 = DDSCAPS2_VOLUME;
+			}
+			else if (isCubeMap)
+			{
+				ddsHeaderCaps2 = DDSCAPS2_CUBEMAP|
+					DDSCAPS2_CUBEMAP_POSITIVEX|DDSCAPS2_CUBEMAP_NEGATIVEX|
+					DDSCAPS2_CUBEMAP_POSITIVEY|DDSCAPS2_CUBEMAP_NEGATIVEY|
+					DDSCAPS2_CUBEMAP_POSITIVEZ|DDSCAPS2_CUBEMAP_NEGATIVEZ;
+			}
+
+			// Populate the DDS header information
+			DDSHeader ddsHeader;
+			ddsHeader.size = DDS_HEADER_SIZE;
+			ddsHeader.flags = ddsHeaderFlags;		
+			ddsHeader.width = (uint32)imgData->width;
+			ddsHeader.height = (uint32)imgData->height;
+			ddsHeader.depth = (uint32)(isVolume ? imgData->depth : 0);
+			ddsHeader.depth = (uint32)(isCubeMap ? 6 : ddsHeader.depth);
+			ddsHeader.mipMapCount = 0;
+			ddsHeader.sizeOrPitch = ddsHeaderSizeOrPitch;
+			for (uint32 reserved1=0; reserved1<11; reserved1++) // XXX nasty constant 11
+			{
+				ddsHeader.reserved1[reserved1] = 0;
+			}
+			ddsHeader.reserved2 = 0;
+
+			ddsHeader.pixelFormat.size = DDS_PIXELFORMAT_SIZE;
+			ddsHeader.pixelFormat.flags = (hasAlpha) ? DDPF_RGB|DDPF_ALPHAPIXELS : DDPF_RGB;
+			ddsHeader.pixelFormat.flags = (isFloat32r) ? DDPF_FOURCC : ddsHeader.pixelFormat.flags;
+			ddsHeader.pixelFormat.fourCC = (isFloat32r) ? D3DFMT_R32F : 0;
+			ddsHeader.pixelFormat.rgbBits = ddsHeaderRgbBits;
+
+			ddsHeader.pixelFormat.alphaMask = (hasAlpha)   ? 0xFF000000 : 0x00000000;
+			ddsHeader.pixelFormat.alphaMask = (isFloat32r) ? 0x00000000 : ddsHeader.pixelFormat.alphaMask;
+			ddsHeader.pixelFormat.redMask   = (isFloat32r) ? 0xFFFFFFFF :0x00FF0000;
+			ddsHeader.pixelFormat.greenMask = (isFloat32r) ? 0x00000000 :0x0000FF00;
+			ddsHeader.pixelFormat.blueMask  = (isFloat32r) ? 0x00000000 :0x000000FF;
+
+			ddsHeader.caps.caps1 = ddsHeaderCaps1;
+			ddsHeader.caps.caps2 = ddsHeaderCaps2;
+			ddsHeader.caps.reserved[0] = 0;
+			ddsHeader.caps.reserved[1] = 0;
+
+			// Swap endian
+			flipEndian(&ddsMagic, sizeof(uint32), 1);
+			flipEndian(&ddsHeader, 4, sizeof(DDSHeader) / 4);
+
+			// Write the file 			
+			std::ofstream of;
+			of.open(outFileName.c_str(), std::ios_base::binary|std::ios_base::out);
+			of.write((const char *)&ddsMagic, sizeof(uint32));
+			of.write((const char *)&ddsHeader, DDS_HEADER_SIZE);
+			// XXX flipEndian on each pixel chunk written unless isFloat32r ?
+			of.write((const char *)input->getPtr(), (uint32)imgData->size);
+			of.close();
+		}
+	}
 	//---------------------------------------------------------------------
 	PixelFormat DDSCodec::convertFourCCFormat(uint32 fourcc) const
 	{
@@ -451,7 +614,7 @@ namespace Ogre {
 
 		if (header.caps.caps1 & DDSCAPS_MIPMAP)
 		{
-	        imgData->num_mipmaps = header.mipMapCount - 1;
+	        imgData->num_mipmaps = static_cast<ushort>(header.mipMapCount - 1);
 		}
 		else
 		{
@@ -747,7 +910,7 @@ namespace Ogre {
 			memcpy(&fileType, magicNumberPtr, sizeof(uint32));
 			flipEndian(&fileType, sizeof(uint32), 1);
 
-			if (FOURCC('D', 'D', 'S', ' ') == fileType)
+			if (DDS_MAGIC == fileType)
 			{
 				return String("dds");
 			}

@@ -61,7 +61,7 @@ GMFN double FindEntityFromCameraPosition(double camera_ptr, double x, double y, 
    Ogre::Vector3 result = Ogre::Vector3::ZERO;
 	float distToColl;
 
-   if (ct->raycastFromCamera(mRenderWindow, cam, Ogre::Vector2(x, y), result, ent, distToColl, mask))
+   if (ct->raycastFromCamera(mRenderWindow, cam, Ogre::Vector2((Ogre::Real)x, (Ogre::Real)y), result, ent, (float)distToColl, (Ogre::uint32)mask))
 	{
       SetGMVectorGlobals(result);
 		return ConvertToGMPointer(ent);
@@ -81,8 +81,8 @@ GMFN double FindTerrainFromCameraPosition(double camera_ptr, double x, double y)
    if (mSceneMgr == NULL)
       return FALSE;
 
-   Ogre::Real realitive_x = x / cam->getViewport()->getActualWidth();
-   Ogre::Real realitive_y = y / cam->getViewport()->getActualHeight();
+   Ogre::Real realitive_x = (Ogre::Real)x / cam->getViewport()->getActualWidth();
+   Ogre::Real realitive_y = (Ogre::Real)y / cam->getViewport()->getActualHeight();
 
    static Ogre::Ray ray;
    cam->getCameraToViewportRay(realitive_x, realitive_y, &ray);
@@ -121,7 +121,7 @@ GMFN double CollidesWithObject(double fromx, double fromz, double fromy, double 
    if (ct == NULL)
       return FALSE;
 
-   return ct->collidesWithEntity(ConvertFromGMAxis(fromx, fromy, fromz), ConvertFromGMAxis(tox, toy, toz), collision_radius, ray_height, mask);
+   return ct->collidesWithEntity(ConvertFromGMAxis(fromx, fromy, fromz), ConvertFromGMAxis(tox, toy, toz), (float)collision_radius, (float)ray_height, (Ogre::uint32)mask);
 }
 
 
@@ -137,17 +137,17 @@ GMFN double GetZCollisionDistance(double scene_node_ptr, double check_terrain, d
    if (ct == NULL)
       return 999999;
 
-   return ct->calculateYDistance(scene_node, (check_terrain != 0), space_width, mask);
+   return ct->calculateYDistance(scene_node, (check_terrain != 0), (float)space_width, (Ogre::uint32)mask);
 }
 
 
 GMFN double DistanceToCollisionWithObject(double fromx, double fromz, double fromy, double tox, double toz, double toy, double collision_radius, double ray_height, double mask = 0xFFFFFFFF)
 {
    Ogre::Vector3 fromPointAdj = ConvertFromGMAxis(fromx, fromy, fromz);
-   fromPointAdj.y += ray_height;
+   fromPointAdj.y += (Ogre::Real)ray_height;
 
    Ogre::Vector3 toPointAdj = ConvertFromGMAxis(tox, toy, toz);
-   toPointAdj.y += ray_height;
+   toPointAdj.y += (Ogre::Real)ray_height;
 
 	Ogre::Vector3 normal = toPointAdj - fromPointAdj;
 	float distToDest = normal.normalise();
@@ -161,9 +161,9 @@ GMFN double DistanceToCollisionWithObject(double fromx, double fromz, double fro
    if (ct == NULL)
       return 999999;
 
-	if (ct->raycastFromPoint(fromPointAdj, normal, myResult, myObject, distToColl, mask))
+   if (ct->raycastFromPoint(fromPointAdj, normal, myResult, myObject, (float)distToColl, (Ogre::uint32)mask))
 	{
-		distToColl -= collision_radius;
+		distToColl -= (float)collision_radius;
 		return (distToColl <= distToDest);
 	}
 	else
@@ -180,7 +180,7 @@ GMFN double GetTerrainHeight(double x, double z)
    if (ct == NULL)
       return -999999;
 
-   return ct->getTSMHeightAt(x, z);	
+   return ct->getTSMHeightAt((float)x, (float)z);	
 }
 
 #endif

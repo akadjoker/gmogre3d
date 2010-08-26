@@ -126,7 +126,7 @@ GMFN double SetGUIMultiColumnListBoxRowText(double gui_list_box_ptr, double row_
    if (list_box == NULL)
       return FALSE;
 
-   CEGUI::ListboxTextItem *item = new CEGUI::ListboxTextItem(text, 0, 0, false, true);
+   CEGUI::ListboxTextItem *item = OGRE_NEW CEGUI::ListboxTextItem(text, 0, 0, false, true);
 
    OgreCEGUIWindowData *data = (OgreCEGUIWindowData *)list_box->getUserData();
    
@@ -208,7 +208,7 @@ GMFN double GetGUIMultiColumnListBoxFirstSelectedRow(double gui_list_box_ptr)
    if (list_box == NULL)
       return -1;
 
-   for (int x = 0; x < list_box->getRowCount(); x++)
+   for (size_t x = 0; x < list_box->getRowCount(); x++)
       if (list_box->isItemSelected(CEGUI::MCLGridRef(x, 0)))
          return x;
 
@@ -223,7 +223,7 @@ GMFN double GetGUIMultiColumnListBoxNextSelectedRow(double gui_list_box_ptr, dou
    if (list_box == NULL)
       return -1;
 
-   for (int x = index + 1; x < list_box->getRowCount(); x++)
+   for (size_t x = index + 1; x < list_box->getRowCount(); x++)
       if (list_box->isItemSelected(CEGUI::MCLGridRef(x, 0)))
          return x;
 
@@ -297,9 +297,9 @@ GMFN double SetGUIMultiColumnListBoxSelectionBrushImage(double gui_list_box_ptr,
       data->m_selection_brush_imageset = imageset;
       data->m_selection_brush_image = image;
 
-      for (int x = 0; x < list_box->getRowCount(); x++)
+      for (size_t x = 0; x < list_box->getRowCount(); x++)
       {
-         for (int y = 0; y < list_box->getColumnCount(); y++)
+         for (size_t y = 0; y < list_box->getColumnCount(); y++)
          {
             CEGUI::ListboxItem *item = list_box->getItemAtGridReference(CEGUI::MCLGridRef(x, y));
             if (item != NULL)

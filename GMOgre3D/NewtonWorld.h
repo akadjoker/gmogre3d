@@ -33,7 +33,7 @@ GMFN double CreateNewtonWorld()
    OgreNewtWorld *world = NULL;
 
    TRY
-      world = new OgreNewtWorld();
+      world = OGRE_NEW OgreNewtWorld();
    CATCH("CreateNewtonWorld")
 
    return ConvertToGMPointer(world);
@@ -87,7 +87,7 @@ GMFN double SetNewtonWorldDebuggerFont(double newton_world_ptr, char *name, doub
    if (!newton_world)
       return FALSE;
 
-   newton_world->getDebugger().setFont(name, size);
+   newton_world->getDebugger().setFont(name, (Ogre::Real)size);
 
    return TRUE;
 }
@@ -217,7 +217,7 @@ GMFN double SetNewtonWorldLeaveWorldCallback(double newton_world_ptr, double fun
    if (!newton_world)
       return FALSE;
 
-   newton_world->setGMLeaveWorldFunc(func);
+   newton_world->setGMLeaveWorldFunc((int)func);
 
    return TRUE;
 }
@@ -230,7 +230,7 @@ GMFN double UpdateNewtonWorld(double newton_world_ptr, double seconds)
    if (!newton_world)
       return FALSE;
 
-   newton_world->update(seconds);
+   newton_world->update((Ogre::Real)seconds);
 
    return TRUE;
 }

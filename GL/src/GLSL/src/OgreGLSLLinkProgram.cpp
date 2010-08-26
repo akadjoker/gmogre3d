@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
@@ -169,14 +168,26 @@ namespace Ogre {
 				{
 					const CustomAttribute& a = msCustomAttributes[i];
 					
-					// we're looking for 'attribute vec<n> <semantic_name>'
+					// we're looking for either: 
+					//   attribute vec<n> <semantic_name>
+					//   in vec<n> <semantic_name>
+					// The latter is recommended in GLSL 1.3 onwards 
 					// be slightly flexible about formatting
 					String::size_type pos = vpSource.find(a.name);
 					if (pos != String::npos)
 					{
-						String::size_type startpos = vpSource.find("attribute", pos-20);
+						String::size_type startpos = vpSource.find("attribute", pos < 20 ? 0 : pos-20);
+						if (startpos == String::npos)
+							startpos = vpSource.find("in", pos-20);
 						if (startpos != String::npos && startpos < pos)
-							glBindAttribLocationARB(mGLHandle, a.attrib, a.name.c_str());
+						{
+							// final check 
+							String expr = vpSource.substr(startpos, pos + a.name.length() - startpos);
+							StringVector vec = StringUtil::split(expr);
+							if ((vec[0] == "in" || vec[0] == "attribute") && vec[2] == a.name)
+								glBindAttribLocationARB(mGLHandle, a.attrib, a.name.c_str());
+						}
+
 					}
 				}
 			}
@@ -193,6 +204,9 @@ namespace Ogre {
 				case RenderOperation::OT_POINT_LIST:
 				case RenderOperation::OT_LINE_STRIP:
 				case RenderOperation::OT_TRIANGLE_STRIP:
+                case RenderOperation::OT_LINE_LIST:
+                case RenderOperation::OT_TRIANGLE_LIST:
+                case RenderOperation::OT_TRIANGLE_FAN:
 					break;
 				
 				}
@@ -285,7 +299,7 @@ namespace Ogre {
 
 	//-----------------------------------------------------------------------
 	void GLSLLinkProgram::updateUniforms(GpuProgramParametersSharedPtr params, 
-		GpuProgramType fromProgType)
+		uint16 mask, GpuProgramType fromProgType)
 	{
 		// iterate through uniform reference list and update uniform values
 		GLUniformReferenceIterator currentUniform = mGLUniformReferences.begin();
@@ -299,114 +313,119 @@ namespace Ogre {
 			if (fromProgType == currentUniform->mSourceProgType)
 			{
 				const GpuConstantDefinition* def = currentUniform->mConstantDef;
-				GLsizei glArraySize = (GLsizei)def->arraySize;
-
-				// get the index in the parameter real list
-				switch (def->constType)
+				if (def->variability & mask)
 				{
-				case GCT_FLOAT1:
-					glUniform1fvARB(currentUniform->mLocation, glArraySize, 
-						params->getFloatPointer(def->physicalIndex));
-					break;
-				case GCT_FLOAT2:
-					glUniform2fvARB(currentUniform->mLocation, glArraySize, 
-						params->getFloatPointer(def->physicalIndex));
-					break;
-				case GCT_FLOAT3:
-					glUniform3fvARB(currentUniform->mLocation, glArraySize, 
-						params->getFloatPointer(def->physicalIndex));
-					break;
-				case GCT_FLOAT4:
-					glUniform4fvARB(currentUniform->mLocation, glArraySize, 
-						params->getFloatPointer(def->physicalIndex));
-					break;
-				case GCT_MATRIX_2X2:
-					glUniformMatrix2fvARB(currentUniform->mLocation, glArraySize, 
-						GL_TRUE, params->getFloatPointer(def->physicalIndex));
-					break;
-				case GCT_MATRIX_2X3:
-					if (GLEW_VERSION_2_1)
-					{
-						glUniformMatrix2x3fv(currentUniform->mLocation, glArraySize, 
-							GL_TRUE, params->getFloatPointer(def->physicalIndex));
-					}
-					break;
-				case GCT_MATRIX_2X4:
-					if (GLEW_VERSION_2_1)
-					{
-						glUniformMatrix2x4fv(currentUniform->mLocation, glArraySize, 
-							GL_TRUE, params->getFloatPointer(def->physicalIndex));
-					}
-					break;
-				case GCT_MATRIX_3X2:
-					if (GLEW_VERSION_2_1)
-					{
-						glUniformMatrix3x2fv(currentUniform->mLocation, glArraySize, 
-							GL_TRUE, params->getFloatPointer(def->physicalIndex));
-					}
-					break;
-				case GCT_MATRIX_3X3:
-					glUniformMatrix3fvARB(currentUniform->mLocation, glArraySize, 
-						GL_TRUE, params->getFloatPointer(def->physicalIndex));
-					break;
-				case GCT_MATRIX_3X4:
-					if (GLEW_VERSION_2_1)
-					{
-						glUniformMatrix3x4fv(currentUniform->mLocation, glArraySize, 
-							GL_TRUE, params->getFloatPointer(def->physicalIndex));
-					}
-					break;
-				case GCT_MATRIX_4X2:
-					if (GLEW_VERSION_2_1)
-					{
-						glUniformMatrix4x2fv(currentUniform->mLocation, glArraySize, 
-							GL_TRUE, params->getFloatPointer(def->physicalIndex));
-					}
-					break;
-				case GCT_MATRIX_4X3:
-					if (GLEW_VERSION_2_1)
-					{
-						glUniformMatrix4x3fv(currentUniform->mLocation, glArraySize, 
-							GL_TRUE, params->getFloatPointer(def->physicalIndex));
-					}
-					break;
-				case GCT_MATRIX_4X4:
-					glUniformMatrix4fvARB(currentUniform->mLocation, glArraySize, 
-						GL_TRUE, params->getFloatPointer(def->physicalIndex));
-					break;
-				case GCT_INT1:
-					glUniform1ivARB(currentUniform->mLocation, glArraySize, 
-						(GLint*)params->getIntPointer(def->physicalIndex));
-					break;
-				case GCT_INT2:
-					glUniform2ivARB(currentUniform->mLocation, glArraySize, 
-						(GLint*)params->getIntPointer(def->physicalIndex));
-					break;
-				case GCT_INT3:
-					glUniform3ivARB(currentUniform->mLocation, glArraySize, 
-						(GLint*)params->getIntPointer(def->physicalIndex));
-					break;
-				case GCT_INT4:
-					glUniform4ivARB(currentUniform->mLocation, glArraySize, 
-						(GLint*)params->getIntPointer(def->physicalIndex));
-					break;
-				case GCT_SAMPLER1D:
-				case GCT_SAMPLER1DSHADOW:
-				case GCT_SAMPLER2D:
-				case GCT_SAMPLER2DSHADOW:
-				case GCT_SAMPLER3D:
-				case GCT_SAMPLERCUBE:
-					// samplers handled like 1-element ints
-					glUniform1ivARB(currentUniform->mLocation, 1, 
-						(GLint*)params->getIntPointer(def->physicalIndex));
-					break;
 
-				} // end switch
-#if OGRE_DEBUG_MODE
-				checkForGLSLError( "GLSLLinkProgram::updateUniforms", "Error updating uniform", 0 );
-#endif
+					GLsizei glArraySize = (GLsizei)def->arraySize;
 
-			}
+					// get the index in the parameter real list
+					switch (def->constType)
+					{
+					case GCT_FLOAT1:
+						glUniform1fvARB(currentUniform->mLocation, glArraySize, 
+							params->getFloatPointer(def->physicalIndex));
+						break;
+					case GCT_FLOAT2:
+						glUniform2fvARB(currentUniform->mLocation, glArraySize, 
+							params->getFloatPointer(def->physicalIndex));
+						break;
+					case GCT_FLOAT3:
+						glUniform3fvARB(currentUniform->mLocation, glArraySize, 
+							params->getFloatPointer(def->physicalIndex));
+						break;
+					case GCT_FLOAT4:
+						glUniform4fvARB(currentUniform->mLocation, glArraySize, 
+							params->getFloatPointer(def->physicalIndex));
+						break;
+					case GCT_MATRIX_2X2:
+						glUniformMatrix2fvARB(currentUniform->mLocation, glArraySize, 
+							GL_TRUE, params->getFloatPointer(def->physicalIndex));
+						break;
+					case GCT_MATRIX_2X3:
+						if (GLEW_VERSION_2_1)
+						{
+							glUniformMatrix2x3fv(currentUniform->mLocation, glArraySize, 
+								GL_TRUE, params->getFloatPointer(def->physicalIndex));
+						}
+						break;
+					case GCT_MATRIX_2X4:
+						if (GLEW_VERSION_2_1)
+						{
+							glUniformMatrix2x4fv(currentUniform->mLocation, glArraySize, 
+								GL_TRUE, params->getFloatPointer(def->physicalIndex));
+						}
+						break;
+					case GCT_MATRIX_3X2:
+						if (GLEW_VERSION_2_1)
+						{
+							glUniformMatrix3x2fv(currentUniform->mLocation, glArraySize, 
+								GL_TRUE, params->getFloatPointer(def->physicalIndex));
+						}
+						break;
+					case GCT_MATRIX_3X3:
+						glUniformMatrix3fvARB(currentUniform->mLocation, glArraySize, 
+							GL_TRUE, params->getFloatPointer(def->physicalIndex));
+						break;
+					case GCT_MATRIX_3X4:
+						if (GLEW_VERSION_2_1)
+						{
+							glUniformMatrix3x4fv(currentUniform->mLocation, glArraySize, 
+								GL_TRUE, params->getFloatPointer(def->physicalIndex));
+						}
+						break;
+					case GCT_MATRIX_4X2:
+						if (GLEW_VERSION_2_1)
+						{
+							glUniformMatrix4x2fv(currentUniform->mLocation, glArraySize, 
+								GL_TRUE, params->getFloatPointer(def->physicalIndex));
+						}
+						break;
+					case GCT_MATRIX_4X3:
+						if (GLEW_VERSION_2_1)
+						{
+							glUniformMatrix4x3fv(currentUniform->mLocation, glArraySize, 
+								GL_TRUE, params->getFloatPointer(def->physicalIndex));
+						}
+						break;
+					case GCT_MATRIX_4X4:
+						glUniformMatrix4fvARB(currentUniform->mLocation, glArraySize, 
+							GL_TRUE, params->getFloatPointer(def->physicalIndex));
+						break;
+					case GCT_INT1:
+						glUniform1ivARB(currentUniform->mLocation, glArraySize, 
+							(GLint*)params->getIntPointer(def->physicalIndex));
+						break;
+					case GCT_INT2:
+						glUniform2ivARB(currentUniform->mLocation, glArraySize, 
+							(GLint*)params->getIntPointer(def->physicalIndex));
+						break;
+					case GCT_INT3:
+						glUniform3ivARB(currentUniform->mLocation, glArraySize, 
+							(GLint*)params->getIntPointer(def->physicalIndex));
+						break;
+					case GCT_INT4:
+						glUniform4ivARB(currentUniform->mLocation, glArraySize, 
+							(GLint*)params->getIntPointer(def->physicalIndex));
+						break;
+					case GCT_SAMPLER1D:
+					case GCT_SAMPLER1DSHADOW:
+					case GCT_SAMPLER2D:
+					case GCT_SAMPLER2DSHADOW:
+					case GCT_SAMPLER3D:
+					case GCT_SAMPLERCUBE:
+						// samplers handled like 1-element ints
+						glUniform1ivARB(currentUniform->mLocation, 1, 
+							(GLint*)params->getIntPointer(def->physicalIndex));
+						break;
+                    case GCT_UNKNOWN:
+                        break;
+
+					} // end switch
+	#if OGRE_DEBUG_MODE
+					checkForGLSLError( "GLSLLinkProgram::updateUniforms", "Error updating uniform", 0 );
+	#endif
+				} // variability & mask
+			} // fromProgType == currentUniform->mSourceProgType
   
   		} // end for
 	}

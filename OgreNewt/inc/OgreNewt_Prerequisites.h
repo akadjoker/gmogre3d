@@ -22,6 +22,7 @@
 #   include <Ogre/OgreRenderable.h>
 #   include <Ogre/OgreNode.h>
 #   include <Ogre/OgreFrameListener.h>
+//#   include <OgreTerrain.h>
 #   ifndef OGRENEWT_NO_OGRE_ANY
 #       include <Ogre/OgreAny.h>
 #   endif
@@ -32,6 +33,7 @@
 #include <OgreRenderable.h>
 #include <OgreNode.h>
 #include <OgreFrameListener.h>
+//#include <OgreTerrain.h>
 #   ifndef OGRENEWT_NO_OGRE_ANY
 #       include <OgreAny.h>
 #   endif
@@ -75,6 +77,7 @@ namespace OgreNewt
     class World;
     class MaterialID;
     class Joint;
+	class CustomJoint;
     class Contact;
     class MaterialPair;
     class Body;

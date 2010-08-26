@@ -43,10 +43,10 @@ GMFN double CreateCamera(double aspect, double znear, double zfar, double fov)
       if (cam == NULL)
          return FALSE;
 
-      cam->setNearClipDistance(znear);
-      cam->setFarClipDistance(zfar);
+      cam->setNearClipDistance((Ogre::Real)znear);
+      cam->setFarClipDistance((Ogre::Real)zfar);
       cam->setAspectRatio(Ogre::Real(aspect));
-      cam->setFOVy(Ogre::Degree(fov));
+      cam->setFOVy(Ogre::Degree((Ogre::Real)fov));
       cam->setOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(0)), Ogre::Degree(0), Ogre::Degree(0)));
    CATCH("CreateCamera")
 
@@ -105,8 +105,8 @@ GMFN double SetCameraClipDistances(double camera_ptr, double znear, double zfar)
    if (cam == NULL)
       return FALSE;
 
-   cam->setNearClipDistance(znear);
-   cam->setFarClipDistance(zfar);
+   cam->setNearClipDistance((Ogre::Real)znear);
+   cam->setFarClipDistance((Ogre::Real)zfar);
 
    return TRUE;
 }
@@ -160,7 +160,7 @@ GMFN double MoveCameraForward(double camera_ptr, double delta)
    if (cam == NULL)
       return FALSE;
 
-   cam->move(cam->getDirection() * delta);
+   cam->move(cam->getDirection() * (Ogre::Real)delta);
 
    return TRUE;
 }
@@ -173,7 +173,7 @@ GMFN double MoveCameraBackward(double camera_ptr, double delta)
    if (cam == NULL)
       return FALSE;
 
-   cam->move(cam->getDirection() * (delta * -1));
+   cam->move(cam->getDirection() * ((Ogre::Real)delta * -1));
 
    return TRUE;
 }
@@ -186,7 +186,7 @@ GMFN double MoveCameraRight(double camera_ptr, double delta)
    if (cam == NULL)
       return FALSE;
 
-   cam->move(cam->getRight() * delta);
+   cam->move(cam->getRight() * (Ogre::Real)delta);
 
    return TRUE;
 }
@@ -199,7 +199,7 @@ GMFN double MoveCameraLeft(double camera_ptr, double delta)
    if (cam == NULL)
       return FALSE;
 
-   cam->move(cam->getRight() * (delta * -1));
+   cam->move(cam->getRight() * ((Ogre::Real)delta * -1));
 
    return TRUE;
 }
@@ -212,7 +212,7 @@ GMFN double MoveCameraUp(double camera_ptr, double delta)
    if (cam == NULL)
       return FALSE;
 
-   cam->move(cam->getUp() * delta);
+   cam->move(cam->getUp() * (Ogre::Real)delta);
 
    return TRUE;
 }
@@ -225,7 +225,7 @@ GMFN double MoveCameraDown(double camera_ptr, double delta)
    if (cam == NULL)
       return FALSE;
 
-   cam->move(cam->getUp() * (delta * -1));
+   cam->move(cam->getUp() * ((Ogre::Real)delta * -1));
 
    return TRUE;
 }
@@ -281,7 +281,7 @@ GMFN double SetCameraOrientation(double cam_ptr, double yaw, double pitch, doubl
    if (cam == NULL)
       return FALSE;
 
-   cam->setOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)));
+   cam->setOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)));
 
    return TRUE;
 }
@@ -336,7 +336,7 @@ GMFN double SetCameraRoll(double camera_ptr, double degrees)
    if (cam == NULL)
       return FALSE;
 
-   cam->roll(Ogre::Degree(degrees));
+   cam->roll(Ogre::Degree((Ogre::Real)degrees));
 
    return TRUE;
 }
@@ -362,7 +362,7 @@ GMFN double SetCameraYaw(double camera_ptr, double degrees)
    if (cam == NULL)
       return FALSE;
 
-   cam->yaw(Ogre::Degree(degrees));
+   cam->yaw(Ogre::Degree((Ogre::Real)degrees));
 
    return TRUE;
 }
@@ -388,7 +388,7 @@ GMFN double SetCameraPitch(double camera_ptr, double degrees)
    if (cam == NULL)
       return FALSE;
 
-   cam->pitch(Ogre::Degree(degrees));
+   cam->pitch(Ogre::Degree((Ogre::Real)degrees));
 
    return TRUE;
 }
@@ -422,7 +422,7 @@ GMFN double SetCameraFOV(double camera_ptr, double angle)
    if (cam == NULL)
       return FALSE;
 
-   cam->setFOVy(Ogre::Degree(angle));
+   cam->setFOVy(Ogre::Degree((Ogre::Real)angle));
 
    return TRUE;
 }
@@ -462,7 +462,7 @@ GMFN double SetCameraLODBias(double camera_ptr, double factor)
    if (cam == NULL)
       return FALSE;
 
-   cam->setLodBias(factor);
+   cam->setLodBias((Ogre::Real)factor);
 
    return TRUE;
 }
@@ -543,10 +543,10 @@ GMFN double GetCameraToViewportRay(double cam_ptr, double x, double y)
    if (cam == NULL)
       return 0;
    
-   Ogre::Real realitive_x = x / cam->getViewport()->getActualWidth();
-   Ogre::Real realitive_y = y / cam->getViewport()->getActualHeight();
+   Ogre::Real realitive_x = (Ogre::Real)x / cam->getViewport()->getActualWidth();
+   Ogre::Real realitive_y = (Ogre::Real)y / cam->getViewport()->getActualHeight();
 
-   Ogre::Ray *ray = new Ogre::Ray;
+   Ogre::Ray *ray = OGRE_NEW Ogre::Ray;
    cam->getCameraToViewportRay(realitive_x, realitive_y, ray);
 
    return ConvertToGMPointer(ray);
@@ -713,7 +713,7 @@ GMFN double AttachCameraToEntityBone2(double x, double y, double z, double yaw, 
    if (entity == NULL)
       return FALSE;
 
-   entity->attachObjectToBone(camera_entity_bone_name, cam, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree(pitch), Ogre::Degree(roll)), ConvertFromGMAxis(x, y, z));
+   entity->attachObjectToBone(camera_entity_bone_name, cam, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)), ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }

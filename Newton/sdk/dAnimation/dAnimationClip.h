@@ -11,12 +11,7 @@
 
 #ifndef _dAnimationClip_
 #define _dAnimationClip_
-
-#include <dList.h>
-#include <dVector.h>
-#include <dQuaternion.h>
-#include <dRefCounter.h>
-
+#include <dClassInfo.h>
 
 class TiXmlElement;
 class dPoseGenerator;
@@ -31,29 +26,38 @@ class dKeyFrames
 
 	int FindKey(float entry) const;
 
-    char m_bindName[32];
+    char m_bindName[D_NAME_STRING_LENGTH];
     int m_keyFrameCounts;
     int* m_keys;
     dVector* m_posit;
     dQuaternion* m_rotation;
 };
 
-class dAnimationClip: public dList<dKeyFrames>, virtual public dRefCounter
+
+
+
+class dAnimationClip: public dList<dKeyFrames>, virtual public dClassInfo  
 {
 	public:
 	dAnimationClip(void);
-	
-	void Load (const char* fileName);
-	void Save (const char* fileName) const;
+	~dAnimationClip(void);
+
+#ifdef D_LOAD_SAVE_XML
+	void LoadXML (const char* fileName);
+	void SaveXML (const char* fileName) const;
+#endif
+
 	void RemoveNode (const char* fileName);
 
 	int GetFramesCount() const;
 	void SetFramesCount(int count);
 
-	protected:
-	~dAnimationClip(void);
+
+	dAddRtti(dClassInfo);
 
 	int m_framesCount;
+	char m_name[D_NAME_STRING_LENGTH];
+
 	friend class dPoseGenerator;
 };
 

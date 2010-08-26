@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -50,7 +49,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     Frustum::Frustum() : 
         mProjType(PT_PERSPECTIVE), 
-        mFOVy(Radian(Math::PI/4.0)), 
+        mFOVy(Radian(Math::PI/4.0f)), 
         mFarDist(100000.0f), 
         mNearDist(100.0f), 
         mAspect(1.33333333333333f), 
@@ -67,6 +66,7 @@ namespace Ogre {
 		mCustomViewMatrix(false),
 		mCustomProjMatrix(false),
 		mFrustumExtentsManuallySet(false),
+        mOrientationMode(OR_DEGREE_0),
         mReflect(false), 
         mLinkedReflectPlane(0),
         mObliqueDepthProjection(false), 
@@ -81,7 +81,6 @@ namespace Ogre {
 
         mLastLinkedReflectionPlane.normal = Vector3::ZERO;
         mLastLinkedObliqueProjPlane.normal = Vector3::ZERO;
-
 
         updateView();
         updateFrustum();
@@ -374,8 +373,8 @@ namespace Ogre {
 			else
 			{
 				// Unknown how to apply frustum offset to orthographic camera, just ignore here
-				Real half_w = getOrthoWindowWidth() * 0.5;
-				Real half_h = getOrthoWindowHeight() * 0.5;
+				Real half_w = getOrthoWindowWidth() * 0.5f;
+				Real half_h = getOrthoWindowHeight() * 0.5f;
 
 				left   = - half_w;
 				right  = + half_w;
@@ -536,8 +535,13 @@ namespace Ogre {
 				mProjMatrix[2][2] = q;
 				mProjMatrix[2][3] = qn;
 				mProjMatrix[3][3] = 1;
-			} // ortho
+			} // ortho            
 		} // !mCustomProjMatrix
+
+#if OGRE_NO_VIEWPORT_ORIENTATIONMODE == 0
+        // Deal with orientation mode
+        mProjMatrix = mProjMatrix * Quaternion(Degree(mOrientationMode * 90.f), Vector3::UNIT_Z);
+#endif
 
 		RenderSystem* renderSystem = Root::getSingleton().getRenderSystem();
 		// API specific
@@ -613,7 +617,7 @@ namespace Ogre {
             // Treat infinite fardist as some arbitrary far value
             Real farDist = (mFarDist == 0) ? 100000 : mFarDist;
 
-            // Calc far palne corners
+            // Calc far plane corners
             Real radio = mProjType == PT_PERSPECTIVE ? farDist / mNearDist : 1;
             Real farLeft = vpLeft * radio;
             Real farRight = vpRight * radio;
@@ -829,7 +833,7 @@ namespace Ogre {
 		// Renormalise any normals which were not unit length
 		for(int i=0; i<6; i++ ) 
 		{
-			float length = mFrustumPlanes[i].normal.normalise();
+			Real length = mFrustumPlanes[i].normal.normalise();
 			mFrustumPlanes[i].d /= length;
 		}
 
@@ -1087,9 +1091,9 @@ namespace Ogre {
 			// b = -2rLx
 			// c = r^2 - Lz^2
 			Real a = Lxz;
-			Real b = -2.0 * r * eyeSpacePos.x;
+			Real b = -2.0f * r * eyeSpacePos.x;
 			Real c = rsq - Math::Sqr(eyeSpacePos.z);
-			Real D = b*b - 4*a*c;
+			Real D = b*b - 4.0f*a*c;
 
 			// two roots?
 			if (D > 0)
@@ -1155,9 +1159,9 @@ namespace Ogre {
 			// b = -2rLy
 			// c = r^2 - Lz^2
 			a = Lyz;
-			b = -2.0 * r * eyeSpacePos.y;
+			b = -2.0f * r * eyeSpacePos.y;
 			c = rsq - Math::Sqr(eyeSpacePos.z);
-			D = b*b - 4*a*c;
+			D = b*b - 4.0f*a*c;
 
 			// two roots?
 			if (D > 0)
@@ -1330,10 +1334,40 @@ namespace Ogre {
 		outbottom = mBottom;
 	}
 	//---------------------------------------------------------------------
+	PlaneBoundedVolume Frustum::getPlaneBoundedVolume()
+	{
+		updateFrustumPlanes();
 
-
-
-
+		PlaneBoundedVolume volume;
+		volume.planes.push_back(mFrustumPlanes[FRUSTUM_PLANE_NEAR]);
+		volume.planes.push_back(mFrustumPlanes[FRUSTUM_PLANE_FAR]);
+		volume.planes.push_back(mFrustumPlanes[FRUSTUM_PLANE_BOTTOM]);
+		volume.planes.push_back(mFrustumPlanes[FRUSTUM_PLANE_TOP]);
+		volume.planes.push_back(mFrustumPlanes[FRUSTUM_PLANE_LEFT]);
+		volume.planes.push_back(mFrustumPlanes[FRUSTUM_PLANE_RIGHT]);
+		return volume;
+	}
+    //---------------------------------------------------------------------
+    void Frustum::setOrientationMode(OrientationMode orientationMode)
+    {
+#if OGRE_NO_VIEWPORT_ORIENTATIONMODE != 0
+        OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED,
+                    "Setting Frustrum orientation mode is not supported",
+                    __FUNCTION__);
+#endif
+        mOrientationMode = orientationMode;
+        invalidateFrustum();
+    }
+    //---------------------------------------------------------------------
+    OrientationMode Frustum::getOrientationMode() const
+    {
+#if OGRE_NO_VIEWPORT_ORIENTATIONMODE != 0
+        OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED,
+                    "Getting Frustrum orientation mode is not supported",
+                    __FUNCTION__);
+#endif
+        return mOrientationMode;
+    }
 
 
 } // namespace Ogre

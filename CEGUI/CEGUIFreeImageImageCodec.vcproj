@@ -348,6 +348,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
+				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				AdditionalIncludeDirectories="./cegui/include;./dependencies/include;./cegui/include/ImageCodecModules/FreeImageImageCodec/;../Dependencies/include"
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;HAVE_CONFIG_H;CEGUIFREEIMAGEIMAGECODEC_EXPORTS;CEGUI_STATIC;TOLUA_STATIC;FREEIMAGE_LIB"

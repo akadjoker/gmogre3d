@@ -18,8 +18,6 @@
 
 class NewtonCustomJoint; 
 
-
-
 // OgreNewt namespace.  all functions and classes use this namespace.
 namespace OgreNewt
 {
@@ -86,36 +84,33 @@ namespace OgreNewt
 		//! 
 		void setRowSpringDamper(Ogre::Real springK, Ogre::Real springD) const;
 
-
-#if 0
 		//! returns collision state
 		/*!
 		The collision state determines whether collision should be calculated between the parent and child bodies of the joint.
 		\return integer value. 1 = collision on, 0 = collision off.
 		*/
-		int getCollisionState() const { return NewtonJointGetCollisionState( m_joint ); }
+		int getCollisionState() const;
 
 		//! sets the collision state
 		/*!
 		The collision state determines whether collision should be calculated between the parent and child bodies of the joint.
 		\param state integer value. 1 = collision on, 0 = collision off.
 		*/      
-		void setCollisionState( int state ) const { NewtonJointSetCollisionState( m_joint, state ); }
+		void setCollisionState( int state ) const;
 
 		//! get joint stiffness
 		/*!
 		Joint stiffness adjusts how much "play" the joint can have.  high stiffness = very small play, but more likely to become unstable.
 		\return float representing joint stiffness in range [0,1]
 		*/
-		Ogre::Real getStiffness() const { return (Ogre::Real)NewtonJointGetStiffness( m_joint ); }
+		Ogre::Real getStiffness() const;
 
 		//! set joint stiffness
 		/*!
 		Joint stiffness adjusts how much "play" the joint can have.  high stiffness = very small play, but more likely to become unstable.
 		\param stiffness float representing joint stiffness in range [0,1]
 		*/
-		void setStiffness( Ogre::Real stiffness ) const { NewtonJointSetStiffness( m_joint, stiffness ); }
-#endif
+		void setStiffness( Ogre::Real stiffness ) const;
 
 	protected:
 
@@ -132,6 +127,24 @@ namespace OgreNewt
 		NewtonCustomJoint* GetSupportJoint () const;
 
 		NewtonCustomJoint* m_joint;
+	};
+
+	class _OgreNewtExport CustomJoint : public Joint
+	{
+	public:
+		CustomJoint( unsigned int maxDOF, const OgreNewt::Body* child, const OgreNewt::Body* parent);
+		virtual ~CustomJoint();
+
+		void pinAndDirToLocal( const Ogre::Vector3& pinpt, const Ogre::Vector3& pindir, Ogre::Quaternion& localOrient0, Ogre::Vector3& localPos0, Ogre::Quaternion& localOrient1, Ogre::Vector3& localPos1 ) const;
+		void localToGlobal( const Ogre::Quaternion& localOrient, const Ogre::Vector3& localPos, Ogre::Quaternion& globalOrient, Ogre::Vector3& globalPos, int bodyIndex ) const;
+		void globalToLocal( const Ogre::Quaternion& globalOrient, const Ogre::Vector3& globalPos, Ogre::Quaternion& localOrient, Ogre::Vector3& localPos, int bodyIndex ) const;
+		Ogre::Quaternion grammSchmidt( const Ogre::Vector3& pin ) const;
+
+	protected:
+		unsigned int m_maxDOF;
+
+		const OgreNewt::Body* m_body0;
+		const OgreNewt::Body* m_body1;
 	};
 
 }   // end NAMESPACE OgreNewt

@@ -6,7 +6,7 @@
 #include "nvparse_errors.h"
 #include "nvparse_externs.h"
 #include <string.h>
-#include <OgreGLPrerequisites.h>
+
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
 #	include <OpenGL/glu.h>
 #else
@@ -143,7 +143,7 @@ bool vs10_init_more()
 	if ( vpid == 0 )
 	{
 		char str[128];
-		sprintf( str, "No vertex program id bound for nvparse() invocation.  Bound id = %d\n", vpid );
+		sprintf( str, "No vertex program id bound for nvparse() invocation.  Bound id = %d\n", (int)vpid );
 		errors.set( str );
 		return false;
 	}
@@ -196,8 +196,8 @@ namespace
 					nchar++;
 				}
 			}
-			int start;
-			int end;
+			int start = 0;
+			int end = 0;
 			int flag = ((instring[errPos]==';') | (instring[errPos-1]==';')) ? 1 : 0;
 			for ( i = errPos; i >= 0; i-- )
 			{

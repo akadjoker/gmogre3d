@@ -60,7 +60,7 @@ GMFN double SetParticleEmitterAngle(double part_emit_ptr, double degrees)
    if (part_emit == NULL)
       return FALSE;
 
-   part_emit->setAngle(Ogre::Degree(degrees));
+   part_emit->setAngle(Ogre::Degree((Ogre::Real)degrees));
 
    return TRUE;
 }
@@ -73,7 +73,7 @@ GMFN double SetParticleEmitterVelocity(double part_emit_ptr, double speed)
    if (part_emit == NULL)
       return FALSE;
 
-   part_emit->setParticleVelocity(speed);
+   part_emit->setParticleVelocity((Ogre::Real)speed);
 
    return TRUE;
 }
@@ -86,7 +86,7 @@ GMFN double SetParticleEmitterVelocityRange(double part_emit_ptr, double min_spe
    if (part_emit == NULL)
       return FALSE;
 
-   part_emit->setParticleVelocity(min_speed, max_speed);
+   part_emit->setParticleVelocity((Ogre::Real)min_speed, (Ogre::Real)max_speed);
 
    return TRUE;
 }
@@ -99,7 +99,7 @@ GMFN double SetParticleEmitterEmissionRate(double part_emit_ptr, double rate)
    if (part_emit == NULL)
       return FALSE;
 
-   part_emit->setEmissionRate(rate);
+   part_emit->setEmissionRate((Ogre::Real)rate);
 
    return TRUE;
 }
@@ -112,7 +112,7 @@ GMFN double SetParticleEmitterTimeToLive(double part_emit_ptr, double ttl)
    if (part_emit == NULL)
       return FALSE;
 
-   part_emit->setTimeToLive(ttl);
+   part_emit->setTimeToLive((Ogre::Real)ttl);
 
    return TRUE;
 }
@@ -125,7 +125,7 @@ GMFN double SetParticleEmitterTimeToLiveRange(double part_emit_ptr, double min_t
    if (part_emit == NULL)
       return FALSE;
 
-   part_emit->setTimeToLive(min_ttl, max_ttl);
+   part_emit->setTimeToLive((Ogre::Real)min_ttl, (Ogre::Real)max_ttl);
 
    return TRUE;
 }
@@ -164,7 +164,7 @@ GMFN double SetParticleEmitterStartTime(double part_emit_ptr, double start_time)
    if (part_emit == NULL)
       return FALSE;
 
-   part_emit->setStartTime(start_time);
+   part_emit->setStartTime((Ogre::Real)start_time);
 
    return TRUE;
 }
@@ -177,7 +177,7 @@ GMFN double SetParticleEmitterDuration(double part_emit_ptr, double duration)
    if (part_emit == NULL)
       return FALSE;
 
-   part_emit->setDuration(duration);
+   part_emit->setDuration((Ogre::Real)duration);
 
    return TRUE;
 }
@@ -190,7 +190,7 @@ GMFN double SetParticleEmitterDurationRange(double part_emit_ptr, double min_dur
    if (part_emit == NULL)
       return FALSE;
 
-   part_emit->setDuration(min_duration, max_duration);
+   part_emit->setDuration((Ogre::Real)min_duration, (Ogre::Real)max_duration);
 
    return TRUE;
 }
@@ -203,7 +203,7 @@ GMFN double SetParticleEmitterRepeatDelay(double part_emit_ptr, double delay)
    if (part_emit == NULL)
       return FALSE;
 
-   part_emit->setRepeatDelay(delay);
+   part_emit->setRepeatDelay((Ogre::Real)delay);
 
    return TRUE;
 }
@@ -216,7 +216,7 @@ GMFN double SetParticleEmitterRepeatDelayRange(double part_emit_ptr, double min_
    if (part_emit == NULL)
       return FALSE;
 
-   part_emit->setRepeatDelay(min_delay, max_delay);
+   part_emit->setRepeatDelay((Ogre::Real)min_delay, (Ogre::Real)max_delay);
 
    return TRUE;
 }
@@ -229,7 +229,7 @@ GMFN double SetParticleEmitterDimensions(double part_emit_ptr, double width, dou
    if (part_emit == NULL)
       return FALSE;
 
-   part_emit->setDimensions(width, height);
+   part_emit->setDimensions((Ogre::Real)width, (Ogre::Real)height);
 
    return TRUE;
 }

@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #ifndef __GLRenderSystem_H__
@@ -41,30 +40,31 @@ namespace Ogre {
     /**
       Implementation of GL as a rendering system.
      */
-    class _OgrePrivate GLRenderSystem : public RenderSystem
+    class _OgreGLExport GLRenderSystem : public RenderSystem
     {
     private:
-        // Rendering loop control
+        /// Rendering loop control
         bool mStopRendering;
 
-        // Array of up to 8 lights, indexed as per API
-        // Note that a null value indicates a free slot
+        /** Array of up to 8 lights, indexed as per API
+            Note that a null value indicates a free slot
+          */ 
         #define MAX_LIGHTS 8
         Light* mLights[MAX_LIGHTS];
 
-        // view matrix to set world against
+        /// View matrix to set world against
         Matrix4 mViewMatrix;
         Matrix4 mWorldMatrix;
         Matrix4 mTextureMatrix;
 
-        // Last min & mip filtering options, so we can combine them
+        /// Last min & mip filtering options, so we can combine them
         FilterOptions mMinFilter;
         FilterOptions mMipFilter;
 
-        // What texture coord set each texture unit is using
+        /// What texture coord set each texture unit is using
         size_t mTextureCoordIndex[OGRE_MAX_TEXTURE_LAYERS];
 
-        /// holds texture type settings for every stage
+        /// Holds texture type settings for every stage
         GLenum mTextureTypes[OGRE_MAX_TEXTURE_LAYERS];
 
 		/// Number of fixed-function texture units
@@ -83,20 +83,20 @@ namespace Ogre {
 
         void setLights();
 
-        // Store last depth write state
+        /// Store last depth write state
         bool mDepthWrite;
-		// Store last stencil mask state
+		/// Store last stencil mask state
 		uint32 mStencilMask;
-		// Store last colour write state
+		/// Store last colour write state
 		bool mColourWrite[4];
 
         GLint convertCompareFunction(CompareFunction func) const;
         GLint convertStencilOp(StencilOperation op, bool invert = false) const;
 
-		// internal method for anisotrophy validation
+		/// Internal method for anisotropy validation
 		GLfloat _getCurrentAnisotropy(size_t unit);
 		
-        /// GL support class, used for creating windows etc
+        /// GL support class, used for creating windows etc.
         GLSupport* mGLSupport;
         
         /// Internal method to set pos / direction of a light
@@ -105,8 +105,8 @@ namespace Ogre {
         bool mUseAutoTextureMatrix;
         GLfloat mAutoTextureMatrix[16];
 
-        // check if the GL system has already been initialized
-        bool mGLInitialized;
+        /// Check if the GL system has already been initialised
+        bool mGLInitialised;
 
         HardwareBufferManager* mHardwareBufferManager;
         GLGpuProgramManager* mGpuProgramManager;
@@ -122,9 +122,9 @@ namespace Ogre {
 
 		/* The main GL context - main thread only */
         GLContext *mMainContext;
-        /* The current GL context  - main thread only*/
+        /* The current GL context  - main thread only */
         GLContext *mCurrentContext;
-		typedef std::list<GLContext*> GLContextList;
+		typedef list<GLContext*>::type GLContextList;
 		/// List of background thread contexts
 		GLContextList mBackgroundContextList;
 
@@ -134,6 +134,9 @@ namespace Ogre {
 			unwieldy and slow. However, FBO support for stencil buffers is poor.
         */
         GLRTTManager *mRTTManager;
+
+		ushort mActiveTextureUnit;
+
 	protected:
 		void setClipPlanesImpl(const PlaneList& clipPlanes);
 		bool activateGLTextureUnit(size_t unit);
@@ -199,6 +202,11 @@ namespace Ogre {
 		RenderWindow* _createRenderWindow(const String &name, unsigned int width, unsigned int height, 
 			bool fullScreen, const NameValuePairList *miscParams = 0);
 
+		/// @copydoc RenderSystem::_createRenderWindows
+		bool _createRenderWindows(const RenderWindowDescriptionList& renderWindowDescriptions, 
+			RenderWindowList& createdWindows);
+
+		
 		/// @copydoc RenderSystem::createMultiRenderTarget
 		virtual MultiRenderTarget * createMultiRenderTarget(const String & name); 
 		
@@ -227,6 +235,10 @@ namespace Ogre {
           RenderSystem
          */
         void _useLights(const LightList& lights, unsigned short limit);
+        /** See
+          RenderSystem
+         */
+		bool areFixedFunctionLightsInViewSpace() const { return true; }
         /** See
           RenderSystem
          */
@@ -281,8 +293,8 @@ namespace Ogre {
          */
         void _setTextureBorderColour(size_t stage, const ColourValue& colour);
 		/** See
-		RenderSystem
-		*/
+		  RenderSystem
+		 */
 		void _setTextureMipmapBias(size_t unit, float bias);
         /** See
           RenderSystem
@@ -291,12 +303,20 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        void _setSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor);
+        void _setSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendOperation op );
         /** See
           RenderSystem
          */
-		void _setSeparateSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendFactor sourceFactorAlpha, SceneBlendFactor destFactorAlpha);
+		void _setSeparateSceneBlending(SceneBlendFactor sourceFactor, SceneBlendFactor destFactor, SceneBlendFactor sourceFactorAlpha, SceneBlendFactor destFactorAlpha, SceneBlendOperation op, SceneBlendOperation alphaOp );
         /** See
+          RenderSystem
+         */
+		void _setSceneBlendingOperation(SceneBlendOperation op);
+		/** See
+          RenderSystem
+         */
+		void _setSeparateSceneBlendingOperation(SceneBlendOperation op, SceneBlendOperation alphaOp);
+		/** See
           RenderSystem
          */
         void _setAlphaRejectSettings(CompareFunction func, unsigned char value, bool alphaToCoverage);
@@ -355,8 +375,8 @@ namespace Ogre {
         void _makeProjectionMatrix(const Radian& fovy, Real aspect, Real nearPlane, Real farPlane, 
             Matrix4& dest, bool forGpuProgram = false);
         /** See
-        RenderSystem
-        */
+          RenderSystem
+         */
         void _makeProjectionMatrix(Real left, Real right, Real bottom, Real top, 
             Real nearPlane, Real farPlane, Matrix4& dest, bool forGpuProgram = false);
         /** See
@@ -370,12 +390,12 @@ namespace Ogre {
         void _applyObliqueDepthProjection(Matrix4& matrix, const Plane& plane, 
             bool forGpuProgram);
         /** See
-        RenderSystem
-        */
+          RenderSystem
+         */
         void setClipPlane (ushort index, Real A, Real B, Real C, Real D);
         /** See
-        RenderSystem
-        */
+          RenderSystem
+         */
         void enableClipPlane (ushort index, bool enable);
         /** See
           RenderSystem
@@ -385,7 +405,8 @@ namespace Ogre {
           RenderSystem
          */
         void setStencilCheckEnabled(bool enabled);
-        /** See RenderSystem.
+        /** See
+          RenderSystem.
          */
         void setStencilBufferParams(CompareFunction func = CMPF_ALWAYS_PASS, 
             uint32 refValue = 0, uint32 mask = 0xFFFFFFFF, 
@@ -424,10 +445,11 @@ namespace Ogre {
         /** See
           RenderSystem
          */
-        void bindGpuProgramParameters(GpuProgramType gptype, GpuProgramParametersSharedPtr params);
+		void bindGpuProgramParameters(GpuProgramType gptype, 
+			GpuProgramParametersSharedPtr params, uint16 variabilityMask);
 		/** See
-		RenderSystem
-		*/
+		  RenderSystem
+		 */
 		void bindGpuProgramPassIterationParameters(GpuProgramType gptype);
         /** See
           RenderSystem
@@ -441,6 +463,7 @@ namespace Ogre {
         Real getVerticalTexelOffset(void);
         Real getMinimumDepthInputValue(void);
         Real getMaximumDepthInputValue(void);
+		OGRE_MUTEX(mThreadInitMutex)
 		void registerThread();
 		void unregisterThread();
 		void preExtraThreadsStarted();
@@ -470,6 +493,9 @@ namespace Ogre {
         void _unregisterContext(GLContext *context);
 		/** Returns the main context */
 		GLContext* _getMainContext() {return mMainContext;} 
+
+		/// @copydoc RenderSystem::getDisplayMonitorCount
+		unsigned int getDisplayMonitorCount() const;
     };
 }
 #endif

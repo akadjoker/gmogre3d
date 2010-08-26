@@ -47,7 +47,7 @@ GMFN double SetTechniqueDiffuseColor(double technique_ptr, double color, double 
    if (tech == NULL)
       return FALSE;
 
-   tech->setDiffuse(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), alpha);
+   tech->setDiffuse(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), (Ogre::Real)alpha);
 
    return TRUE;
 }
@@ -60,7 +60,7 @@ GMFN double SetTechniqueSpecularColor(double technique_ptr, double color, double
    if (tech == NULL)
       return FALSE;
 
-   tech->setSpecular(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), alpha);
+   tech->setSpecular(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), (Ogre::Real)alpha);
 
    return TRUE;
 }
@@ -86,7 +86,7 @@ GMFN double SetTechniqueShininess(double technique_ptr, double shininess)
    if (tech == NULL)
       return FALSE;
 
-   tech->setShininess(shininess);
+   tech->setShininess((Ogre::Real)shininess);
 
    return TRUE;
 }
@@ -99,7 +99,7 @@ GMFN double SetTechniqueLODIndex(double technique_ptr, double index)
    if (tech == NULL)
       return FALSE;
 
-   tech->setLodIndex(index);
+   tech->setLodIndex((unsigned short)index);
 
    return TRUE;
 }
@@ -164,7 +164,7 @@ GMFN double SetTechniquePointSize(double technique_ptr, double size)
    if (tech == NULL)
       return FALSE;
 
-   tech->setPointSize(size);
+   tech->setPointSize((Ogre::Real)size);
 
    return TRUE;
 }
@@ -206,7 +206,7 @@ GMFN double GetTechniquePass(double technique_ptr, double pass_index)
    if (tech == NULL)
       return 0;
 
-   return ConvertToGMPointer(tech->getPass(pass_index));
+   return ConvertToGMPointer(tech->getPass((unsigned short)pass_index));
 }
 
 

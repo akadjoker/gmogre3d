@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -140,7 +139,7 @@ namespace Ogre {
         // Fill index of the first key
         if (firstKeyIndex)
         {
-            *firstKeyIndex = std::distance(mKeyFrames.begin(), i);
+            *firstKeyIndex = static_cast<unsigned short>(std::distance(mKeyFrames.begin(), i));
         }
 
         *keyFrame1 = *i;
@@ -209,13 +208,13 @@ namespace Ogre {
 
     }
     //---------------------------------------------------------------------
-    void AnimationTrack::_collectKeyFrameTimes(std::vector<Real>& keyFrameTimes)
+    void AnimationTrack::_collectKeyFrameTimes(vector<Real>::type& keyFrameTimes)
     {
         for (KeyFrameList::const_iterator i = mKeyFrames.begin(); i != mKeyFrames.end(); ++i)
         {
             Real timePos = (*i)->getTime();
 
-            std::vector<Real>::iterator it =
+            vector<Real>::type::iterator it =
                 std::lower_bound(keyFrameTimes.begin(), keyFrameTimes.end(), timePos);
             if (it == keyFrameTimes.end() || *it != timePos)
             {
@@ -224,7 +223,7 @@ namespace Ogre {
         }
     }
     //---------------------------------------------------------------------
-    void AnimationTrack::_buildKeyFrameIndexMap(const std::vector<Real>& keyFrameTimes)
+    void AnimationTrack::_buildKeyFrameIndexMap(const vector<Real>::type& keyFrameTimes)
     {
         // Pre-allocate memory
         mKeyFrameIndexMap.resize(keyFrameTimes.size() + 1);
@@ -603,12 +602,12 @@ namespace Ogre {
 		// NB only eliminate middle keys from sequences of 5+ identical keyframes
 		// since we need to preserve the boundary keys in place, and we need
 		// 2 at each end to preserve tangents for spline interpolation
-		Vector3 lasttrans;
-		Vector3 lastscale;
+		Vector3 lasttrans = Vector3::ZERO;
+		Vector3 lastscale = Vector3::ZERO;
 		Quaternion lastorientation;
         KeyFrameList::iterator i = mKeyFrames.begin();
 		Radian quatTolerance(1e-3f);
-		std::list<unsigned short> removeList;
+		list<unsigned short>::type removeList;
 		unsigned short k = 0;
 		ushort dupKfCount = 0;
         for (; i != mKeyFrames.end(); ++i, ++k)
@@ -645,7 +644,7 @@ namespace Ogre {
 		}
 
 		// Now remove keyframes, in reverse order to avoid index revocation
-		std::list<unsigned short>::reverse_iterator r = removeList.rbegin();
+		list<unsigned short>::type::reverse_iterator r = removeList.rbegin();
 		for (; r!= removeList.rend(); ++r)
 		{
 			removeKeyFrame(*r);

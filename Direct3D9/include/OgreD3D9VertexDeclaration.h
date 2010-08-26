@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #ifndef __D3D9VERTEXDECLARATION_H__
@@ -31,18 +30,16 @@ Torus Knot Software Ltd.
 
 #include "OgreD3D9Prerequisites.h"
 #include "OgreHardwareVertexBuffer.h"
+#include "OgreD3D9Resource.h"
 
 namespace Ogre { 
 
     /** Specialisation of VertexDeclaration for D3D9 */
-    class D3D9VertexDeclaration : public VertexDeclaration
+    class _OgreD3D9Export D3D9VertexDeclaration : public VertexDeclaration, public D3D9Resource
     {
-    protected:
-        LPDIRECT3DDEVICE9 mlpD3DDevice;
-        LPDIRECT3DVERTEXDECLARATION9 mlpD3DDecl;
-        bool mNeedsRebuild;
+    
     public:
-        D3D9VertexDeclaration(LPDIRECT3DDEVICE9 device);
+        D3D9VertexDeclaration();
         ~D3D9VertexDeclaration();
         
         /** See VertexDeclaration */
@@ -68,10 +65,24 @@ namespace Ogre {
         void modifyElement(unsigned short elem_index, unsigned short source, size_t offset, VertexElementType theType,
             VertexElementSemantic semantic, unsigned short index = 0);
 
+		// Called immediately after the Direct3D device has been created.
+		virtual void notifyOnDeviceCreate(IDirect3DDevice9* d3d9Device);
+
+		// Called before the Direct3D device is going to be destroyed.
+		virtual void notifyOnDeviceDestroy(IDirect3DDevice9* d3d9Device);
+
         /** Gets the D3D9-specific vertex declaration. */
-        LPDIRECT3DVERTEXDECLARATION9 getD3DVertexDeclaration(void);
+        IDirect3DVertexDeclaration9* getD3DVertexDeclaration(void);
+
+	protected:
+		void	releaseDeclaration();
 
 
+	protected:        
+		typedef map<IDirect3DDevice9*, IDirect3DVertexDeclaration9*>::type	DeviceToDeclarationMap;
+		typedef DeviceToDeclarationMap::iterator							DeviceToDeclarationIterator;
+
+		DeviceToDeclarationMap		mMapDeviceToDeclaration;
     };
 
 }

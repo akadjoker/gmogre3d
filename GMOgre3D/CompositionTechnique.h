@@ -49,8 +49,8 @@ GMFN double CreateCompositionTechniqueTextureDefinition2(double technique_ptr, d
    
    TRY
       def = tech->createTextureDefinition(comp_tech_tex_def_name);
-      def->width = width;
-      def->height = height;
+      def->width = (size_t)width;
+      def->height = (size_t)height;
       def->formatList.push_back(static_cast<Ogre::PixelFormat>((int)pixel_format));
    CATCH("CreateCompositionTechniqueTextureDefinition")
 
@@ -65,7 +65,7 @@ GMFN double GetCompositionTechniqueTextureDefinition(double technique_ptr, doubl
    if (tech == NULL)
       return 0;
 
-   return ConvertToGMPointer(tech->getTextureDefinition(def_index));
+   return ConvertToGMPointer(tech->getTextureDefinition((size_t)def_index));
 }
 
 
@@ -104,7 +104,7 @@ GMFN double GetCompositionTechniqueTargetPass(double technique_ptr, double pass_
    if (tech == NULL)
       return 0;
 
-   return ConvertToGMPointer(tech->getTargetPass(pass_index));
+   return ConvertToGMPointer(tech->getTargetPass((size_t)pass_index));
 }
 
 

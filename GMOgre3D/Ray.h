@@ -32,7 +32,7 @@ GMFN double CreateRay(double originx, double originz, double originy, double dir
    Ogre::Ray *ray = NULL;
    
    TRY
-      ray = new Ogre::Ray(ConvertFromGMAxis(originx, originy, originz), ConvertFromGMAxis(dirx, diry, dirz));
+      ray = OGRE_NEW Ogre::Ray(ConvertFromGMAxis(originx, originy, originz), ConvertFromGMAxis(dirx, diry, dirz));
    CATCH("CreateRay")
 
    return ConvertToGMPointer(ray);
@@ -63,8 +63,8 @@ GMFN double SetRayFromViewportCamera(double ray_ptr, double cam_ptr, double x, d
 
    if (cam == NULL)
       return FALSE;
-   
-   cam->getCameraToViewportRay(x, y, ray);
+
+   cam->getCameraToViewportRay((Ogre::Real)x / (Ogre::Real)cam->getViewport()->getActualWidth(), (Ogre::Real)y / (Ogre::Real)cam->getViewport()->getActualHeight(), ray);
 
    return TRUE;
 }

@@ -520,6 +520,16 @@ class CustomUserDGRayCastCar: public CustomDGRayCastCar
 		m_tireTransformCallback = callback;
 	}
 
+//	void InitNormalizeTireLateralForce(int pointsCount, dFloat* const piceSizeStepAxis, dFloat* const normalizedForceValue)
+//	{
+//		m_normalizedLateralForce.InitalizeCurve (pointsCount, piceSizeStepAxis, normalizedForceValue);
+//	}
+//	void InitNormalizeTireLongitudinalForce(int pointsCount, dFloat* const piceSizeStepAxis, dFloat* const normalizedForceValue)
+//	{
+//		m_normalizedLongitudinalForce.InitalizeCurve (pointsCount, piceSizeStepAxis, normalizedForceValue);
+//	}
+
+
 	static void CarTransformCallback (const NewtonBody* body, const dFloat* matrix, int threadIndex)
 	{
 		NewtonJoint* joint;
@@ -573,6 +583,16 @@ void* DGRaycastVehicleGetTiresUserData(NewtonUserJoint *car, int tireIndex)
 void DGRaycastVehicleGetTireMatrix(NewtonUserJoint *car, int tire, dFloat* tireMatrix)
 {
 	(*(dMatrix*)tireMatrix) = ((CustomUserDGRayCastCar*)car)->CalculateTireMatrix(tire);
+}
+
+void DGRaycastVehicleInitNormalizeTireLateralForce(NewtonUserJoint *car, int pointsCount, dFloat* const piceSizeStepAxis, dFloat* const normalizedForceValue)
+{
+	((CustomUserDGRayCastCar*)car)->InitNormalizeTireLateralForce (pointsCount, piceSizeStepAxis, normalizedForceValue);
+}
+
+void DGRaycastVehicleInitNormalizeTireLongitudinalForce(NewtonUserJoint *car, int pointsCount, dFloat* const piceSizeStepAxis, dFloat* const normalizedForceValue)
+{
+	((CustomUserDGRayCastCar*)car)->InitNormalizeTireLongitudinalForce (pointsCount, piceSizeStepAxis, normalizedForceValue);
 }
 
 

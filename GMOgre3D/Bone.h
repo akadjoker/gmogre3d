@@ -164,7 +164,7 @@ GMFN double SetBoneOrientation(double bone_ptr, double yaw, double pitch, double
    if (bone == NULL)
       return FALSE;
 
-   bone->setOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(pitch), Ogre::Degree(roll)));
+   bone->setOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)));
 
    return TRUE;
 }
@@ -198,7 +198,7 @@ GMFN double SetBoneRoll(double bone_ptr, double degrees, double relative_type = 
    if (bone == NULL)
       return FALSE;
 
-   bone->roll(Ogre::Degree(degrees), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
+   bone->roll(Ogre::Degree((Ogre::Real)degrees), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
 
    return TRUE;
 }
@@ -224,7 +224,7 @@ GMFN double SetBoneYaw(double bone_ptr, double degrees, double relative_type = 0
    if (bone == NULL)
       return FALSE;
 
-   bone->yaw(Ogre::Degree(degrees), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
+   bone->yaw(Ogre::Degree((Ogre::Real)degrees), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
 
    return TRUE;
 }
@@ -250,7 +250,7 @@ GMFN double SetBonePitch(double bone_ptr, double degrees, double relative_type =
    if (bone == NULL)
       return FALSE;
 
-   bone->pitch(Ogre::Degree(degrees), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
+   bone->pitch(Ogre::Degree((Ogre::Real)degrees), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
 
    return TRUE;
 }
@@ -283,7 +283,7 @@ GMFN double RotateBone(double bone_ptr, double x, double z, double y, double deg
    if (bone == NULL)
       return FALSE;
 
-   bone->rotate(ConvertFromGMAxis(x, y, z), Ogre::Degree(degrees), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
+   bone->rotate(ConvertFromGMAxis(x, y, z), Ogre::Degree((Ogre::Real)degrees), static_cast<Ogre::Node::TransformSpace>((int)relative_type));
 
    return TRUE;
 }

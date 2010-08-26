@@ -4,26 +4,25 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -36,7 +35,8 @@ Torus Knot Software Ltd.
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#if OGRE_PLATFORM == OGRE_PLATFORM_LINUX || OGRE_PLATFORM == OGRE_PLATFORM_APPLE
+#if OGRE_PLATFORM == OGRE_PLATFORM_LINUX || OGRE_PLATFORM == OGRE_PLATFORM_APPLE || \
+    OGRE_PLATFORM == OGRE_PLATFORM_SYMBIAN || OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
 #   include "OgreSearchOps.h"
 #   include <sys/param.h>
 #   define MAX_PATH MAXPATHLEN
@@ -44,7 +44,9 @@ Torus Knot Software Ltd.
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
 #  define WIN32_LEAN_AND_MEAN
-#  define NOMINMAX // required to stop windows.h messing up std::min
+#  if !defined(NOMINMAX) && defined(_MSC_VER)
+#	define NOMINMAX // required to stop windows.h messing up std::min
+#  endif
 #  include <windows.h>
 #  include <direct.h>
 #  include <io.h>
@@ -186,7 +188,19 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void FileSystemArchive::load()
     {
-        // do nothing here, what has to be said will be said later
+		OGRE_LOCK_AUTO_MUTEX
+        // test to see if this folder is writeable
+		String testPath = concatenate_path(mName, "__testwrite.ogre");
+		std::ofstream writeStream;
+		writeStream.open(testPath.c_str());
+		if (writeStream.fail())
+			mReadOnly = true;
+		else
+		{
+			mReadOnly = false;
+			writeStream.close();
+			::remove(testPath.c_str());
+		}
     }
     //-----------------------------------------------------------------------
     void FileSystemArchive::unload()
@@ -194,34 +208,111 @@ namespace Ogre {
         // nothing to see here, move along
     }
     //-----------------------------------------------------------------------
-    DataStreamPtr FileSystemArchive::open(const String& filename) const
+    DataStreamPtr FileSystemArchive::open(const String& filename, bool readOnly) const
     {
-        String full_path = concatenate_path(mName, filename);
+		String full_path = concatenate_path(mName, filename);
 
-        // Use filesystem to determine size 
-        // (quicker than streaming to the end and back)
-        struct stat tagStat;
-	int ret = stat(full_path.c_str(), &tagStat);
-        assert(ret == 0 && "Problem getting file size" );
+		// Use filesystem to determine size 
+		// (quicker than streaming to the end and back)
+		struct stat tagStat;
+		int ret = stat(full_path.c_str(), &tagStat);
+		assert(ret == 0 && "Problem getting file size" );
+        (void)ret;  // Silence warning
 
-        // Always open in binary mode
-        std::ifstream *origStream = OGRE_NEW_T(std::ifstream, MEMCATEGORY_GENERAL)();
-        origStream->open(full_path.c_str(), std::ios::in | std::ios::binary);
+		// Always open in binary mode
+		// Also, always include reading
+		std::ios::openmode mode = std::ios::in | std::ios::binary;
+		std::istream* baseStream = 0;
+		std::ifstream* roStream = 0;
+		std::fstream* rwStream = 0;
 
-        // Should check ensure open succeeded, in case fail for some reason.
-        if (origStream->fail())
-        {
-            OGRE_DELETE_T(origStream, basic_ifstream, MEMCATEGORY_GENERAL);
-            OGRE_EXCEPT(Exception::ERR_FILE_NOT_FOUND,
-                "Cannot open file: " + filename,
-                "FileSystemArchive::open");
-        }
+		if (!readOnly && isReadOnly())
+		{
+			mode |= std::ios::out;
+			rwStream = OGRE_NEW_T(std::fstream, MEMCATEGORY_GENERAL)();
+			rwStream->open(full_path.c_str(), mode);
+			baseStream = rwStream;
+		}
+		else
+		{
+			roStream = OGRE_NEW_T(std::ifstream, MEMCATEGORY_GENERAL)();
+			roStream->open(full_path.c_str(), mode);
+			baseStream = roStream;
+		}
 
-        /// Construct return stream, tell it to delete on destroy
-        FileStreamDataStream* stream = OGRE_NEW FileStreamDataStream(filename,
-            origStream, tagStat.st_size, true);
-        return DataStreamPtr(stream);
+
+		// Should check ensure open succeeded, in case fail for some reason.
+		if (baseStream->fail())
+		{
+			OGRE_DELETE_T(roStream, basic_ifstream, MEMCATEGORY_GENERAL);
+			OGRE_DELETE_T(rwStream, basic_fstream, MEMCATEGORY_GENERAL);
+			OGRE_EXCEPT(Exception::ERR_FILE_NOT_FOUND,
+				"Cannot open file: " + filename,
+				"FileSystemArchive::open");
+		}
+
+		/// Construct return stream, tell it to delete on destroy
+		FileStreamDataStream* stream = 0;
+		if (rwStream)
+		{
+			// use the writeable stream 
+			stream = OGRE_NEW FileStreamDataStream(filename,
+				rwStream, tagStat.st_size, true);
+		}
+		else
+		{
+			// read-only stream
+			stream = OGRE_NEW FileStreamDataStream(filename,
+				roStream, tagStat.st_size, true);
+		}
+		return DataStreamPtr(stream);
     }
+	//---------------------------------------------------------------------
+	DataStreamPtr FileSystemArchive::create(const String& filename) const
+	{
+		if (isReadOnly())
+		{
+			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
+				"Cannot create a file in a read-only archive", 
+				"FileSystemArchive::remove");
+		}
+
+		String full_path = concatenate_path(mName, filename);
+
+		// Always open in binary mode
+		// Also, always include reading
+		std::ios::openmode mode = std::ios::out | std::ios::binary;
+		std::fstream* rwStream = OGRE_NEW_T(std::fstream, MEMCATEGORY_GENERAL)();
+		rwStream->open(full_path.c_str(), mode);
+
+		// Should check ensure open succeeded, in case fail for some reason.
+		if (rwStream->fail())
+		{
+			OGRE_DELETE_T(rwStream, basic_fstream, MEMCATEGORY_GENERAL);
+			OGRE_EXCEPT(Exception::ERR_FILE_NOT_FOUND,
+				"Cannot open file: " + filename,
+				"FileSystemArchive::create");
+		}
+
+		/// Construct return stream, tell it to delete on destroy
+		FileStreamDataStream* stream = OGRE_NEW FileStreamDataStream(filename,
+				rwStream, 0, true);
+
+		return DataStreamPtr(stream);
+	}
+	//---------------------------------------------------------------------
+	void FileSystemArchive::remove(const String& filename) const
+	{
+		if (isReadOnly())
+		{
+			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, 
+				"Cannot remove a file from a read-only archive", 
+				"FileSystemArchive::remove");
+		}
+		String full_path = concatenate_path(mName, filename);
+		::remove(full_path.c_str());
+
+	}
     //-----------------------------------------------------------------------
     StringVectorPtr FileSystemArchive::list(bool recursive, bool dirs)
     {

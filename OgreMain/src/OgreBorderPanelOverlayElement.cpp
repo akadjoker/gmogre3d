@@ -5,25 +5,24 @@ This source file is part of OGRE
 For the latest info, see http://www.ogre3d.org/
 
 Copyright  2000-2005 The OGRE Team
-Also see acknowledgements in Readme.html
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -153,7 +152,7 @@ namespace Ogre {
 					mRenderOp2.indexData->indexBuffer->getSizeInBytes(), 
 					HardwareBuffer::HBL_DISCARD) );
 
-			for (int cell = 0; cell < 8; ++cell)
+			for (ushort cell = 0; cell < 8; ++cell)
 			{
 				ushort base = cell * 4;
 				*pIdx++ = base;
@@ -236,7 +235,7 @@ namespace Ogre {
         if (mMetricsMode != GMM_RELATIVE)
         {
             mPixelLeftBorderSize = mPixelRightBorderSize = 
-                mPixelTopBorderSize = mPixelBottomBorderSize = static_cast<unsigned>(size);
+                mPixelTopBorderSize = mPixelBottomBorderSize = static_cast<unsigned short>(size);
         }
         else
         {
@@ -250,8 +249,8 @@ namespace Ogre {
     {
         if (mMetricsMode != GMM_RELATIVE)
         {
-            mPixelLeftBorderSize = mPixelRightBorderSize = static_cast<unsigned>(sides);
-            mPixelTopBorderSize = mPixelBottomBorderSize = static_cast<unsigned>(topAndBottom);
+            mPixelLeftBorderSize = mPixelRightBorderSize = static_cast<unsigned short>(sides);
+            mPixelTopBorderSize = mPixelBottomBorderSize = static_cast<unsigned short>(topAndBottom);
         }
         else
         {
@@ -267,10 +266,10 @@ namespace Ogre {
     {
         if (mMetricsMode != GMM_RELATIVE)
         {
-            mPixelLeftBorderSize = static_cast<unsigned>(left);
-            mPixelRightBorderSize = static_cast<unsigned>(right);
-            mPixelTopBorderSize = static_cast<unsigned>(top);
-            mPixelBottomBorderSize = static_cast<unsigned>(bottom);
+            mPixelLeftBorderSize = static_cast<unsigned short>(left);
+            mPixelRightBorderSize = static_cast<unsigned short>(right);
+            mPixelTopBorderSize = static_cast<unsigned short>(top);
+            mPixelBottomBorderSize = static_cast<unsigned short>(bottom);
         }
         else
         {
@@ -622,10 +621,10 @@ namespace Ogre {
         PanelOverlayElement::setMetricsMode(gmm);
         if (gmm != GMM_RELATIVE)
         {
-            mPixelBottomBorderSize = static_cast<unsigned>(mBottomBorderSize);
-            mPixelLeftBorderSize = static_cast<unsigned>(mLeftBorderSize);
-            mPixelRightBorderSize = static_cast<unsigned>(mRightBorderSize);
-            mPixelTopBorderSize = static_cast<unsigned>(mTopBorderSize);
+            mPixelBottomBorderSize = static_cast<unsigned short>(mBottomBorderSize);
+            mPixelLeftBorderSize = static_cast<unsigned short>(mLeftBorderSize);
+            mPixelRightBorderSize = static_cast<unsigned short>(mRightBorderSize);
+            mPixelTopBorderSize = static_cast<unsigned short>(mTopBorderSize);
         }
     }
     //-----------------------------------------------------------------------
@@ -659,7 +658,7 @@ namespace Ogre {
     }
     void BorderPanelOverlayElement::CmdBorderSize::doSet(void* target, const String& val)
     {
-        std::vector<String> vec = StringUtil::split(val);
+        vector<String>::type vec = StringUtil::split(val);
 
         static_cast<BorderPanelOverlayElement*>(target)->setBorderSize(
             StringConverter::parseReal(vec[0]),
@@ -676,7 +675,7 @@ namespace Ogre {
     }
     void BorderPanelOverlayElement::CmdBorderMaterial::doSet(void* target, const String& val)
     {
-        std::vector<String> vec = StringUtil::split(val);
+        vector<String>::type vec = StringUtil::split(val);
 
         static_cast<BorderPanelOverlayElement*>(target)->setBorderMaterialName(val);
     }
@@ -688,7 +687,7 @@ namespace Ogre {
     }
     void BorderPanelOverlayElement::CmdBorderBottomLeftUV::doSet(void* target, const String& val)
     {
-        std::vector<String> vec = StringUtil::split(val);
+        vector<String>::type vec = StringUtil::split(val);
 
         static_cast<BorderPanelOverlayElement*>(target)->setBottomLeftBorderUV(
             StringConverter::parseReal(vec[0]),
@@ -705,7 +704,7 @@ namespace Ogre {
     }
     void BorderPanelOverlayElement::CmdBorderBottomRightUV::doSet(void* target, const String& val)
     {
-        std::vector<String> vec = StringUtil::split(val);
+        vector<String>::type vec = StringUtil::split(val);
 
         static_cast<BorderPanelOverlayElement*>(target)->setBottomRightBorderUV(
             StringConverter::parseReal(vec[0]),
@@ -722,7 +721,7 @@ namespace Ogre {
     }
     void BorderPanelOverlayElement::CmdBorderTopLeftUV::doSet(void* target, const String& val)
     {
-        std::vector<String> vec = StringUtil::split(val);
+        vector<String>::type vec = StringUtil::split(val);
 
         static_cast<BorderPanelOverlayElement*>(target)->setTopLeftBorderUV(
             StringConverter::parseReal(vec[0]),
@@ -739,7 +738,7 @@ namespace Ogre {
     }
     void BorderPanelOverlayElement::CmdBorderTopRightUV::doSet(void* target, const String& val)
     {
-        std::vector<String> vec = StringUtil::split(val);
+        vector<String>::type vec = StringUtil::split(val);
 
         static_cast<BorderPanelOverlayElement*>(target)->setTopRightBorderUV(
             StringConverter::parseReal(vec[0]),
@@ -756,7 +755,7 @@ namespace Ogre {
     }
     void BorderPanelOverlayElement::CmdBorderLeftUV::doSet(void* target, const String& val)
     {
-        std::vector<String> vec = StringUtil::split(val);
+        vector<String>::type vec = StringUtil::split(val);
 
         static_cast<BorderPanelOverlayElement*>(target)->setLeftBorderUV(
             StringConverter::parseReal(vec[0]),
@@ -773,7 +772,7 @@ namespace Ogre {
     }
     void BorderPanelOverlayElement::CmdBorderRightUV::doSet(void* target, const String& val)
     {
-        std::vector<String> vec = StringUtil::split(val);
+        vector<String>::type vec = StringUtil::split(val);
 
         static_cast<BorderPanelOverlayElement*>(target)->setRightBorderUV(
             StringConverter::parseReal(vec[0]),
@@ -790,7 +789,7 @@ namespace Ogre {
     }
     void BorderPanelOverlayElement::CmdBorderTopUV::doSet(void* target, const String& val)
     {
-        std::vector<String> vec = StringUtil::split(val);
+        vector<String>::type vec = StringUtil::split(val);
 
         static_cast<BorderPanelOverlayElement*>(target)->setTopBorderUV(
             StringConverter::parseReal(vec[0]),
@@ -807,7 +806,7 @@ namespace Ogre {
     }
     void BorderPanelOverlayElement::CmdBorderBottomUV::doSet(void* target, const String& val)
     {
-        std::vector<String> vec = StringUtil::split(val);
+        vector<String>::type vec = StringUtil::split(val);
 
         static_cast<BorderPanelOverlayElement*>(target)->setBottomBorderUV(
             StringConverter::parseReal(vec[0]),

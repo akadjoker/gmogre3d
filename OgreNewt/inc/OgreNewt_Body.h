@@ -228,21 +228,22 @@ public:
         returns the current center of mass, as an offset from the original origin when the body was created.
     */
     Ogre::Vector3 getCenterOfMass() const;
-        //! freeze the rigid body.
-        /*!
-            this command "freezes" the Rigid Body, removing it from the active simulation list.  it will "unfreeze" if another body comes in contact with it, or you "unfreeze" it.
-            \sa unFreeze()
-        */
-       void freeze() { NewtonBodySetFreezeState( m_body, 1 ); }
 
-        //! unfreeze the rigid body.
-        /*!
-            \sa freeze()
-        */
-        void unFreeze() { NewtonBodySetFreezeState( m_body, 0 ); }
+    //! freeze the rigid body.
+    /*!
+        this command "freezes" the Rigid Body, removing it from the active simulation list.  it will "unfreeze" if another body comes in contact with it, or you "unfreeze" it.
+        \sa unFreeze()
+    */
+   void freeze() { NewtonBodySetFreezeState( m_body, 1 ); }
 
-        //! is the body freezed?
-        bool isFreezed() { return NewtonBodyGetFreezeState( m_body ) != 0; }
+    //! unfreeze the rigid body.
+    /*!
+        \sa freeze()
+    */
+    void unFreeze() { NewtonBodySetFreezeState( m_body, 0 ); }
+
+    //! is the body freezed?
+    bool isFreezed() { return NewtonBodyGetFreezeState( m_body ) != 0; }
             
     //! set the material for the body
     /*!
@@ -318,11 +319,23 @@ public:
     //! get position and orientation in form of an Ogre::Vector(position) and Ogre::Quaternion(orientation)
     void getPositionOrientation( Ogre::Vector3& pos, Ogre::Quaternion& orient ) const;
 
+	//! returns body position
+	Ogre::Vector3 getPosition() const;
+
+	//! returns body orientation
+	Ogre::Quaternion getOrientation() const;
+
 	//! get the node position and orientation in form of an Ogre::Vector(position) and Ogre::Quaternion(orientation)
     /*!
         this function should be used for calculating Render matrix render or anything related to render time
     */
 	void getVisualPositionOrientation( Ogre::Vector3& pos, Ogre::Quaternion& orient ) const;
+
+	//! return body visual position
+	Ogre::Vector3 getVisualPosition() const;
+
+	//! returns body visual orientation
+	Ogre::Quaternion getVisualOrientation() const;
 
 
     //! get the axis-aligned bounding box for this body.
@@ -422,6 +435,15 @@ public:
     */
     void addGlobalForce( const Ogre::Vector3& force, const Ogre::Vector3& pos );
 
+	//! helper function that adds a force (and resulting torque) to an object in global cordinates called from anywhere.
+    /*!
+        this function can also be called outside ForceCallback function, the calls are accumulated and
+		applied in the callback.
+        \param force vector representing force, in global space
+        \param pos vector representing location of force, in global space
+    */
+    void addGlobalForceAccumulate( const Ogre::Vector3& force, const Ogre::Vector3& pos );
+
     // helper function that adds a force (and resulting torque) to an object in local coordinates.
     /*!
         this function is only valid inside a ForceCallback function!
@@ -471,6 +493,8 @@ protected:
     OgreNewt::CollisionPtr          m_collision;
     const MaterialID*               m_matid;
     const World*                    m_world;
+
+	std::vector<std::pair<Ogre::Vector3, Ogre::Vector3>> m_accumulatedGlobalForces;
 
 	Ogre::Vector3					m_nodePosit;
 	Ogre::Vector3					m_curPosit;

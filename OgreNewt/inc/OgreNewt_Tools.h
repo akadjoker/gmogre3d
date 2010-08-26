@@ -52,6 +52,8 @@ namespace OgreNewt
             \param matrix_out Newton-happy output matrix (float[16])
         */
         _OgreNewtExport void Matrix4ToMatrix( const Ogre::Matrix4& matrix_in, float* matrix_out );
+
+		_OgreNewtExport Ogre::Quaternion grammSchmidt( const Ogre::Vector3& pin );
     }
 
     //! low-level collision commands.

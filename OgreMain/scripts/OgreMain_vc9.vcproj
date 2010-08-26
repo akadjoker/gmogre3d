@@ -521,6 +521,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\OgreDistanceLodStrategy.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\src\OgreDynLib.cpp"
 				>
 			</File>
@@ -581,6 +585,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\OgreGpuProgramParams.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\src\OgreGpuProgramUsage.cpp"
 				>
 			</File>
@@ -633,6 +641,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\OgreLodStrategy.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\OgreLodStrategyManager.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\src\OgreLog.cpp"
 				>
 			</File>
@@ -674,6 +690,10 @@
 			</File>
 			<File
 				RelativePath="..\src\OgreMemoryNedAlloc.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\OgreMemoryNedPooling.cpp"
 				>
 			</File>
 			<File
@@ -789,6 +809,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\OgrePixelCountLodStrategy.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\src\OgrePixelFormat.cpp"
 				>
 			</File>
@@ -862,6 +886,10 @@
 			</File>
 			<File
 				RelativePath="..\src\OgreProgressiveMesh.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\OgrePVRTCCodec.cpp"
 				>
 			</File>
 			<File
@@ -1045,6 +1073,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\OgreStreamSerialiser.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\src\OgreString.cpp"
 				>
 			</File>
@@ -1105,6 +1137,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\OgreUserObjectBindings.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\OgreUTFString.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\src\OgreVector2.cpp"
 				>
 			</File>
@@ -1133,9 +1173,21 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\OgreWorkQueue.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\src\OgreZip.cpp"
 				>
 			</File>
+			<Filter
+				Name="Threading"
+				>
+				<File
+					RelativePath="..\src\Threading\OgreDefaultWorkQueueStandard.cpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -1274,6 +1326,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\include\OgreCompositorLogic.h"
+				>
+			</File>
+			<File
 				RelativePath="..\include\OgreCompositorManager.h"
 				>
 			</File>
@@ -1318,6 +1374,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\include\OgreCustomCompositionPass.h"
+				>
+			</File>
+			<File
 				RelativePath="..\include\OgreDataStream.h"
 				>
 			</File>
@@ -1327,6 +1387,10 @@
 			</File>
 			<File
 				RelativePath="..\include\OgreDefaultHardwareBufferManager.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreDistanceLodStrategy.h"
 				>
 			</File>
 			<File
@@ -1402,6 +1466,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\include\OgreGpuProgramParams.h"
+				>
+			</File>
+			<File
 				RelativePath="..\include\OgreGpuProgramUsage.h"
 				>
 			</File>
@@ -1430,6 +1498,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\include\OgreHeaderPrefix.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreHeaderSuffix.h"
+				>
+			</File>
+			<File
 				RelativePath="..\include\OgreHighLevelGpuProgram.h"
 				>
 			</File>
@@ -1450,6 +1526,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\include\OgreIteratorRange.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreIteratorWrapper.h"
+				>
+			</File>
+			<File
 				RelativePath="..\include\OgreIteratorWrappers.h"
 				>
 			</File>
@@ -1459,6 +1543,18 @@
 			</File>
 			<File
 				RelativePath="..\include\OgreLight.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreLodListener.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreLodStrategy.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreLodStrategyManager.h"
 				>
 			</File>
 			<File
@@ -1507,6 +1603,10 @@
 			</File>
 			<File
 				RelativePath="..\include\OgreMemoryNedAlloc.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreMemoryNedPooling.h"
 				>
 			</File>
 			<File
@@ -1642,6 +1742,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\include\OgrePixelCountLodStrategy.h"
+				>
+			</File>
+			<File
 				RelativePath="..\include\OgrePixelFormat.h"
 				>
 			</File>
@@ -1694,6 +1798,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\include\OgrePVRTCCodec.h"
+				>
+			</File>
+			<File
 				RelativePath="..\include\OgreQuaternion.h"
 				>
 			</File>
@@ -1711,6 +1819,10 @@
 			</File>
 			<File
 				RelativePath="..\include\OgreRenderable.h"
+				>
+			</File>
+			<File
+				RelativePath="..\include\OgreRenderObjectListener.h"
 				>
 			</File>
 			<File
@@ -1930,6 +2042,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\include\OgreStreamSerialiser.h"
+				>
+			</File>
+			<File
 				RelativePath="..\include\OgreString.h"
 				>
 			</File>
@@ -1998,6 +2114,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\include\OgreUserObjectBindings.h"
+				>
+			</File>
+			<File
 				RelativePath="..\include\OgreUTFString.h"
 				>
 			</File>
@@ -2034,6 +2154,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\include\OgreWorkQueue.h"
+				>
+			</File>
+			<File
 				RelativePath="..\include\OgreZip.h"
 				>
 			</File>
@@ -2041,6 +2165,50 @@
 				RelativePath="..\src\WIN32\resource.h"
 				>
 			</File>
+			<Filter
+				Name="Threading"
+				>
+				<File
+					RelativePath="..\include\Threading\OgreDefaultWorkQueue.h"
+					>
+				</File>
+				<File
+					RelativePath="..\include\Threading\OgreDefaultWorkQueueStandard.h"
+					>
+				</File>
+				<File
+					RelativePath="..\include\Threading\OgreDefaultWorkQueueTBB.h"
+					>
+				</File>
+				<File
+					RelativePath="..\include\Threading\OgreThreadDefines.h"
+					>
+				</File>
+				<File
+					RelativePath="..\include\Threading\OgreThreadDefinesBoost.h"
+					>
+				</File>
+				<File
+					RelativePath="..\include\Threading\OgreThreadDefinesNone.h"
+					>
+				</File>
+				<File
+					RelativePath="..\include\Threading\OgreThreadDefinesPoco.h"
+					>
+				</File>
+				<File
+					RelativePath="..\include\Threading\OgreThreadHeaders.h"
+					>
+				</File>
+				<File
+					RelativePath="..\include\Threading\OgreThreadHeadersBoost.h"
+					>
+				</File>
+				<File
+					RelativePath="..\include\Threading\OgreThreadHeadersPoco.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"

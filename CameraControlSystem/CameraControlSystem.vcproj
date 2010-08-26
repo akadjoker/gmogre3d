@@ -116,6 +116,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				FavorSizeOrSpeed="1"
 				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories="include; &quot;..\OgreMain\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS; CCS_LIB"

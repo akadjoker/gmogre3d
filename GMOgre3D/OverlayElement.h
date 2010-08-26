@@ -118,7 +118,7 @@ GMFN double SetOverlayElementPosition(double overlay_elem_ptr, double x, double 
    if (overlay_elem == NULL)
       return FALSE;
 
-   overlay_elem->setPosition(x, y);
+   overlay_elem->setPosition((Ogre::Real)x, (Ogre::Real)y);
 
    return TRUE;
 }
@@ -131,7 +131,7 @@ GMFN double SetOverlayElementDimensions(double overlay_elem_ptr, double width, d
    if (overlay_elem == NULL)
       return FALSE;
 
-   overlay_elem->setDimensions(width, height);
+   overlay_elem->setDimensions((Ogre::Real)width, (Ogre::Real)height);
 
    return TRUE;
 }
@@ -170,7 +170,7 @@ GMFN double SetOverlayElementColor(double overlay_elem_ptr, double color, double
    if (overlay_elem == NULL)
       return FALSE;
 
-   overlay_elem->setColour(Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), alpha));
+   overlay_elem->setColour(Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), (float)alpha));
 
    return TRUE;
 }
@@ -201,7 +201,7 @@ GMFN double SetTextOverlayElementTopColor(double ta_overlay_elem_ptr, double col
    if (ta_overlay_elem == NULL)
       return FALSE;
 
-   ta_overlay_elem->setColourTop(Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), alpha));
+   ta_overlay_elem->setColourTop(Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), (float)alpha));
 
    return TRUE;
 }
@@ -214,7 +214,7 @@ GMFN double SetTextOverlayElementBottomColor(double ta_overlay_elem_ptr, double 
    if (ta_overlay_elem == NULL)
       return FALSE;
 
-   ta_overlay_elem->setColourBottom(Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), alpha));
+   ta_overlay_elem->setColourBottom(Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), (float)alpha));
 
    return TRUE;
 }
@@ -228,7 +228,7 @@ GMFN double SetTextOverlayElementFont(double ta_overlay_elem_ptr, char *font_nam
       return FALSE;
 
    ta_overlay_elem->setFontName(font_name);
-   ta_overlay_elem->setCharHeight(GetFontSize(font_name));
+   ta_overlay_elem->setCharHeight((Ogre::Real)GetFontSize(font_name));
 
    return TRUE;
 }
@@ -247,6 +247,50 @@ GMFN double SetTextOverlayElementAlignment(double ta_overlay_elem_ptr, double ty
 }
 
 
+GMFN double SetTextOverlayElementHorizontalAlignment(double ta_overlay_elem_ptr, double type)
+{
+   Ogre::TextAreaOverlayElement *ta_overlay_elem = ConvertFromGMPointer<Ogre::TextAreaOverlayElement*>(ta_overlay_elem_ptr);
+
+   if (ta_overlay_elem == NULL)
+      return FALSE;
+
+   Ogre::GuiHorizontalAlignment halign;
+
+   if ((int)type == 0)
+      halign = Ogre::GHA_LEFT;
+   else if ((int)type == 1)
+      halign = Ogre::GHA_RIGHT;
+   else
+      halign = Ogre::GHA_CENTER;
+
+   ta_overlay_elem->setHorizontalAlignment(halign);
+
+   return TRUE;
+}
+
+
+GMFN double SetTextOverlayElementVerticalAlignment(double ta_overlay_elem_ptr, double type)
+{
+   Ogre::TextAreaOverlayElement *ta_overlay_elem = ConvertFromGMPointer<Ogre::TextAreaOverlayElement*>(ta_overlay_elem_ptr);
+
+   if (ta_overlay_elem == NULL)
+      return FALSE;
+
+   Ogre::GuiVerticalAlignment valign;
+
+   if ((int)type == 0)
+      valign = Ogre::GVA_BOTTOM;
+   else if ((int)type == 1)
+      valign = Ogre::GVA_TOP;
+   else
+      valign = Ogre::GVA_CENTER;
+
+   ta_overlay_elem->setVerticalAlignment(valign);
+
+   return TRUE;
+}
+
+
 GMFN double SetPanelOverlayElementTiling(double panel_overlay_elem_ptr, double x, double y, double layer)
 {
    Ogre::PanelOverlayElement *panel_overlay_elem = ConvertFromGMPointer<Ogre::PanelOverlayElement*>(panel_overlay_elem_ptr);
@@ -254,7 +298,7 @@ GMFN double SetPanelOverlayElementTiling(double panel_overlay_elem_ptr, double x
    if (panel_overlay_elem == NULL)
       return FALSE;
 
-   panel_overlay_elem->setTiling(x, y, layer);
+   panel_overlay_elem->setTiling((Ogre::Real)x, (Ogre::Real)y, (Ogre::ushort)layer);
 
    return TRUE;
 }
@@ -267,7 +311,7 @@ GMFN double SetPanelOverlayElementUV(double panel_overlay_elem_ptr, double u1, d
    if (panel_overlay_elem == NULL)
       return FALSE;
 
-   panel_overlay_elem->setUV(u1, v1, u2, v2);
+   panel_overlay_elem->setUV((Ogre::Real)u1, (Ogre::Real)v1, (Ogre::Real)u2, (Ogre::Real)v2);
 
    return TRUE;
 }
@@ -293,7 +337,7 @@ GMFN double SetBorderPanelOverlayElementSize(double panel_overlay_elem_ptr, doub
    if (panel_overlay_elem == NULL)
       return FALSE;
 
-   panel_overlay_elem->setBorderSize(left, right, top, bottom);
+   panel_overlay_elem->setBorderSize((Ogre::Real)left, (Ogre::Real)right, (Ogre::Real)top, (Ogre::Real)bottom);
 
    return TRUE;
 }
@@ -306,7 +350,7 @@ GMFN double SetBorderPanelOverlayElementLeftBorderUV(double panel_overlay_elem_p
    if (panel_overlay_elem == NULL)
       return FALSE;
 
-   panel_overlay_elem->setLeftBorderUV(u1, v1, u2, v2);
+   panel_overlay_elem->setLeftBorderUV((Ogre::Real)u1, (Ogre::Real)v1, (Ogre::Real)u2, (Ogre::Real)v2);
 
    return TRUE;
 }
@@ -319,7 +363,7 @@ GMFN double SetBorderPanelOverlayElementRightBorderUV(double panel_overlay_elem_
    if (panel_overlay_elem == NULL)
       return FALSE;
 
-   panel_overlay_elem->setRightBorderUV(u1, v1, u2, v2);
+   panel_overlay_elem->setRightBorderUV((Ogre::Real)u1, (Ogre::Real)v1, (Ogre::Real)u2, (Ogre::Real)v2);
 
    return TRUE;
 }
@@ -332,7 +376,7 @@ GMFN double SetBorderPanelOverlayElementTopBorderUV(double panel_overlay_elem_pt
    if (panel_overlay_elem == NULL)
       return FALSE;
 
-   panel_overlay_elem->setTopBorderUV(u1, v1, u2, v2);
+   panel_overlay_elem->setTopBorderUV((Ogre::Real)u1, (Ogre::Real)v1, (Ogre::Real)u2, (Ogre::Real)v2);
 
    return TRUE;
 }
@@ -345,7 +389,7 @@ GMFN double SetBorderPanelOverlayElementBottomBorderUV(double panel_overlay_elem
    if (panel_overlay_elem == NULL)
       return FALSE;
 
-   panel_overlay_elem->setBottomBorderUV(u1, v1, u2, v2);
+   panel_overlay_elem->setBottomBorderUV((Ogre::Real)u1, (Ogre::Real)v1, (Ogre::Real)u2, (Ogre::Real)v2);
 
    return TRUE;
 }
@@ -358,7 +402,7 @@ GMFN double SetBorderPanelOverlayElementTopLeftBorderUV(double panel_overlay_ele
    if (panel_overlay_elem == NULL)
       return FALSE;
 
-   panel_overlay_elem->setTopLeftBorderUV(u1, v1, u2, v2);
+   panel_overlay_elem->setTopLeftBorderUV((Ogre::Real)u1, (Ogre::Real)v1, (Ogre::Real)u2, (Ogre::Real)v2);
 
    return TRUE;
 }
@@ -371,7 +415,7 @@ GMFN double SetBorderPanelOverlayElementTopRightBorderUV(double panel_overlay_el
    if (panel_overlay_elem == NULL)
       return FALSE;
 
-   panel_overlay_elem->setTopRightBorderUV(u1, v1, u2, v2);
+   panel_overlay_elem->setTopRightBorderUV((Ogre::Real)u1, (Ogre::Real)v1, (Ogre::Real)u2, (Ogre::Real)v2);
 
    return TRUE;
 }
@@ -384,7 +428,7 @@ GMFN double SetBorderPanelOverlayElementBottomLeftBorderUV(double panel_overlay_
    if (panel_overlay_elem == NULL)
       return FALSE;
 
-   panel_overlay_elem->setBottomLeftBorderUV(u1, v1, u2, v2);
+   panel_overlay_elem->setBottomLeftBorderUV((Ogre::Real)u1, (Ogre::Real)v1, (Ogre::Real)u2, (Ogre::Real)v2);
 
    return TRUE;
 }
@@ -397,7 +441,7 @@ GMFN double SetBorderPanelOverlayElementBottomRightBorderUV(double panel_overlay
    if (panel_overlay_elem == NULL)
       return FALSE;
 
-   panel_overlay_elem->setBottomRightBorderUV(u1, v1, u2, v2);
+   panel_overlay_elem->setBottomRightBorderUV((Ogre::Real)u1, (Ogre::Real)v1, (Ogre::Real)u2, (Ogre::Real)v2);
 
    return TRUE;
 }

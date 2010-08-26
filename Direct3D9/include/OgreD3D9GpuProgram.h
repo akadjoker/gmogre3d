@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #ifndef __D3D9GpuProgram_H_
@@ -32,70 +31,136 @@ Torus Knot Software Ltd.
 // Precompiler options
 #include "OgreD3D9Prerequisites.h"
 #include "OgreGpuProgram.h"
+#include "OgreD3D9Resource.h"
 
 namespace Ogre {
 
     /** Direct3D implementation of a few things common to low-level vertex & fragment programs. */
-    class D3D9GpuProgram : public GpuProgram
-    {
-    protected:
-        LPDIRECT3DDEVICE9 mpDevice;
-        LPD3DXBUFFER mpExternalMicrocode; // microcode from elsewhere, we do NOT delete this ourselves
+    class _OgreD3D9Export D3D9GpuProgram : public GpuProgram, public D3D9Resource
+    {   
+	public:
+        /// Command object for setting matrix packing in column-major order
+        class CmdColumnMajorMatrices : public ParamCommand
+        {
+        public:
+            String doGet(const void* target) const;
+            void doSet(void* target, const String& val);
+        };
+		/// Command object for getting/setting external micro code (void*)
+		class CmdExternalMicrocode : public ParamCommand
+		{
+		public:
+			String doGet(const void* target) const;
+			void doSet(void* target, const String& val);
+		};
+	protected:
+		static CmdColumnMajorMatrices msCmdColumnMajorMatrices;
+		static CmdExternalMicrocode msCmdExternalMicrocode;
     public:
         D3D9GpuProgram(ResourceManager* creator, const String& name, ResourceHandle handle,
-            const String& group, bool isManual, ManualResourceLoader* loader, LPDIRECT3DDEVICE9 pDev);
-        
+            const String& group, bool isManual, ManualResourceLoader* loader);
+        ~D3D9GpuProgram();
 
+
+        /** Sets whether matrix packing in column-major order. */ 
+        void setColumnMajorMatrices(bool columnMajor) { mColumnMajorMatrices = columnMajor; }
+        /** Gets whether matrix packed in column-major order. */
+        bool getColumnMajorMatrices(void) const { return mColumnMajorMatrices; }
+
+		/** Tells the program to load from some externally created microcode instead of a file or source. 
+		*/
+		void setExternalMicrocode(const void* pMicrocode, size_t size);
         /** Tells the program to load from some externally created microcode instead of a file or source. 
         @remarks
-            It is the callers responsibility to delete the microcode buffer.
+            add ref count to pMicrocode when setting
         */ 
-        void setExternalMicrocode(LPD3DXBUFFER pMicrocode) { mpExternalMicrocode = pMicrocode; }
+        void setExternalMicrocode(ID3DXBuffer* pMicrocode);
         /** Gets the external microcode buffer, if any. */
-        LPD3DXBUFFER getExternalMicrocode(void) { return mpExternalMicrocode; }
+        LPD3DXBUFFER getExternalMicrocode(void);
     protected:
         /** @copydoc Resource::loadImpl */
         void loadImpl(void);
+		/** Loads this program to specified device */
+		void loadImpl(IDirect3DDevice9* d3d9Device);
+		/** Overridden from GpuProgram */
+		void unloadImpl(void);
         /** Overridden from GpuProgram */
         void loadFromSource(void);
-        /** Internal method to load from microcode, must be overridden by subclasses. */
-        virtual void loadFromMicrocode(LPD3DXBUFFER microcode) = 0;
+		/** Loads this program from source to specified device */
+		void loadFromSource(IDirect3DDevice9* d3d9Device);        
+		/** Loads this program from microcode, must be overridden by subclasses. */
+        virtual void loadFromMicrocode(IDirect3DDevice9* d3d9Device, ID3DXBuffer* microcode) = 0;
 
+
+        /** Creates a new parameters object compatible with this program definition. 
+        @remarks
+            It is recommended that you use this method of creating parameters objects
+            rather than going direct to GpuProgramManager, because this method will
+            populate any implementation-specific extras (like named parameters) where
+            they are appropriate.
+        */
+        virtual GpuProgramParametersSharedPtr createParameters(void);
+	protected:    
+		bool mColumnMajorMatrices;
+		ID3DXBuffer* mpExternalMicrocode;
 
     };
 
     /** Direct3D implementation of low-level vertex programs. */
-    class D3D9GpuVertexProgram : public D3D9GpuProgram
-    {
-    protected:
-        LPDIRECT3DVERTEXSHADER9 mpVertexShader;
+    class _OgreD3D9Export D3D9GpuVertexProgram : public D3D9GpuProgram
+    {  
     public:
         D3D9GpuVertexProgram(ResourceManager* creator, const String& name, ResourceHandle handle,
-            const String& group, bool isManual, ManualResourceLoader* loader, LPDIRECT3DDEVICE9 pDev);
+            const String& group, bool isManual, ManualResourceLoader* loader);
 		~D3D9GpuVertexProgram();
-        /// Gets the vertex shader
-        LPDIRECT3DVERTEXSHADER9 getVertexShader(void) const { return mpVertexShader; }
+        
+		/// Gets the vertex shader
+        IDirect3DVertexShader9* getVertexShader(void);
+
+		// Called immediately after the Direct3D device has been created.
+		virtual void notifyOnDeviceCreate(IDirect3DDevice9* d3d9Device);
+
+		// Called before the Direct3D device is going to be destroyed.
+		virtual void notifyOnDeviceDestroy(IDirect3DDevice9* d3d9Device);
+
     protected:
         /** @copydoc Resource::unloadImpl */
         void unloadImpl(void);
-        void loadFromMicrocode(LPD3DXBUFFER microcode);
+        void loadFromMicrocode(IDirect3DDevice9* d3d9Device, ID3DXBuffer* microcode);
+
+	protected:
+		typedef map<IDirect3DDevice9*, IDirect3DVertexShader9*>::type   DeviceToVertexShaderMap;
+		typedef DeviceToVertexShaderMap::iterator						DeviceToVertexShaderIterator;
+	
+		DeviceToVertexShaderMap		mMapDeviceToVertexShader;	
     };
 
     /** Direct3D implementation of low-level fragment programs. */
-    class D3D9GpuFragmentProgram : public D3D9GpuProgram
-    {
-    protected:
-        LPDIRECT3DPIXELSHADER9 mpPixelShader;
+    class _OgreD3D9Export D3D9GpuFragmentProgram : public D3D9GpuProgram
+    {  
     public:
         D3D9GpuFragmentProgram(ResourceManager* creator, const String& name, ResourceHandle handle,
-            const String& group, bool isManual, ManualResourceLoader* loader, LPDIRECT3DDEVICE9 pDev);
+            const String& group, bool isManual, ManualResourceLoader* loader);
 		~D3D9GpuFragmentProgram();
         /// Gets the pixel shader
-        LPDIRECT3DPIXELSHADER9 getPixelShader(void) const { return mpPixelShader; }
+        IDirect3DPixelShader9* getPixelShader(void);
+
+		// Called immediately after the Direct3D device has been created.
+		virtual void notifyOnDeviceCreate(IDirect3DDevice9* d3d9Device);
+
+		// Called before the Direct3D device is going to be destroyed.
+		virtual void notifyOnDeviceDestroy(IDirect3DDevice9* d3d9Device);
+
     protected:
         /** @copydoc Resource::unloadImpl */
         void unloadImpl(void);
-        void loadFromMicrocode(LPD3DXBUFFER microcode);
+        void loadFromMicrocode(IDirect3DDevice9* d3d9Device, ID3DXBuffer* microcode);
+
+	protected:
+		typedef map<IDirect3DDevice9*, IDirect3DPixelShader9*>::type	DeviceToPixelShaderMap;
+		typedef DeviceToPixelShaderMap::iterator						DeviceToPixelShaderIterator;
+
+		DeviceToPixelShaderMap		mMapDeviceToPixelShader;			
     };
     /** Specialisation of SharedPtr to allow SharedPtr to be assigned to D3D9GpuProgramPtr 
     @note Has to be a subclass since we need operator=.

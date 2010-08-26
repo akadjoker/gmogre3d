@@ -37,6 +37,9 @@ World::World(Ogre::Real desiredFps, int maxUpdatesPerFrames) :
 
     m_leaveCallback = NULL;
 
+	m_defaultAngularDamping = Ogre::Vector3(0.1f, 0.1f, 0.1f);
+	m_defaultLinearDamping = 0.1f;
+
     m_debugger = new Debugger(this);
 
 	// set the default solve mode to be iterative the fastest
@@ -79,26 +82,29 @@ World::~World()
 void World::setUpdateFPS(Ogre::Real desiredFps, int maxUpdatesPerFrames)
 {
 
-	if (maxUpdatesPerFrames < 2) {
-		maxUpdatesPerFrames = 2;
+	if (maxUpdatesPerFrames < 1) {
+		maxUpdatesPerFrames = 1;
 	}
 
-	if (maxUpdatesPerFrames > 5) {
-		maxUpdatesPerFrames = 5;
+	if (maxUpdatesPerFrames > 10) {
+		maxUpdatesPerFrames = 10;
 	}
+
 	m_maxTicksPerFrames = maxUpdatesPerFrames;
-
+	m_updateFPS = desiredFps;
 
 	m_timestep = 1.0f / desiredFps;
-	if (m_timestep > 1.0f / 60.0f) {
+	if (m_timestep > 1.0f / 10.0f) {
 		// recalculate the iteration count to met the desire fps 
 		m_maxTicksPerFrames += ceilf (m_timestep / (1.0f / 60.0f));
 
-		m_timestep = 1.0 / 60.0f;
+		m_timestep = 1.0 / 10.0f;
+		m_updateFPS = 10;
 	}
 
 	if (m_timestep < 1.0f / 1000.0f) {
 		m_timestep = 1.0 / 1000.0f;
+		m_updateFPS = 1000;
 	}
 
 	m_invTimestep = 1.0f / m_timestep;
@@ -138,8 +144,10 @@ void World::addBodyUpdateNodeRequest( int threadIndex, OgreNewt::Body* body ) co
 }
 
 // update
-void World::update( Ogre::Real t_step )
+int World::update( Ogre::Real t_step )
 {
+	int realUpdates = 0;
+
 	// clean up all pending bodies for update
 	for( BodyVectorVector::iterator it = m_bodyUpdateNodeRequests.begin(); it != m_bodyUpdateNodeRequests.end(); it++ )
 	{
@@ -167,6 +175,7 @@ void World::update( Ogre::Real t_step )
 	while (m_timeAcumulator >= m_timestep) {
 		NewtonUpdate (m_world, m_timestep);
 		m_timeAcumulator -= m_timestep;
+		realUpdates++;
 	}
 
 #ifdef _DEBUG
@@ -184,6 +193,8 @@ void World::update( Ogre::Real t_step )
 			(*body)->updateNode(param);
 		}
 	}
+
+	return realUpdates;
 }
 
 

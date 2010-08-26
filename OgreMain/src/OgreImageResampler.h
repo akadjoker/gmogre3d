@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #ifndef OGREIMAGERESAMPLER_H
@@ -34,6 +33,12 @@ Torus Knot Software Ltd.
 // this file is inlined into OgreImage.cpp!
 // do not include anywhere else.
 namespace Ogre {
+	/** \addtogroup Core
+	*  @{
+	*/
+	/** \addtogroup Image
+	*  @{
+	*/
 
 // variable name hints:
 // sx_48 = 16/48-bit fixed-point x-position in source
@@ -111,7 +116,7 @@ struct LinearResampler {
 		// for the center of the destination pixel, not the top-left corner
 		uint64 sz_48 = (stepz >> 1) - 1;
 		for (size_t z = dst.front; z < dst.back; z++, sz_48+=stepz) {
-			temp = sz_48 >> 32;
+			temp = static_cast<unsigned int>(sz_48 >> 32);
 			temp = (temp > 0x8000)? temp - 0x8000 : 0;
 			size_t sz1 = temp >> 16;				 // src z, sample #1
 			size_t sz2 = std::min(sz1+1,src.getDepth()-1);// src z, sample #2
@@ -119,7 +124,7 @@ struct LinearResampler {
 
 			uint64 sy_48 = (stepy >> 1) - 1;
 			for (size_t y = dst.top; y < dst.bottom; y++, sy_48+=stepy) {
-				temp = sy_48 >> 32;
+				temp = static_cast<unsigned int>(sy_48 >> 32);
 				temp = (temp > 0x8000)? temp - 0x8000 : 0;
 				size_t sy1 = temp >> 16;					// src y #1
 				size_t sy2 = std::min(sy1+1,src.getHeight()-1);// src y #2
@@ -127,7 +132,7 @@ struct LinearResampler {
 				
 				uint64 sx_48 = (stepx >> 1) - 1;
 				for (size_t x = dst.left; x < dst.right; x++, sx_48+=stepx) {
-					temp = sx_48 >> 32;
+					temp = static_cast<unsigned int>(sx_48 >> 32);
 					temp = (temp > 0x8000)? temp - 0x8000 : 0;
 					size_t sx1 = temp >> 16;					// src x #1
 					size_t sx2 = std::min(sx1+1,src.getWidth()-1);// src x #2
@@ -196,7 +201,7 @@ struct LinearResampler_Float32 {
 		// for the center of the destination pixel, not the top-left corner
 		uint64 sz_48 = (stepz >> 1) - 1;
 		for (size_t z = dst.front; z < dst.back; z++, sz_48+=stepz) {
-			temp = sz_48 >> 32;
+			temp = static_cast<unsigned int>(sz_48 >> 32);
 			temp = (temp > 0x8000)? temp - 0x8000 : 0;
 			size_t sz1 = temp >> 16;				 // src z, sample #1
 			size_t sz2 = std::min(sz1+1,src.getDepth()-1);// src z, sample #2
@@ -204,7 +209,7 @@ struct LinearResampler_Float32 {
 
 			uint64 sy_48 = (stepy >> 1) - 1;
 			for (size_t y = dst.top; y < dst.bottom; y++, sy_48+=stepy) {
-				temp = sy_48 >> 32;
+				temp = static_cast<unsigned int>(sy_48 >> 32);
 				temp = (temp > 0x8000)? temp - 0x8000 : 0;
 				size_t sy1 = temp >> 16;					// src y #1
 				size_t sy2 = std::min(sy1+1,src.getHeight()-1);// src y #2
@@ -212,7 +217,7 @@ struct LinearResampler_Float32 {
 				
 				uint64 sx_48 = (stepx >> 1) - 1;
 				for (size_t x = dst.left; x < dst.right; x++, sx_48+=stepx) {
-					temp = sx_48 >> 32;
+					temp = static_cast<unsigned int>(sx_48 >> 32);
 					temp = (temp > 0x8000)? temp - 0x8000 : 0;
 					size_t sx1 = temp >> 16;					// src x #1
 					size_t sx2 = std::min(sx1+1,src.getWidth()-1);// src x #2
@@ -304,7 +309,7 @@ template<unsigned int channels> struct LinearResampler_Byte {
 		
 		uint64 sy_48 = (stepy >> 1) - 1;
 		for (size_t y = dst.top; y < dst.bottom; y++, sy_48+=stepy) {
-			temp = sy_48 >> 36;
+			temp = static_cast<unsigned int>(sy_48 >> 36);
 			temp = (temp > 0x800)? temp - 0x800: 0;
 			unsigned int syf = temp & 0xFFF;
 			size_t sy1 = temp >> 12;
@@ -314,7 +319,7 @@ template<unsigned int channels> struct LinearResampler_Byte {
 
 			uint64 sx_48 = (stepx >> 1) - 1;
 			for (size_t x = dst.left; x < dst.right; x++, sx_48+=stepx) {
-				temp = sx_48 >> 36;
+				temp = static_cast<unsigned int>(sx_48 >> 36);
 				temp = (temp > 0x800)? temp - 0x800 : 0;
 				unsigned int sxf = temp & 0xFFF;
 				size_t sx1 = temp >> 12;
@@ -329,13 +334,15 @@ template<unsigned int channels> struct LinearResampler_Byte {
 						srcdata[(sx2 + syoff2)*channels+k]*sxfsyf;
 					// accum is computed using 8/24-bit fixed-point math
 					// (maximum is 0xFF000000; rounding will not cause overflow)
-					*pdst++ = (accum + 0x800000) >> 24;
+					*pdst++ = static_cast<uchar>((accum + 0x800000) >> 24);
 				}
 			}
 			pdst += channels*dst.getRowSkip();
 		}
 	}
 };
+/** @} */
+/** @} */
 
 }
 

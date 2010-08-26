@@ -48,7 +48,7 @@ GMFN double CreateNewtonSliderJoint(double newton_child_body_ptr, double newton_
    OgreNewt::Joint *joint;
 
    TRY
-      joint = new OgreNewt::Slider(newton_child_body->getOgreNewtBody(), newton_parent_body ? newton_parent_body->getOgreNewtBody() : NULL, ConvertFromGMAxis(posx, posy, posz), ConvertFromGMAxis(pinx, piny, pinz));
+      joint = OGRE_NEW OgreNewt::Slider(newton_child_body->getOgreNewtBody(), newton_parent_body ? newton_parent_body->getOgreNewtBody() : NULL, ConvertFromGMAxis(posx, posy, posz), ConvertFromGMAxis(pinx, piny, pinz));
    CATCH("CreateNewtonSliderJoint")
 
    return ConvertToGMPointer(joint);

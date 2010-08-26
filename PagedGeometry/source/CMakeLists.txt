@@ -1,17 +1,23 @@
-INCLUDE_DIRECTORIES(../include)
 
-set(PagedGeometry_SRCS
-	BatchedGeometry.cpp
-	BatchPage.cpp
-	GrassLoader.cpp
-	ImpostorPage.cpp
-	PagedGeometry.cpp
-	PropertyMaps.cpp
-	StaticBillboardSet.cpp
-	TreeLoader2D.cpp
-	TreeLoader3D.cpp
-	WindBatchedGeometry.cpp
-	WindBatchPage.cpp
+include_directories(${PagedGeometry_SOURCE_DIR}/include)
+include_directories(${PagedGeometry_BINARY_DIR}/include)
+include_directories(${Ogre_INCLUDE_DIRS})
+link_directories   (${Ogre_LIBRARY_DIRS})
+
+FILE(GLOB sources *.cpp ${PagedGeometry_SOURCE_DIR}/include/*.h)
+
+set(LIBNAME "PagedGeometry")
+
+ADD_LIBRARY(${LIBNAME} STATIC ${sources})
+windows_hacks(${LIBNAME})
+
+# install the library
+INSTALL(TARGETS ${LIBNAME}
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+        ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
 )
 
-ADD_LIBRARY(PagedGeometry STATIC ${PagedGeometry_SRCS})
+# install the headers: both source and build headers
+INSTALL(DIRECTORY ${PagedGeometry_SOURCE_DIR}/include/ DESTINATION include/PagedGeometry FILES_MATCHING PATTERN "*.h" PATTERN ".svn" EXCLUDE)
+INSTALL(DIRECTORY ${PagedGeometry_BINARY_DIR}/include/ DESTINATION include/PagedGeometry FILES_MATCHING PATTERN "*.h" PATTERN ".svn" EXCLUDE)

@@ -114,7 +114,7 @@ GMFN double SetMaterialDiffuseColor(char *name, double color, double alpha)
    if (mat.isNull())
       return FALSE;
 
-   mat->setDiffuse(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), alpha);
+   mat->setDiffuse(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), (Ogre::Real)alpha);
 
    return TRUE;
 }
@@ -127,7 +127,7 @@ GMFN double SetMaterialSpecularColor(char *name, double color, double alpha)
    if (mat.isNull())
       return FALSE;
 
-   mat->setSpecular(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), alpha);
+   mat->setSpecular(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), (Ogre::Real)alpha);
 
    return TRUE;
 }
@@ -153,7 +153,7 @@ GMFN double SetMaterialShininess(char *name, double shininess)
    if (mat.isNull())
       return FALSE;
 
-   mat->setShininess(shininess);
+   mat->setShininess((Ogre::Real)shininess);
 
    return TRUE;
 }
@@ -196,6 +196,26 @@ GMFN double EnableMaterialTransparencyCastsShadows(char *name, double enable)
 }
 
 
+GMFN double SetMaterialLODStrategy(char *name, double strategy)
+{
+   Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().getByName(name);
+   
+   if (mat.isNull())
+      return FALSE;
+
+   Ogre::LodStrategy *lod_strategy;
+
+   if (strategy == 1)
+      lod_strategy = Ogre::LodStrategyManager::getSingleton().getStrategy("PixelCount");
+   else
+      lod_strategy = Ogre::LodStrategyManager::getSingleton().getStrategy("Distance");
+
+   mat->setLodStrategy(lod_strategy);
+
+   return TRUE;
+}
+
+
 GMFN double SetMaterialLODLevels1(char *name, double lod1, double lod2, double lod3)
 {
    Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().getByName(name);
@@ -206,11 +226,11 @@ GMFN double SetMaterialLODLevels1(char *name, double lod1, double lod2, double l
    mLODLevels.clear();
 
    if (lod1 > 0)
-      mLODLevels.push_back(lod1);
+      mLODLevels.push_back((Ogre::Real)lod1);
    if (lod2 > 0)
-      mLODLevels.push_back(lod2);
+      mLODLevels.push_back((Ogre::Real)lod2);
    if (lod3 > 0)
-      mLODLevels.push_back(lod3);
+      mLODLevels.push_back((Ogre::Real)lod3);
 
    return TRUE;
 }
@@ -224,11 +244,11 @@ GMFN double SetMaterialLODLevels2(char *name, double lod4, double lod5, double l
       return FALSE;
 
    if (lod4 > 0)
-      mLODLevels.push_back(lod4);
+      mLODLevels.push_back((Ogre::Real)lod4);
    if (lod5 > 0)
-      mLODLevels.push_back(lod5);
+      mLODLevels.push_back((Ogre::Real)lod5);
    if (lod6 > 0)
-      mLODLevels.push_back(lod6);
+      mLODLevels.push_back((Ogre::Real)lod6);
 
    return TRUE;
 }
@@ -242,11 +262,11 @@ GMFN double SetMaterialLODLevels3(char *name, double lod7, double lod8, double l
       return FALSE;
 
    if (lod7 > 0)
-      mLODLevels.push_back(lod7);
+      mLODLevels.push_back((Ogre::Real)lod7);
    if (lod8 > 0)
-      mLODLevels.push_back(lod8);
+      mLODLevels.push_back((Ogre::Real)lod8);
    if (lod9 > 0)
-      mLODLevels.push_back(lod9);
+      mLODLevels.push_back((Ogre::Real)lod9);
 
    return TRUE;
 }
@@ -260,11 +280,11 @@ GMFN double SetMaterialLODLevels4(char *name, double lod10, double lod11, double
       return FALSE;
 
    if (lod10 > 0)
-      mLODLevels.push_back(lod10);
+      mLODLevels.push_back((Ogre::Real)lod10);
    if (lod11 > 0)
-      mLODLevels.push_back(lod11);
+      mLODLevels.push_back((Ogre::Real)lod11);
    if (lod12 > 0)
-      mLODLevels.push_back(lod12);
+      mLODLevels.push_back((Ogre::Real)lod12);
 
    mat->setLodLevels(mLODLevels);
 
@@ -292,7 +312,7 @@ GMFN double GetMaterialTechnique(char *name, double technique_index)
    if (mat.isNull())
       return 0;
 
-   return ConvertToGMPointer(mat->getTechnique(technique_index));
+   return ConvertToGMPointer(mat->getTechnique((unsigned short)technique_index));
 }
 
 
@@ -328,7 +348,7 @@ GMFN double SetDefaultMaterialTextureFiltering(double type)
 
 GMFN double SetDefaultMaterialAnisotropy(double anisotropy)
 {
-   Ogre::MaterialManager::getSingleton().setDefaultAnisotropy(anisotropy);
+   Ogre::MaterialManager::getSingleton().setDefaultAnisotropy((unsigned int)anisotropy);
 
    return TRUE;
 }
@@ -338,11 +358,11 @@ GMFN double SetDefaultMaterialSchemeNotFoundCallback(double func)
 {
    if (mMaterialListener == NULL)
    {
-      mMaterialListener = new GMMaterialListener;
+      mMaterialListener = OGRE_NEW GMMaterialListener;
       Ogre::MaterialManager::getSingleton().addListener(mMaterialListener);
    }
 
-   mMaterialListener->SetSchemeNotFoundCallback(func);
+   mMaterialListener->SetSchemeNotFoundCallback((int)func);
 
    return TRUE;
 }

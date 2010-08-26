@@ -114,7 +114,7 @@ GMFN double SetOrbitalCameraModeYaw(double camera_mode_ptr, double degrees)
    if (cam_mode == NULL)
       return FALSE;
 
-   cam_mode->setYaw(Ogre::Degree(degrees));
+   cam_mode->setYaw(Ogre::Degree((Ogre::Real)degrees));
 
    return TRUE;
 }
@@ -140,7 +140,7 @@ GMFN double SetOrbitalCameraModePitch(double camera_mode_ptr, double degrees)
    if (cam_mode == NULL)
       return FALSE;
 
-   cam_mode->setPitch(Ogre::Degree(degrees));
+   cam_mode->setPitch(Ogre::Degree((Ogre::Real)degrees));
 
    return TRUE;
 }

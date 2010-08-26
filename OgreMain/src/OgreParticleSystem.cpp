@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -101,10 +100,11 @@ namespace Ogre {
 		mLastVisibleFrame(0),
         mTimeController(0),
 		mEmittedEmitterPoolInitialised(false),
+		mIsEmitting(true),
         mRenderer(0),
         mCullIndividual(false),
         mPoolSize(0),
-		mEmittedEmitterPoolSize(0)
+        mEmittedEmitterPoolSize(0)
 	{
         initParameters();
 
@@ -134,10 +134,11 @@ namespace Ogre {
 		mLastVisibleFrame(Root::getSingleton().getNextFrameNumber()),
         mTimeController(0),
 		mEmittedEmitterPoolInitialised(false),
+		mIsEmitting(true),
         mRenderer(0), 
-		mCullIndividual(false),
+        mCullIndividual(false),
         mPoolSize(0),
-		mEmittedEmitterPoolSize(0)
+        mEmittedEmitterPoolSize(0)
     {
         setDefaultDimensions( 100, 100 );
         setMaterialName( "BaseWhite" );
@@ -265,15 +266,14 @@ namespace Ogre {
         removeAllAffectors();
 
         // Copy emitters
-        unsigned int i;
-        for(i = 0; i < rhs.getNumEmitters(); ++i)
+        for(unsigned short i = 0; i < rhs.getNumEmitters(); ++i)
         {
             ParticleEmitter* rhsEm = rhs.getEmitter(i);
             ParticleEmitter* newEm = addEmitter(rhsEm->getType());
             rhsEm->copyParametersTo(newEm);
         }
         // Copy affectors
-        for(i = 0; i < rhs.getNumAffectors(); ++i)
+        for(unsigned short i = 0; i < rhs.getNumAffectors(); ++i)
         {
             ParticleAffector* rhsAf = rhs.getAffector(i);
             ParticleAffector* newAf = addAffector(rhsAf->getType());
@@ -406,8 +406,12 @@ namespace Ogre {
                 _expire(iterationInterval);
                 _triggerAffectors(iterationInterval);
                 _applyMotion(iterationInterval);
-                // Emit new particles
-                _triggerEmitters(iterationInterval);
+
+				if(mIsEmitting)
+				{
+					// Emit new particles
+					_triggerEmitters(iterationInterval);
+				}
 
                 mUpdateRemainTime -= iterationInterval;
             }
@@ -418,8 +422,12 @@ namespace Ogre {
             _expire(timeElapsed);
             _triggerAffectors(timeElapsed);
             _applyMotion(timeElapsed);
-            // Emit new particles
-            _triggerEmitters(timeElapsed);
+
+			if(mIsEmitting)
+			{
+				// Emit new particles
+				_triggerEmitters(timeElapsed);
+			}
         }
 
         if (!mBoundsAutoUpdate && mBoundsUpdateTime > 0.0f)
@@ -454,7 +462,7 @@ namespace Ogre {
 				{
 					// For now, it can only be an emitted emitter
 					pParticleEmitter = static_cast<ParticleEmitter*>(*i);
-					std::list<ParticleEmitter*>* fee = findFreeEmittedEmitter(pParticleEmitter->getName());
+					list<ParticleEmitter*>::type* fee = findFreeEmittedEmitter(pParticleEmitter->getName());
 					fee->push_back(pParticleEmitter);
 
 					// Also erase from mActiveEmittedEmitters
@@ -477,7 +485,7 @@ namespace Ogre {
     void ParticleSystem::_triggerEmitters(Real timeElapsed)
     {
         // Add up requests for emission
-        static std::vector<unsigned> requested;
+        static vector<unsigned>::type requested;
         if( requested.size() != mEmitters.size() )
             requested.resize( mEmitters.size() );
 
@@ -539,6 +547,12 @@ namespace Ogre {
     {
 		ParticleAffectorList::iterator	itAff, itAffEnd;
 		Real timePoint = 0.0f;
+
+
+        // avoid any divide by zero conditions
+		if(!requested) 
+			return;
+
 		Real timeInc = timeElapsed / requested;
 
 		for (unsigned int j = 0; j < requested; ++j)
@@ -687,7 +701,7 @@ namespace Ogre {
     {
 		// Get the appropriate list and retrieve an emitter	
 		Particle* p = 0;
-		std::list<ParticleEmitter*>* fee = findFreeEmittedEmitter(emitterName);
+		list<ParticleEmitter*>::type* fee = findFreeEmittedEmitter(emitterName);
 		if (fee && !fee->empty())
 		{
 	        p = fee->front();
@@ -871,6 +885,16 @@ namespace Ogre {
             _update(interval);
         }
     }
+	//-----------------------------------------------------------------------
+	void ParticleSystem::setEmitting(bool v)
+	{
+		mIsEmitting = v;
+	}
+	//-----------------------------------------------------------------------
+	bool ParticleSystem::getEmitting() const
+	{
+		return mIsEmitting;
+	}
     //-----------------------------------------------------------------------
     const String& ParticleSystem::getMovableType(void) const
     {
@@ -983,7 +1007,7 @@ namespace Ogre {
         }
     }
     //-----------------------------------------------------------------------
-    void ParticleSystem::setMaterialName(const String& name)
+    void ParticleSystem::setMaterialName( const String& name, const String& groupName /* = ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME */)
     {
         mMaterialName = name;
         if (mIsRendererConfigured)
@@ -1352,7 +1376,7 @@ namespace Ogre {
 		EmittedEmitterPool::iterator emittedEmitterPoolIterator;
 		EmittedEmitterList::iterator emittedEmitterIterator;
 		EmittedEmitterList* emittedEmitters = 0;
-		std::list<ParticleEmitter*>* fee = 0;
+		list<ParticleEmitter*>::type* fee = 0;
 		String name = StringUtil::BLANK;
 
 		// Run through the emittedEmitterPool map
@@ -1362,7 +1386,7 @@ namespace Ogre {
 			emittedEmitters = &emittedEmitterPoolIterator->second;
 			fee = findFreeEmittedEmitter(name);
 
-			// If it´s not in the map, create an empty one
+			// If its not in the map, create an empty one
 			if (!fee)
 			{
 				FreeEmittedEmitterList empty;
@@ -1370,7 +1394,7 @@ namespace Ogre {
 				fee = findFreeEmittedEmitter(name);
 			}
 
-			// Check anyway if it´s ok now
+			// Check anyway if its ok now
 			if (!fee)
 				return; // forget it!
 
@@ -1397,13 +1421,13 @@ namespace Ogre {
 			e->clear();
         }
 
-		// Don´t leave any references behind
+		// Dont leave any references behind
 		mEmittedEmitterPool.clear();
 		mFreeEmittedEmitters.clear();
 		mActiveEmittedEmitters.clear();
     }
 	//-----------------------------------------------------------------------
-	std::list<ParticleEmitter*>* ParticleSystem::findFreeEmittedEmitter (const String& name)
+	list<ParticleEmitter*>::type* ParticleSystem::findFreeEmittedEmitter (const String& name)
 	{
 		FreeEmittedEmitterMap::iterator it;
 		it = mFreeEmittedEmitters.find (name);
@@ -1435,7 +1459,7 @@ namespace Ogre {
 		ActiveEmittedEmitterList::iterator itActiveEmit;
 		for (itActiveEmit = mActiveEmittedEmitters.begin(); itActiveEmit != mActiveEmittedEmitters.end(); ++itActiveEmit)
 		{
-			std::list<ParticleEmitter*>* fee = findFreeEmittedEmitter ((*itActiveEmit)->getName());
+			list<ParticleEmitter*>::type* fee = findFreeEmittedEmitter ((*itActiveEmit)->getName());
 			if (fee)
 				fee->push_back(*itActiveEmit);
 		}
@@ -1444,7 +1468,7 @@ namespace Ogre {
 	void ParticleSystem::_notifyReorganiseEmittedEmitterData (void)
 	{
 		removeAllEmittedEmitters();
-		mEmittedEmitterPoolInitialised = false; // Don´t rearrange immediately; it will be performed in the regular flow
+		mEmittedEmitterPoolInitialised = false; // Dont rearrange immediately; it will be performed in the regular flow
 	}
     //-----------------------------------------------------------------------
     String ParticleSystem::CmdCull::doGet(const void* target) const
@@ -1571,7 +1595,7 @@ namespace Ogre {
     ParticleAffectorFactory::~ParticleAffectorFactory() 
     {
         // Destroy all affectors
-        std::vector<ParticleAffector*>::iterator i;
+        vector<ParticleAffector*>::type::iterator i;
         for (i = mAffectors.begin(); i != mAffectors.end(); ++i)
         {
             OGRE_DELETE (*i);
@@ -1583,7 +1607,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     void ParticleAffectorFactory::destroyAffector(ParticleAffector* e)
     {
-        std::vector<ParticleAffector*>::iterator i;
+        vector<ParticleAffector*>::type::iterator i;
         for (i = mAffectors.begin(); i != mAffectors.end(); ++i)
         {
             if ((*i) == e)

@@ -42,7 +42,7 @@ GMFN double CreatePagedGeometry(double cam_ptr, double page_size)
    Forests::PagedGeometry *pg = NULL;
    
    TRY
-      pg = new Forests::PagedGeometry(cam, page_size);
+      pg = OGRE_NEW Forests::PagedGeometry(cam, page_size);
       pg->setInfinite();
    CATCH("CreatePagedGeometry")
 

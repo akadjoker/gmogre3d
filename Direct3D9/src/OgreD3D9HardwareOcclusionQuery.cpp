@@ -4,31 +4,31 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreD3D9HardwareOcclusionQuery.h"
 #include "OgreRenderSystemCapabilities.h"
 #include "OgreException.h"
+#include "OgreD3D9RenderSystem.h"
 
 namespace Ogre {
 
@@ -45,10 +45,9 @@ namespace Ogre {
 	/**
 	* Default object constructor
 	*/
-    D3D9HardwareOcclusionQuery::D3D9HardwareOcclusionQuery( IDirect3DDevice9* pD3DDevice ) :
-        mpDevice(pD3DDevice)
+    D3D9HardwareOcclusionQuery::D3D9HardwareOcclusionQuery()
 	{ 
-		recreateResources();
+		
 	}
 
 	/**
@@ -56,49 +55,71 @@ namespace Ogre {
 	*/
 	D3D9HardwareOcclusionQuery::~D3D9HardwareOcclusionQuery() 
 	{ 
-		releaseResources();
+		DeviceToQueryIterator it = mMapDeviceToQuery.begin();
+
+		while (it != mMapDeviceToQuery.end())
+		{
+			SAFE_RELEASE(it->second);
+			++it;
+		}	
+		mMapDeviceToQuery.clear();
 	}
 
 	//------------------------------------------------------------------
 	// Occlusion query functions (see base class documentation for this)
 	//--
 	void D3D9HardwareOcclusionQuery::beginOcclusionQuery() 
-	{	    	
-		mpQuery->Issue(D3DISSUE_BEGIN); 
-        mIsQueryResultStillOutstanding = true;
-        mPixelCount = 0;
+	{	
+		IDirect3DDevice9* pCurDevice  = D3D9RenderSystem::getActiveD3D9Device();				
+		DeviceToQueryIterator it      = mMapDeviceToQuery.find(pCurDevice);
+
+		// No resource exits for current device -> create it.
+		if (it == mMapDeviceToQuery.end() || it->second == NULL)		
+			createQuery(pCurDevice);			
+		
+
+		// Grab the query of the current device.
+		IDirect3DQuery9* pOccQuery = mMapDeviceToQuery[pCurDevice];
+
+		
+		if (pOccQuery != NULL)
+		{
+			pOccQuery->Issue(D3DISSUE_BEGIN); 
+			mIsQueryResultStillOutstanding = true;
+			mPixelCount = 0;
+		}		
 	}
 
 	void D3D9HardwareOcclusionQuery::endOcclusionQuery() 
 	{ 
-		mpQuery->Issue(D3DISSUE_END); 
-	}
-
-	// [GLaforte - 06-11-2008]
-	// Abstract out the resource creation/release so that we can reset the device properly.
-	void D3D9HardwareOcclusionQuery::releaseResources()
-	{
-		SAFE_RELEASE(mpQuery);
-	}
-	void D3D9HardwareOcclusionQuery::recreateResources()
-	{
-		// create the occlusion query
-		const HRESULT hr = mpDevice->CreateQuery(D3DQUERYTYPE_OCCLUSION, &mpQuery);
-
-		if ( hr != D3D_OK ) 
-		{	
-			if( D3DERR_NOTAVAILABLE == hr)
-			{
-				OGRE_EXCEPT( Exception::ERR_INTERNAL_ERROR, 
-					"Cannot allocate a Hardware query. This video card doesn't supports it, sorry.", 
-					"D3D9HardwareOcclusionQuery::D3D9HardwareOcclusionQuery" );
-			}			
+		IDirect3DDevice9* pCurDevice  = D3D9RenderSystem::getActiveD3D9Device();				
+		DeviceToQueryIterator it      = mMapDeviceToQuery.find(pCurDevice);
+		
+		if (it == mMapDeviceToQuery.end())
+		{
+			OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, 
+				"End occlusion called without matching begin call !!", 
+				"D3D9HardwareOcclusionQuery::endOcclusionQuery" );
 		}
-	}
+
+		IDirect3DQuery9* pOccQuery = mMapDeviceToQuery[pCurDevice];
+
+		if (pOccQuery != NULL)
+			pOccQuery->Issue(D3DISSUE_END); 
+	}	
 
 	//------------------------------------------------------------------
 	bool D3D9HardwareOcclusionQuery::pullOcclusionQuery( unsigned int* NumOfFragments ) 
 	{
+		IDirect3DDevice9* pCurDevice = D3D9RenderSystem::getActiveD3D9Device();
+		DeviceToQueryIterator it     = mMapDeviceToQuery.find(pCurDevice);
+
+		if (it == mMapDeviceToQuery.end())		
+			return false;
+
+		if (it->second == NULL)
+			return false;
+
         // in case you didn't check if query arrived and want the result now.
         if (mIsQueryResultStillOutstanding)
         {
@@ -107,7 +128,7 @@ namespace Ogre {
             const size_t dataSize = sizeof( DWORD );
 			while (1)
             {
-                const HRESULT hr = mpQuery->GetData((void *)&pixels, dataSize, D3DGETDATA_FLUSH);
+                const HRESULT hr = it->second->GetData((void *)&pixels, dataSize, D3DGETDATA_FLUSH);
 
                 if  (hr == S_FALSE)
                     continue;
@@ -119,10 +140,9 @@ namespace Ogre {
                 }
                 if (hr == D3DERR_DEVICELOST)
                 {
-                    *NumOfFragments = 100000;
-                    mPixelCount = 100000;
-					releaseResources();
-					recreateResources();
+                    *NumOfFragments = 0;
+                    mPixelCount = 0;
+                    SAFE_RELEASE(it->second);
                     break;
                 }
             } 
@@ -135,6 +155,13 @@ namespace Ogre {
         }		
 		return true;
 	}
+
+	//------------------------------------------------------------------
+	unsigned int D3D9HardwareOcclusionQuery::getLastQuerysPixelcount()
+	{
+		return mPixelCount;
+	}
+
     //------------------------------------------------------------------
     bool D3D9HardwareOcclusionQuery::isStillOutstanding(void)
     {       
@@ -142,21 +169,87 @@ namespace Ogre {
         if (!mIsQueryResultStillOutstanding)
             return false;
 
+		IDirect3DDevice9* pCurDevice = D3D9RenderSystem::getActiveD3D9Device();
+		DeviceToQueryIterator it     = mMapDeviceToQuery.find(pCurDevice);
+
+		if (it == mMapDeviceToQuery.end())		
+			return false;
+
+		if (it->second == NULL)
+			return false;
+
+
         DWORD pixels;
-        const HRESULT hr = mpQuery->GetData( (void *) &pixels, sizeof( DWORD ), 0);
+        const HRESULT hr = it->second->GetData( (void *) &pixels, sizeof( DWORD ), 0);
 
         if (hr  == S_FALSE)
             return true;
 
         if (hr == D3DERR_DEVICELOST)
         {
-            mPixelCount = 100000;
-			releaseResources();
-			recreateResources();
+            mPixelCount = 100000;  
+			SAFE_RELEASE(it->second);
         }
+
         mPixelCount = pixels;
         mIsQueryResultStillOutstanding = false;
         return false;
-    
-    } 
+	}
+
+	//------------------------------------------------------------------
+	void D3D9HardwareOcclusionQuery::notifyOnDeviceCreate(IDirect3DDevice9* d3d9Device)
+	{
+		
+	}
+
+	//------------------------------------------------------------------
+	void D3D9HardwareOcclusionQuery::notifyOnDeviceDestroy(IDirect3DDevice9* d3d9Device)
+	{		
+		releaseQuery(d3d9Device);
+	}
+
+	//------------------------------------------------------------------
+	void D3D9HardwareOcclusionQuery::notifyOnDeviceLost(IDirect3DDevice9* d3d9Device)
+	{		
+		releaseQuery(d3d9Device);		
+	}
+
+	//------------------------------------------------------------------
+	void D3D9HardwareOcclusionQuery::notifyOnDeviceReset(IDirect3DDevice9* d3d9Device)
+	{		
+		
+	}
+
+	//------------------------------------------------------------------
+	void D3D9HardwareOcclusionQuery::createQuery(IDirect3DDevice9* d3d9Device)
+	{
+		HRESULT hr;
+
+		// Check if query supported.
+		hr = d3d9Device->CreateQuery(D3DQUERYTYPE_OCCLUSION, NULL);
+		if (FAILED(hr))
+		{
+			mMapDeviceToQuery[d3d9Device] = NULL;
+			return;
+		}
+
+		// create the occlusion query.
+		IDirect3DQuery9*  pCurQuery;
+		hr = d3d9Device->CreateQuery(D3DQUERYTYPE_OCCLUSION, &pCurQuery);
+				
+		mMapDeviceToQuery[d3d9Device] = pCurQuery;	
+	}
+
+	//------------------------------------------------------------------
+	void D3D9HardwareOcclusionQuery::releaseQuery(IDirect3DDevice9* d3d9Device)
+	{
+		DeviceToQueryIterator it     = mMapDeviceToQuery.find(d3d9Device);
+
+		// Remove from query resource map.
+		if (it != mMapDeviceToQuery.end())		
+		{
+			SAFE_RELEASE(it->second);
+			mMapDeviceToQuery.erase(it);
+		}
+	}
 }

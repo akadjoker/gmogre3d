@@ -44,7 +44,7 @@ GMFN double CreateMovableText2(double size, double color, double alpha)
    MovableText *text = NULL;
    
    TRY
-      text = new MovableText(GenerateUniqueName(), mtext_txt, mtext_font_name, size);
+      text = OGRE_NEW MovableText(GenerateUniqueName(), mtext_txt, mtext_font_name, size);
       text->setColor(Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), alpha));
    CATCH("CreateMovableText")
 

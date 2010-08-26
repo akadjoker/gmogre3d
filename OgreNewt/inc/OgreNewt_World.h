@@ -59,6 +59,23 @@ public:
         FM_ADAPTIVE = 1 /*!< adaptive friction mode. (faster but less accurate) */
     };
 
+	//! platform mode
+	/*!
+		This function allows the application to configure the Newton to take advantage for specific hardware architecture in the same platform.
+		
+		PF_DETERMINISTIC_UNOPTIMIZED = 0 - force the hardware lower common denominator for the running platform.
+		PF_OPTIMIZED = 1 - will try to use common floating point enhancement like spacial instruction set on the specific architecture. This mode made lead to result that differ from mode 1 and 2 as the accumulation round off errors maybe different.
+		PF_BEST_POSSIBLE = 2 - the engine will try to use the best possible hardware setting found in the current platform this is the default configuration. This mode made lead to result that differ from mode 1 and 2 as the accumulation round off errors maybe different.
+		
+		The only hardware mode guarantee to work is mode 0. all other are only hints to the engine, for example setting mode 1 will take not effect on CPUs without specially floating point instructions set.
+	*/
+	enum PlatformArchitecture
+	{
+		PF_DETERMINISTIC_UNOPTIMIZED = 0,
+		PF_COMMON_OPTIMIZED = 1,
+		PF_BEST_POSSIBLE = 2
+	};
+
     //! leave world callback.
     /*!
         this function is called when a body leaves the OgreNewt::World.  you can use this to destroy bodies that have left the scene,
@@ -70,7 +87,7 @@ public:
 
 public:
     //! Standard Constructor, creates the world.
-	World(Ogre::Real desiredFps = 100.0f, int maxUpdatesPerFrames = 2);
+	World(Ogre::Real desiredFps = 100.0f, int maxUpdatesPerFrames = 5);
 
     //! Standard Destructor, destroys the world.
     ~World();       
@@ -87,8 +104,9 @@ public:
         this function is clamped between values representing fps [60,600].  if you pass a smaller value, it is internally clamped to 60fps.  likewise a value higher than 600fps is treated as 600fs.
 
         \param t_step Real value representing the time elapsed in seconds.
+		\return How many times was the actual physics updated
     */
-    void update( Ogre::Real t_step );   
+    int update( Ogre::Real t_step );   
 
     //! invalidate internal cache
     /*!
@@ -104,7 +122,43 @@ public:
     */
     void setUpdateFPS(Ogre::Real desiredFps, int maxUpdatesPerFrames);
 
+	//! returns desired update frames per second
+	/*!
+		\return desired update rate
+	*/
+	Ogre::Real getUpdateFPS() const { return m_updateFPS; }
 
+	//! sets default linear damping
+	/*!
+		default damping is used when creating new bodies and changing this applies only to bodies
+		created after calling this method. default damping is also timestep-dependant, the value you
+		set here is for 60fps and scales down if using larger physics update rate.
+
+		\param defaultLinearDamping Ogre::Real default linear damping to use
+	*/
+	void setDefaultLinearDamping(Ogre::Real defaultLinearDamping) { m_defaultLinearDamping = defaultLinearDamping; }
+
+	//! return default linear damping
+	/*!
+		\return default linear damping
+	*/
+	Ogre::Real getDefaultLinearDamping() const { return m_defaultLinearDamping; }
+
+	//! sets default angular damping
+	/*!
+		default damping is used when creating new bodies and changing this applies only to bodies
+		created after calling this method. default damping is also timestep-dependant, the value you
+		set here is for 60fps and scales down if using larger physics update rate.
+
+		\param defaultLinearDamping Ogre::Real default linear damping to use
+	*/
+	void setDefaultAngularDamping(Ogre::Vector3 defaultAngularDamping) { m_defaultAngularDamping = defaultAngularDamping; }
+
+	//! return default angular damping
+	/*!
+		\return default angular damping
+	*/
+	Ogre::Vector3 getDefaultAngularDamping() const { return m_defaultAngularDamping; }
 
     //! retrieves a pointer to the NewtonWorld
     /*!
@@ -268,8 +322,10 @@ protected:
 	Ogre::Real m_timestep;
 	Ogre::Real m_invTimestep;
 	Ogre::Real m_timeAcumulator;
-	
-	
+	Ogre::Real m_updateFPS;
+
+	Ogre::Vector3 m_defaultAngularDamping;
+	Ogre::Real m_defaultLinearDamping;
 
     NewtonWorld* m_world;
     MaterialID* m_defaultMatID;
@@ -288,7 +344,7 @@ protected:
     mutable pthread_mutex_t m_ogreMutex;
 #endif
 
-public:
+private:
 
     static void _CDECL newtonLeaveWorld( const NewtonBody* body, int threadIndex );
 

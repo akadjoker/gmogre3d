@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
@@ -52,7 +51,7 @@ OSXCarbonWindow::OSXCarbonWindow()
 	mAGLContext = NULL;
 	mContext = NULL;
 	mWindow = NULL;
-    mEventHandlerRef = NULL;
+	mEventHandlerRef = NULL;
 	mView = NULL;
 }
 
@@ -76,7 +75,7 @@ void OSXCarbonWindow::create( const String& name, unsigned int width, unsigned i
 	if( miscParams )
 	{
 		
-		NameValuePairList::const_iterator opt = NULL;
+		NameValuePairList::const_iterator opt(NULL);
 		
 		// Full screen anti aliasing
 		opt = miscParams->find( "FSAA" );
@@ -117,7 +116,7 @@ void OSXCarbonWindow::create( const String& name, unsigned int width, unsigned i
 		else if(mainContext->getContextType() == "AGL")
 		{
 			OSXCarbonContext* aglShare = static_cast<OSXCarbonContext*>(mainContext);
-			aglGetCGLContext(aglShare->getContext(), &((void*)share));
+			aglGetCGLContext(aglShare->getContext(), (void**)&share);
 		}
 		else if(mainContext->getContextType() == "CGL")
 		{
@@ -170,7 +169,6 @@ void OSXCarbonWindow::create( const String& name, unsigned int width, unsigned i
 		else if(mainContext->getContextType() == "AGL")
 		{
 			OSXCarbonContext* context = static_cast<OSXCarbonContext*>( rs->_getMainContext() );
-			AGLContext shared = context->getContext();
 			mAGLContext = aglCreateContext(pixelFormat, context->getContext());
 		}
 		else
@@ -181,7 +179,7 @@ void OSXCarbonWindow::create( const String& name, unsigned int width, unsigned i
 				"with an AGL context.");
 		}
 		
-		NameValuePairList::const_iterator opt = 0;
+		NameValuePairList::const_iterator opt(NULL);
 		if(miscParams)
 			opt = miscParams->find("externalWindowHandle");
 		if(!miscParams || opt == miscParams->end())
@@ -259,36 +257,40 @@ void OSXCarbonWindow::create( const String& name, unsigned int width, unsigned i
 		}
 		else
 		{
-			// TODO: The Contol is going to report the incorrect location with a
+			// TODO: The Control is going to report the incorrect location with a
 			// Metalic / Textured window.  The default windows work just fine.
 			
 			// First get the HIViewRef / ControlRef
 			mView = (HIViewRef)StringConverter::parseUnsignedLong(opt->second);
 			mWindow = GetControlOwner(mView);
-			
 			// Lets try hiding the HIView
 			//HIViewSetVisible(mView, false);
-					
 			// Get the rect bounds
 			::Rect ctrlBounds;
 			GetControlBounds(mView, &ctrlBounds);
 			GLint bufferRect[4];
-
+      
 			bufferRect[0] = ctrlBounds.left;					// left edge
 			bufferRect[1] = ctrlBounds.bottom;					// bottom edge
 			bufferRect[2] =	ctrlBounds.right - ctrlBounds.left; // width of buffer rect
 			bufferRect[3] = ctrlBounds.bottom - ctrlBounds.top; // height of buffer rect
+      
 			aglSetInteger(mAGLContext, AGL_BUFFER_RECT, bufferRect);
 			aglEnable (mAGLContext, AGL_BUFFER_RECT);
-            
-            mIsExternal = true;
-		}
+
+      		mIsExternal = true;
+        }
 		
 		// Set the drawable, and current context
 		// If you do this last, there is a moment before the rendering window pops-up
 		// This could go once inside each case above, before the window is displayed,
 		// if desired.
-		aglSetDrawable(mAGLContext, GetWindowPort(mWindow));
+#if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_5
+        aglSetDrawable(mAGLContext, GetWindowPort(mWindow));
+#else
+        aglSetWindowRef(mAGLContext, mWindow);
+#endif
+
 		aglSetCurrentContext(mAGLContext);
 
 		// Give a copy of our context to the render system
@@ -298,6 +300,8 @@ void OSXCarbonWindow::create( const String& name, unsigned int width, unsigned i
 	mName = name;
 	mWidth = width;
 	mHeight = height;
+    mColourDepth = depth;
+    mFSAA = fsaa_samples;
 	mActive = true;
     mClosed = false;
     mCreated = true;
@@ -368,11 +372,45 @@ void OSXCarbonWindow::resize(unsigned int width, unsigned int height)
 	// Check if the window size really changed
 	if(mWidth == width && mHeight == height)
 		return;
-
 	mWidth = width;
 	mHeight = height;
+	if (mIsExternal)
+	{
+		HIRect viewBounds, winBounds;
+		HIViewGetBounds(mView, &viewBounds);
+		HIViewRef root = HIViewGetRoot(HIViewGetWindow(mView));
+		HIViewGetBounds(root, &winBounds);
+		HIViewConvertRect(&viewBounds, mView, root);
+		mLeft = viewBounds.origin.x;
+		mTop = winBounds.size.height - (viewBounds.origin.y + viewBounds.size.height);
+		// Set the AGL buffer rectangle (i.e. the bounds that we will use) 
+		GLint bufferRect[4];      
+		bufferRect[0] = mLeft; // 0 = left edge 
+		bufferRect[1] = mTop; // 0 = bottom edge 
+		bufferRect[2] = mWidth; // width of buffer rect 
+		bufferRect[3] = mHeight; // height of buffer rect 
+		aglSetInteger(mAGLContext, AGL_BUFFER_RECT, bufferRect);
+		for (ViewportList::iterator it = mViewportList.begin(); it != mViewportList.end(); ++it) 
+		{ 
+			(*it).second->_updateDimensions(); 
+		}
+	}
+	else
+	{
+		SizeWindow(mWindow, width, height, true);
+	}
+}
 
-	SizeWindow(mWindow, width, height, true);
+void OSXCarbonWindow::setVisible( bool visible ) {
+  mVisible = visible;
+  if (mIsExternal && !visible) {
+    GLint bufferRect[4]={0,0,0,0};
+    aglSetInteger(mAGLContext, AGL_BUFFER_RECT, bufferRect);
+  }
+}
+
+bool OSXCarbonWindow::isVisible( void ) const {
+  return mVisible;
 }
 
 //-------------------------------------------------------------------------------------------------//
@@ -458,7 +496,7 @@ void OSXCarbonWindow::windowMovedOrResized()
         mWidth = viewBounds.size.width; 
         mHeight = viewBounds.size.height; 
         mLeft = viewBounds.origin.x; 
-        mTop = bufferRect[1]; 
+        mTop = bufferRect[1];
     } 
     
     for (ViewportList::iterator it = mViewportList.begin(); it != mViewportList.end(); ++it) 
@@ -510,4 +548,30 @@ void OSXCarbonWindow::getCustomAttribute( const String& name, void* pData )
 		return;
 	}
 }
+    
+void OSXCarbonWindow::setFullscreen(bool fullScreen, unsigned int width, unsigned int height)
+{
+    GLRenderSystem *rs = static_cast<GLRenderSystem*>(Root::getSingleton().getRenderSystem());
+    OSXContext *mainContext = (OSXContext*)rs->_getMainContext();
+
+    CGLContextObj share = NULL;
+    if(mainContext == 0)
+    {
+        share = NULL;
+    }
+    else if(mainContext->getContextType() == "AGL")
+    {
+        OSXCarbonContext* aglShare = static_cast<OSXCarbonContext*>(mainContext);
+        aglGetCGLContext(aglShare->getContext(), (void**)&share);
+    }
+    else if(mainContext->getContextType() == "CGL")
+    {
+        OSXCGLContext* cglShare = static_cast<OSXCGLContext*>(mainContext);
+        share = cglShare->getContext();
+    }
+
+    // create the context, keeping the current colour depth and FSAA settings
+    createCGLFullscreen(width, height, getColourDepth(), getFSAA(), share);
+}
+
 }

@@ -36,7 +36,7 @@ GMFN double CreateAnimation(char *name, double length)
    Ogre::Animation *anim = NULL;
    
    TRY
-      anim = mSceneMgr->createAnimation(name, length);
+      anim = mSceneMgr->createAnimation(name, (Ogre::Real)length);
    CATCH("CreateAnimation")
 
    return ConvertToGMPointer(anim);
@@ -112,7 +112,7 @@ GMFN double DestroyAnimationNodeTrackByHandle(double anim_ptr, double handle)
    if (anim == NULL)
       return FALSE;
 
-   anim->destroyNodeTrack(handle);
+   anim->destroyNodeTrack((unsigned short)handle);
 
    return TRUE;
 }
@@ -125,7 +125,7 @@ GMFN double GetAnimationNodeTrackByHandle(double anim_ptr, double handle)
    if (anim == NULL)
       return FALSE;
 
-   Ogre::NodeAnimationTrack *node_track = anim->getNodeTrack(handle);
+   Ogre::NodeAnimationTrack *node_track = anim->getNodeTrack((unsigned short)handle);
 
    return ConvertToGMPointer(node_track);
 }

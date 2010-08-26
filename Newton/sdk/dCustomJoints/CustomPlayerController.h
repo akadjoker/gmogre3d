@@ -23,6 +23,7 @@ class JOINTLIBRARY_API CustomPlayerController: public NewtonCustomJoint
 		m_onLand,
 		m_onFreeFall,
 		m_onIlligalRamp,
+      //m_onJumping,
 	};
 
 	CustomPlayerController (const dMatrix& localFrame, const NewtonBody* child, dFloat maxStairStepFactor, dFloat cushion);
@@ -36,7 +37,11 @@ class JOINTLIBRARY_API CustomPlayerController: public NewtonCustomJoint
 
 	dFloat GetPlayerHeight() const;
 	dFloat GetPlayerStairHeight() const;
-	
+   void SetPlayerStairHeight(dFloat stair_height);
+   void SetPlayerState(PlayerState state);
+   PlayerState GetPlayerState();
+
+   void AddImpulse(dFloat ximpulse, dFloat yimpulse, dFloat zimpulse, bool jump);
 /*
 	virtual bool CanPushBody (const NewtonBody* hitBody) const {return true;}
 	const NewtonCollision* GetDynamicsSensorShape () const;
@@ -110,9 +115,12 @@ class JOINTLIBRARY_API CustomPlayerController: public NewtonCustomJoint
 	dMatrix m_localMatrix0;
 	dMatrix m_localMatrix1;
 	PlayerState m_playerState;
+
 	NewtonCollision* m_bodySensorShape;
 	NewtonCollision* m_stairSensorShape;
 	NewtonCollision* m_bodyFloorSensorShape;
+
+   bool m_jumping;
 };
 
 #endif

@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -41,9 +40,13 @@ Torus Knot Software Ltd.
 #include <signal.h>
 #include <setjmp.h>
 
+    #if OGRE_CPU == OGRE_CPU_ARM
+        #include <sys/sysctl.h>
+        #include <mach/machine.h>
+    #endif
 #endif
 
-// Yes, I known, this file looks very ugly, but there hasn't other ways to do it better.
+// Yes, I know, this file looks very ugly, but there aren't other ways to do it better.
 
 namespace Ogre {
 
@@ -458,7 +461,86 @@ namespace Ogre {
 		return "X86";
     }
 
-#else   // OGRE_CPU == OGRE_CPU_X86
+#elif OGRE_CPU == OGRE_CPU_ARM  // OGRE_CPU == OGRE_CPU_X86
+
+    //---------------------------------------------------------------------
+    static uint _detectCpuFeatures(void)
+    {
+        // Use preprocessor definitions to determine architecture and CPU features
+        uint features = 0;
+#if defined(__ARM_ARCH_7A__) && defined(__ARM_NEON__)
+            features |= PlatformInformation::CPU_FEATURE_NEON;
+#elif defined(__ARM_ARCH_6K__) && defined(__VFP_FP__)
+            features |= PlatformInformation::CPU_FEATURE_VFP;
+#endif
+        return features;
+    }
+    //---------------------------------------------------------------------
+    static String _detectCpuIdentifier(void)
+    {
+        String cpuID;
+#if OGRE_PLATFORM == OGRE_PLATFORM_IPHONE
+        // Get the size of the CPU subtype struct
+        size_t size;
+        sysctlbyname("hw.cpusubtype", NULL, &size, NULL, 0);
+        
+        // Get the ARM CPU subtype
+        cpu_subtype_t cpusubtype = 0;
+        sysctlbyname("hw.cpusubtype", &cpusubtype, &size, NULL, 0);
+
+        switch(cpusubtype)
+        {
+            case CPU_SUBTYPE_ARM_V4T:
+                cpuID = "ARMv4T";
+                break;
+            case CPU_SUBTYPE_ARM_V6:
+                cpuID = "ARMv6";
+                break;
+            case CPU_SUBTYPE_ARM_V5TEJ:
+                cpuID = "ARMv5TEJ";
+                break;
+            case CPU_SUBTYPE_ARM_XSCALE:
+                cpuID = "ARM XScale";
+                break;
+            case CPU_SUBTYPE_ARM_V7:
+                cpuID = "ARMv7";
+                break;
+            default:
+                cpuID = "Unknown ARM";
+                break;
+        }
+#elif OGRE_PLATFORM == OGRE_PLATFORM_LINUX
+//        FILE *cpuinfo;
+//        int proccount = -1;
+//        cpuinfo = fopen("/proc/cpuinfo", "r");
+//        if (!cpuinfo)
+//            return -1;
+//        while (!feof(cpuinfo)) {
+//            if (fscanf(cpuinfo, "processor\t: %d\n", &proccount) < 1) {
+//                /* Failure to match: advance the file */
+//                if (feof(cpuinfo))
+//                    goto done;
+//                fseek(cpuinfo, 1, SEEK_CUR);
+//            } else {
+//                proccount++;
+//            }
+//        }
+//    done:
+//        fclose(cpuinfo); 
+        
+        static char processor[257];
+        size_t s = sizeof processor;
+        static int mib[] = { CTL_HW, HW_MODEL };
+        if (sysctl (mib, 2, processor, &s, 0, 0) >= 0)
+            cpuID = processor;
+        else
+            cpuID = "Unknown ARM";
+
+#endif
+        return cpuID;
+    }
+    
+#else   // OGRE_CPU == OGRE_CPU_ARM
 
     //---------------------------------------------------------------------
     static uint _detectCpuFeatures(void)
@@ -528,6 +610,11 @@ namespace Ogre {
 			pLog->logMessage(
 				" *       HT: " + StringConverter::toString(hasCpuFeature(CPU_FEATURE_HTT), true));
 		}
+#elif OGRE_CPU == OGRE_CPU_ARM
+        pLog->logMessage(
+				" *      VFP: " + StringConverter::toString(hasCpuFeature(CPU_FEATURE_VFP), true));
+        pLog->logMessage(
+				" *     NEON: " + StringConverter::toString(hasCpuFeature(CPU_FEATURE_NEON), true));
 #endif
 		pLog->logMessage("-------------------------");
 

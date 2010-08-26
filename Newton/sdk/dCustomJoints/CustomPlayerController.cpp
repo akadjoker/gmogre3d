@@ -110,8 +110,8 @@ CustomPlayerController::CustomPlayerController(
 		dFloat fx;
 		dFloat fz;
 
-		x = dCos (2.0f * 3.1416f * dFloat(i) / dFloat(SENSOR_SHAPE_SEGMENTS));
-		z = dSin (2.0f * 3.1416f * dFloat(i) / dFloat(SENSOR_SHAPE_SEGMENTS));
+		x = dCos (2.0f * 3.14159265f * dFloat(i) / dFloat(SENSOR_SHAPE_SEGMENTS));
+		z = dSin (2.0f * 3.14159265f * dFloat(i) / dFloat(SENSOR_SHAPE_SEGMENTS));
 
 		fx = floorRadios * x;
 		fz = floorRadios * z;
@@ -161,6 +161,8 @@ CustomPlayerController::CustomPlayerController(
 	m_stairSensorShape = NewtonCreateConvexHull (m_world, SENSOR_SHAPE_SEGMENTS * 2, &stairSensorShape[0].m_x, sizeof (dVector), 0.0f, 0, NULL);
 	m_bodySensorShape = NewtonCreateConvexHull (m_world, SENSOR_SHAPE_SEGMENTS * 2, &bodySensorPoints[0].m_x, sizeof (dVector), 0.0f, 0, NULL);
 	m_bodyFloorSensorShape = NewtonCreateConvexHull (m_world, SENSOR_SHAPE_SEGMENTS * 2, &floorSensorShape[0].m_x, sizeof (dVector), 0.0f, 0, NULL);
+
+   m_jumping = false;
 }
 
 CustomPlayerController::~CustomPlayerController()
@@ -203,11 +205,11 @@ void CustomPlayerController::SetMaxSlope (dFloat maxSlopeAngleIndRadian)
 {
 //	
 	maxSlopeAngleIndRadian = dAbs(maxSlopeAngleIndRadian);
-	if (maxSlopeAngleIndRadian < 10.0f * 3.1416f / 180.0f) {
-		maxSlopeAngleIndRadian = 10.0f * 3.1416f / 180.0f;
+	if (maxSlopeAngleIndRadian < 10.0f * 3.14159265f / 180.0f) {
+		maxSlopeAngleIndRadian = 10.0f * 3.14159265f / 180.0f;
 	}
-	if (maxSlopeAngleIndRadian > 60.0f * 3.1416f / 180.0f) {
-		maxSlopeAngleIndRadian = 60.0f * 3.1416f / 180.0f;
+	if (maxSlopeAngleIndRadian > 60.0f * 3.14159265f / 180.0f) {
+		maxSlopeAngleIndRadian = 60.0f * 3.14159265f / 180.0f;
 	}
 
 	m_maxSlope = dCos (maxSlopeAngleIndRadian);
@@ -228,6 +230,21 @@ dFloat CustomPlayerController::GetPlayerHeight() const
 dFloat CustomPlayerController::GetPlayerStairHeight() const
 {
 	return m_stairHeight;
+}
+
+void CustomPlayerController::SetPlayerStairHeight(dFloat stair_height)
+{
+   m_stairHeight = stair_height;
+}
+
+void CustomPlayerController::SetPlayerState(PlayerState state)
+{
+   m_playerState = state;
+}
+
+CustomPlayerController::PlayerState CustomPlayerController::GetPlayerState()
+{
+   return m_playerState;
 }
 
 /*
@@ -423,6 +440,7 @@ void CustomPlayerController::SubmitConstraints (dFloat timestep, int threadIndex
 
 		NewtonBodySetVelocity(m_body0, &desiredVeloc[0]);
 	}
+   
 }
 
 
@@ -657,7 +675,7 @@ void CustomPlayerController::PlayerOnFreeFall (dFloat timestep, int threadIndex)
 	// make sure the body velocity will no penetrates other bodies
 	NewtonBodyGetVelocity (m_body0, &velocity[0]);
 
-	velocity = CalculateVelocity (velocity, timestep, upDir, m_stairHeight, threadIndex);
+   velocity = CalculateVelocity (velocity, timestep, upDir, m_stairHeight, threadIndex);
 
 	// player of in free fall look ahead for the land
 	dist = upDir % velocity.Scale (timestep);
@@ -678,6 +696,7 @@ void CustomPlayerController::PlayerOnFreeFall (dFloat timestep, int threadIndex)
 		}
 	}
 	NewtonBodySetVelocity(m_body0, &velocity[0]);
+   m_jumping = false;
 }
 
 
@@ -721,7 +740,7 @@ void CustomPlayerController::PlayerOnRamp (dFloat timestep, int threadIndex)
 
 	// if the player did not change state, then make sure it is still landed on a floor
 	dVector step (velocity.Scale (timestep));
-	bodyMatrix.m_posit = posit + step + upDir.Scale (m_stairHeight - m_kinematicCushion);
+	bodyMatrix.m_posit = posit + step + upDir.Scale(m_stairHeight - m_kinematicCushion);
 	target = bodyMatrix.m_posit - upDir.Scale(m_stairHeight * 2.0f);
 
 //	castFilterData.m_count = 1;
@@ -788,8 +807,17 @@ void CustomPlayerController::PlayerOnLand (dFloat timestep, int threadIndex)
 
 	// if the player did not change state, then make sure it is still landed on a floor
 	dVector step (velocity.Scale (timestep));
-	bodyMatrix.m_posit = posit + step + upDir.Scale (m_stairHeight - m_kinematicCushion);
-	dVector target (bodyMatrix.m_posit - upDir.Scale(m_stairHeight * 2.0f));
+   dVector target;
+   if (!m_jumping)
+   {
+	   bodyMatrix.m_posit = posit + step + upDir.Scale (m_stairHeight - m_kinematicCushion);
+	   target = (bodyMatrix.m_posit - upDir.Scale(m_stairHeight * 2.0f));
+   }
+   else
+   {
+      bodyMatrix.m_posit = posit + step + upDir.Scale (0.0f - m_kinematicCushion);
+	   target = (bodyMatrix.m_posit - upDir.Scale(0.0f * 2.0f));
+   }
 
 	dVector floorNormal;
 	if (FindFloor (bodyMatrix, target, upDir, m_bodyFloorSensorShape, hitParam, floorNormal, threadIndex)) {
@@ -830,7 +858,7 @@ void CustomPlayerController::PlayerOnLand (dFloat timestep, int threadIndex)
 					}
 
 					if (iterations >= MAX_COLLISIONS_ITERATION) {
-						dVector veloc1 (CalculateVelocity (savedVeloc, timestep, upDir, 0.0f, threadIndex));
+						dVector veloc1 (CalculateVelocity (savedVeloc, timestep, upDir, m_stairHeight, threadIndex));
 						dVector err (veloc1 - velocity);
 						if ((err % err) < 1.0e-6f) {
 							m_playerState = m_onIlligalRamp;
@@ -895,4 +923,20 @@ void CustomPlayerController::KinematicMotion (dFloat timestep, int threadIndex)
 			PlayerOnRamp (timestep, threadIndex);
 			break;
 	}
+}
+
+
+
+void CustomPlayerController::AddImpulse(dFloat ximpulse, dFloat yimpulse, dFloat zimpulse, bool jump)
+{
+   dMatrix bodyMatrix;
+
+	// Get the global matrices of each rigid body.
+	NewtonBodyGetMatrix(m_body0, &bodyMatrix[0][0]);
+
+   dVector velocity(ximpulse, yimpulse, zimpulse);
+   dVector posit(bodyMatrix.m_posit);
+   
+   NewtonBodyAddImpulse(m_body0, &velocity[0], &posit[0]);
+   m_jumping = jump;
 }

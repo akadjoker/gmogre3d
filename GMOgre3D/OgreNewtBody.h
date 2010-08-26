@@ -34,8 +34,8 @@ public:
    OgreNewtBody(const OgreNewt::World* W, const OgreNewt::CollisionPtr& col, int bodytype = 0);
    ~OgreNewtBody();
 
-    void setUserData( void* data );
-    void* getUserData() const;
+    void setUserData( char *key, void* data );
+    void* getUserData(char *key) const;
 
     void setType( int type );
     int getType() const;
@@ -95,7 +95,7 @@ public:
 
 protected:
    OgreNewt::Body *m_body;
-   void *m_userdata;
+   std::map<Ogre::String, void *> m_userdata;
    int m_gm_force_and_torque_func;
 
    bool m_override_gravity;

@@ -48,7 +48,7 @@ GMFN double CreateNewtonHingeJoint(double newton_child_body_ptr, double newton_p
    OgreNewt::Joint *joint;
 
    TRY
-      joint = new OgreNewt::Hinge(newton_child_body->getOgreNewtBody(), newton_parent_body ? newton_parent_body->getOgreNewtBody() : NULL, ConvertFromGMAxis(posx, posy, posz), ConvertFromGMAxis(pinx, piny, pinz));
+      joint = OGRE_NEW OgreNewt::Hinge(newton_child_body->getOgreNewtBody(), newton_parent_body ? newton_parent_body->getOgreNewtBody() : NULL, ConvertFromGMAxis(posx, posy, posz), ConvertFromGMAxis(pinx, piny, pinz));
    CATCH("CreateNewtonHingeJoint")
 
    return ConvertToGMPointer(joint);
@@ -101,7 +101,7 @@ GMFN double GetNewtonHingeJointAngle(double newton_joint_ptr)
    if (!newton_joint)
       return FALSE;
 
-   return newton_joint->getJointAngle();
+   return newton_joint->getJointAngle().valueDegrees();
 }
 
 
@@ -112,7 +112,7 @@ GMFN double GetNewtonHingeJointAngularVelocity(double newton_joint_ptr)
    if (!newton_joint)
       return FALSE;
 
-   return newton_joint->getJointAngulatVelocity();
+   return newton_joint->getJointAngularVelocity().valueDegrees();
 }
 
 

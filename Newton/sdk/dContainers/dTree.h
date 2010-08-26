@@ -13,7 +13,7 @@
 #ifndef __dTree__
 #define __dTree__
 
-#include <dContainersStdAfx.h>
+#include "dContainersStdAfx.h"
 #include <stdlib.h>
 
 
@@ -38,21 +38,19 @@ class dRedBackNode
 	dRedBackNode *Next() const;
 	dRedBackNode *Minimum() const;
 	dRedBackNode *Maximum() const;
-
+/*
 	void *operator new (size_t size) 
 	{
-		//return m_allocator->malloc(size_t);
-		return malloc (size) ;
+		//return malloc (size) ;
+		return new char[size];
 	}
 
 	void operator delete (void *ptr) 
 	{
-		#ifdef	_DEBUG
-		//memset (ptr, 0xcc, m_size);
-		#endif
-		free (ptr);
+		//free (ptr);
+		delete[] (char*)ptr;
 	}
-
+*/
 
 	protected:
 	~dRedBackNode () 
@@ -69,6 +67,7 @@ class dRedBackNode
 	void RotateRight(dRedBackNode **head); 
 	void RemoveFixup (dRedBackNode *node, dRedBackNode **head); 
 	void RemoveAll ();
+	void Unlink (dRedBackNode **head);
 	void Remove (dRedBackNode **head);
 	void InsertFixup(dRedBackNode **head); 
 
@@ -108,19 +107,17 @@ class dTree
 /*
 		void *operator new (size_t size) 
 		{
-			//return m_allocator->malloc(size_t);
-			return malloc (size) ;
+			//return malloc(size);
+			return new char[size];
 		}
 
 		void operator delete (void *ptr) 
 		{
-			#ifdef	_DEBUG
-			//memset (ptr, 0xcc, m_size);
-			#endif
-			//m_allocator->free(ptr);
-			free (ptr);
+			//free(ptr);
+			delete[] (char*)ptr;
 		}
 */
+
 		dTreeNode *GetLeft () const
 		{
 			return (dTreeNode *)dRedBackNode::m_left;
@@ -255,8 +252,8 @@ class dTree
 	dTree ();
 	~dTree (); 
 
-	void* operator new (size_t size);
-	void operator delete (void *ptr);
+//	void* operator new (size_t size);
+//	void operator delete (void *ptr);
 
 	operator int() const;
 	int GetCount() const;
@@ -280,6 +277,8 @@ class dTree
 	dTreeNode *Replace (OBJECT &element, KEY key);
 	dTreeNode *ReplaceKey (KEY oldKey, KEY newKey);
 	dTreeNode *ReplaceKey (dTreeNode *node, KEY key);
+
+	void Unlink (dTreeNode *node);
 
 	void Remove (KEY key);
 	void Remove (dTreeNode *node);
@@ -351,19 +350,21 @@ dTree<OBJECT, KEY>::~dTree ()
 	RemoveAll();
 }
 
-
+/*
 template<class OBJECT, class KEY>
 void* dTree<OBJECT, KEY>::operator new (size_t size)
 {
-	return malloc (size);
+//	return malloc (size);
+	return new char[size];
 }
 
 template<class OBJECT, class KEY>
 void dTree<OBJECT, KEY>::operator delete (void *ptr)
 {
-	free (ptr);
+//	free (ptr);
+	delete[] (char*)ptr;
 }
-
+*/
 
 template<class OBJECT, class KEY>
 dTree<OBJECT, KEY>::operator int() const
@@ -721,10 +722,10 @@ template<class OBJECT, class KEY>
 typename dTree<OBJECT, KEY>::dTreeNode *dTree<OBJECT, KEY>::ReplaceKey (typename dTree<OBJECT, KEY>::dTreeNode *node, KEY key)
 {
 	dTreeNode *ptr;
-
-	_ASSERTE (node->IsAlive());
-	Remove (node);
-	node->Unkill();
+//	_ASSERTE (node->IsAlive());
+//	Remove (node);
+//	node->Unkill();
+	Unlink(node);
 	ptr = Insert (node, key);
 
 	_ASSERTE (ptr);
@@ -739,6 +740,14 @@ typename dTree<OBJECT, KEY>::dTreeNode *dTree<OBJECT, KEY>::ReplaceKey (KEY oldK
 	node = Find (oldKey);
 	return node ? ReplaceKey (node, newKey) : NULL;
 }
+
+template<class OBJECT, class KEY>
+void dTree<OBJECT, KEY>::Unlink (typename dTree<OBJECT, KEY>::dTreeNode *node)
+{
+	m_count	--;
+	node->Unlink((dRedBackNode **)&m_head);
+}
+
 
 template<class OBJECT, class KEY>
 void dTree<OBJECT, KEY>::Remove (typename dTree<OBJECT, KEY>::dTreeNode *node)

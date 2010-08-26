@@ -6,7 +6,7 @@
 
 Ogre::Vector3 ConvertFromGMAxis2(double x, double y, double z)
 {
-   return Ogre::Vector3(x, y, z);
+   return Ogre::Vector3((Ogre::Real)x, (Ogre::Real)y, (Ogre::Real)z);
 }
 
 
@@ -22,7 +22,7 @@ static void _CDECL LeaveWorldCallback(const NewtonBody* body, int threadIndex)
 
 OgreNewtWorld::OgreNewtWorld(Ogre::Real desiredFps, int maxUpdatesPerFrames)
 {
-   m_world = new OgreNewt::World(desiredFps, maxUpdatesPerFrames);
+   m_world = OGRE_NEW OgreNewt::World(desiredFps, maxUpdatesPerFrames);
 
    m_default_gravity = Ogre::Vector3(0, -9.81, 0); // Default to earth gravity
    m_world->setPlatformArchitecture(2);

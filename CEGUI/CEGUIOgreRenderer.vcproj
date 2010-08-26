@@ -268,6 +268,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
+				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				AdditionalIncludeDirectories="./cegui/include;./dependencies/include;./cegui/include/RendererModules/Ogre/;../OgreMain/include"
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;HAVE_CONFIG_H;OGRE_GUIRENDERER_EXPORTS;CEGUI_STATIC;TOLUA_STATIC;OGRE_STATIC_LIB"

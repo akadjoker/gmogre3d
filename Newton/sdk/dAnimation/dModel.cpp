@@ -14,13 +14,24 @@
 #include <dMesh.h>
 #include <dModel.h>
 #include <dAnimationClip.h>
+
+#ifdef D_LOAD_SAVE_XML
 #include <tinyxml.h>
+#endif
 
 
+dInitRtti(dModel);
 
-dMesh* dLoaderContext::CreateMesh (int type)
+
+dModel* dLoaderContext::CreateModel ()
 {
-	return new dMesh (dMesh::dMeshType (type));
+	return new dModel();
+}
+
+
+dMesh* dLoaderContext::CreateMesh (const char* name)
+{
+	return new dMesh (name);
 }
 
 dBone* dLoaderContext::CreateBone (dBone* parent)
@@ -32,76 +43,176 @@ void dLoaderContext::LoaderFixup (dModel* model)
 {
 }
 
+void dLoaderContext::SetUserData (const NewtonBody* body, dModel* model, const char* bindkeyword)
+{
+
+}
+
+void dLoaderContext::SetTransformCallback (const NewtonBody* body, const char* bindkeyword)
+{
+
+}
+
+void dLoaderContext::SetForceAndTorqueCallback (const NewtonBody* body, const char* bindkeyword)
+{
+
+}
+
+void dLoaderContext::SetDestructorCallback (const NewtonBody* body, const char* bindkeyword)
+{
+
+}
+
+
 
 dModel::dModel(void)
+	:dClassInfo()
 {
+//	int xxx = dModel::GetRttiType();
+//	xxx = dClassInfo::GetRttiType();
+//	xxx = dClassInfo::GetTypeId();
+//	xxx = GetTypeId();
+//	bool sss = IsType (dModel::GetRttiType());
+//	sss = IsType (dClassInfo::GetRttiType());
+	strcpy (m_name, "scene_model");;
 }
+
 
 dModel::~dModel(void)
 {
-//	for (dMeshList::dListNode* node = m_meshList.GetFirst(); node; node = node->GetNext()) {
-	for (ModelComponentList<dList<dMesh*> >::dListNode* list = m_meshList.GetFirst(); list; list = list->GetNext()) {
-		for (dList<dMesh*>::dListNode* node = list->GetInfo().m_data.GetFirst(); node; node = node->GetNext()) { 
-			node->GetInfo()->Release();
-		}
+	for (dList<dBone*>::dListNode* list = m_skeleton.GetFirst(); list; list = list->GetNext()) {
+		list->GetInfo()->Release();
 	}
 
-//	for (dSkeleton::dListNode* node = m_skeleton.GetFirst(); node; node = node->GetNext()) {
-	for (ModelComponentList<dList<dBone*> >::dListNode* list = m_skeleton.GetFirst(); list; list = list->GetNext()) {
-		for (dList<dBone*>::dListNode* node = list->GetInfo().m_data.GetFirst(); node; node = node->GetNext()) { 
-			delete node->GetInfo();
-		}
+	for (dList<dAnimationClip*>::dListNode* node = m_animations.GetFirst(); node; node = node->GetNext()) {
+		node->GetInfo()->Release();
 	}
-
-	for (ModelComponentList<dAnimationClip*>::dListNode* node = m_animations.GetFirst(); node; node = node->GetNext()) {
-		node->GetInfo().m_data->Release();
-	}
-
 }
+
+
+void dModel::InitFromModel (const dModel& source)
+{
+	while (m_skeleton.GetCount()) {
+		RemoveSkeleton(m_skeleton.GetFirst()->GetInfo());
+	}
+	while (m_meshList.GetCount()) {
+		RemoveMesh(m_meshList.GetFirst()->GetInfo().m_mesh);
+	}
+
+	while (m_animations.GetCount()) {
+		RemoveAnimation(m_animations.GetFirst()->GetInfo());
+	}
+
+
+	for (dList<dBone*>::dListNode* node = source.m_skeleton.GetFirst(); node; node = node->GetNext()) {
+		int stack = 1;
+		dBone* pool[64];
+		dBone* parentBones[64];
+
+		parentBones[0] = NULL;
+		dBone* rootBone = NULL;
+		pool[0] = node->GetInfo();
+		
+		while (stack) {
+			stack --;
+			dBone* parent = parentBones[stack];
+			dBone* sourceBone = pool[stack];
+			dBone* bone = new dBone (*sourceBone, parent);
+			if (!rootBone) {
+				rootBone = bone;
+			}
+
+			for (sourceBone = sourceBone->GetChild(); sourceBone; sourceBone = sourceBone->GetSibling()) {
+				pool[stack] = sourceBone;
+				parentBones[stack] = bone;
+				stack ++;
+			}
+		}
+	
+		AddSkeleton(rootBone);
+		rootBone->Release();
+	}
+
+
+
+	for (dList<dAnimationClip*>::dListNode* node = source.m_animations.GetFirst(); node; node = node->GetNext()) {
+		AddAnimation(node->GetInfo());
+	}
+
+
+	for (dList<dMeshInstance>::dListNode* node = source.m_meshList.GetFirst(); node; node = node->GetNext()) { 
+		AddMesh(node->GetInfo().m_mesh);
+		dMeshInstance& instance = m_meshList.GetLast()->GetInfo();
+		instance.m_boneID = node->GetInfo().m_boneID;
+		if (node->GetInfo().GetModifier()) {
+			instance.SetModifier(node->GetInfo().GetModifier()->CreateCopy (instance, *this));
+		}
+	}
+}
+
+//void dModel::SetMatrix (const dMatrix& matrix)
+//{
+//	m_matrix = matrix;
+//}
+
 
 void dModel::AddMesh(dMesh* mesh)
 {	
-	if (!m_meshList.GetCount()) {
-		m_meshList.Append();
-	}
-	ModelComponentList<dList<dMesh*> >::dListNode* list = m_meshList.GetFirst();
-	list->GetInfo().m_data.Append (mesh);
-	mesh->AddRef();
+	m_meshList.Append(mesh);
 }
 
 
 void dModel::RemoveMesh(dMesh* mesh)
 {
-//	for (dMeshList::dListNode* node = m_meshList.GetFirst(); node; node = node->GetNext()) {
-	for (ModelComponentList<dList<dMesh*> >::dListNode* list = m_meshList.GetFirst(); list; list = list->GetNext()) {
-		for (dList<dMesh*>::dListNode* node = list->GetInfo().m_data.GetFirst(); node; node = node->GetNext()) { 
-			if (mesh == node->GetInfo()) {
-				mesh->Release();
-				list->GetInfo().m_data.Remove(node);
-				return;
-			}
+	for (dList<dMeshInstance>::dListNode* node = m_meshList.GetFirst(); node; node = node->GetNext()) { 
+		if (mesh == node->GetInfo().m_mesh) {
+			m_meshList.Remove(node);
+			return;
 		}
 	}
 }
 
-void dModel::AddAnimation(const char* name, dAnimationClip* anim)
+void dModel::AddAnimation(dAnimationClip* anim)
 {
-	ModelComponent<dAnimationClip*>& clip = m_animations.Append()->GetInfo();
-	strncpy (clip.m_name, name, MODEL_COMPONENT_NAME_SIZE - 1);
-	clip.m_data = anim;
+//	dList<dAnimationClip*>& clip = m_animations.Append()->GetInfo();
+//	strncpy (clip.m_name, name, MODEL_COMPONENT_NAME_SIZE - 1);
+//	clip.m_data = anim;
+	m_animations.Append(anim);
 	anim->AddRef();
 }
 
 void dModel::RemoveAnimation(dAnimationClip* anim)
 {
-	for (ModelComponentList<dAnimationClip*>::dListNode* node = m_animations.GetFirst(); node; node = node->GetNext()) {
-		if (anim == node->GetInfo().m_data) {
-			node->GetInfo().m_data->Release();
+	for (dList<dAnimationClip*>::dListNode* node = m_animations.GetFirst(); node; node = node->GetNext()) {
+		if (anim == node->GetInfo()) {
+			node->GetInfo()->Release();
 			m_animations.Remove(node);
 			break;
 		}
 	}
 }
+
+void dModel::AddSkeleton (dBone* rootBone)
+{
+//	ModelComponent<dList<dBone*> >& boneList = m_skeleton.Append()->GetInfo();
+//	boneList.m_data.Append (rootBone);
+	m_skeleton.Append(rootBone);
+	rootBone->AddRef();
+}
+
+
+void dModel::RemoveSkeleton(dBone* rootBone)
+{
+	for (dList<dBone*>::dListNode* list = m_skeleton.GetFirst(); list; list = list->GetNext()) {
+		if (list->GetInfo() == rootBone) {
+			rootBone->Release();
+			m_skeleton.Remove(list);
+			break;
+		}
+	}
+}
+
+
 
 dAnimationClip* dModel::FindAnimationClip (const char* name) const
 {
@@ -111,103 +222,38 @@ dAnimationClip* dModel::FindAnimationClip (const char* name) const
 
 
 void dModel::BindMeshToBonesByName () const
-{	
-//	for (dMeshList::dListNode* node = m_meshList.GetFirst(); node; node = node->GetNext()) {
-	for (ModelComponentList<dList<dMesh*> >::dListNode* list = m_meshList.GetFirst(); list; list = list->GetNext()) {
-		for (dList<dMesh*>::dListNode* node = list->GetInfo().m_data.GetFirst(); node; node = node->GetNext()) { 
-			dMesh* mesh;
-			dBone* bone;
-			mesh = node->GetInfo();
-			bone = FindBone (mesh->m_name);
-			if (bone) {
-				mesh->m_boneID = bone->m_boneID;
-			} else {
-				mesh->m_boneID = 0;
-			}
+{
+	_ASSERTE (0);
+/*
+	for (dList<dMeshInstance>::dListNode* node = m_meshList.GetFirst(); node; node = node->GetNext()) { 
+		
+		dMesh* mesh;
+		dBone* bone;
+		mesh = node->GetInfo().m_mesh;
+		bone = FindBone (mesh->m_name);
+		if (bone) {
+			bone->m_boneID = bone->m_boneID;
+		} else {
+			bone->m_boneID = 0;
 		}
 	}
+*/
 }
 
 int dModel::GetBoneCount() const
 {
 	int count = 0;
-	for (ModelComponentList<dList<dBone*> >::dListNode* list = m_skeleton.GetFirst(); list; list = list->GetNext()) {
-		for (dList<dBone*>::dListNode* node = list->GetInfo().m_data.GetFirst(); node; node = node->GetNext()) { 
-			count += node->GetInfo()->GetBonesCount();
-		}
+	for (dList<dBone*>::dListNode* list = m_skeleton.GetFirst(); list; list = list->GetNext()) {
+			count += list->GetInfo()->GetBonesCount();
 	}
 	return count;
 }
 
 void dModel::UpdateMatrixPalette (const dMatrix& parentMatrix, dMatrix* const matrixOut, int maxCount) const
 {
-//	for (dSkeleton::dListNode* node = m_skeleton.GetFirst(); node; node = node->GetNext()) {
-	for (ModelComponentList<dList<dBone*> >::dListNode* list = m_skeleton.GetFirst(); list; list = list->GetNext()) {
-		for (dList<dBone*>::dListNode* node = list->GetInfo().m_data.GetFirst(); node; node = node->GetNext()) { 
-			node->GetInfo()->UpdateMatrixPalette (parentMatrix, matrixOut, maxCount);
-		}
+	for (dList<dBone*>::dListNode* list = m_skeleton.GetFirst(); list; list = list->GetNext()) {
+			list->GetInfo()->UpdateMatrixPalette (parentMatrix, matrixOut, maxCount);
 	}
-
-}
-
-void dModel::IntsToString (char* string, const int* ints, int count)
-{
-	for (int i =0; i < (count - 1); i ++) {
-		sprintf (string, "%d ", ints[i]);
-		string += strlen (string);
-	}
-	sprintf (string, "%d", ints[count - 1]);
-
-}
-
-void dModel::FloatsToString (char* string, const dFloat* floats, int count)
-{
-	for (int i =0; i < (count - 1); i ++) {
-		sprintf (string, "%f ", floats[i]);
-		string += strlen (string);
-	}
-	sprintf (string, "%f", floats[count - 1]);
-}
-
-int dModel::StringToInts (const char* string, int* ints)
-{
-	int count;
-	count = 0;
-
-	do {
-		ints[count] = atoi (string);
-		count ++;
-		while (string[0] && !isspace(string[0])) string ++;
-		while (string[0] && isspace(string[0])) string ++;
-	} while (string[0]);
-
-	return count;
-}
-
-int dModel::StringToFloats (const char* string, dFloat* floats)
-{
-	int count;
-	count = 0;
-
-	do {
-		floats[count] = dFloat (atof (string));
-		count ++;
-		while (string[0] && !isspace(string[0])) string ++;
-		while (string[0] && isspace(string[0])) string ++;
-	} while (string[0]);
-
-	return count;
-}
-
-void dModel::GetFileName (const char* pathNamenode, char* name)
-{
-	for (int i = int (strlen (pathNamenode)); i >= 0; i --) {
-		if ((pathNamenode[i] == '/') || (pathNamenode[i] == '\\')) {
-			strcpy (name, &pathNamenode[i + 1]); 
-			return ;
-		}
-	}
-	strcpy (name, pathNamenode);
 }
 
 void dModel::GetFilePath (const char* pathNamenode, char* name)
@@ -221,6 +267,20 @@ void dModel::GetFilePath (const char* pathNamenode, char* name)
 	}
 	name[0] = 0;
 }
+
+void dModel::GetFileName (const char* pathNamenode, char* name)
+{
+	for (int i = int (strlen (pathNamenode)); i >= 0; i --) {
+		if ((pathNamenode[i] == '/') || (pathNamenode[i] == '\\')) {
+			strcpy (name, &pathNamenode[i + 1]); 
+			return ;
+		}
+	}
+	strcpy (name, pathNamenode);
+}
+
+
+
 
 
 static int SortVertexArray (const void *A, const void *B) 
@@ -307,13 +367,10 @@ int dModel::PackVertexArray (dFloat* vertexList, int compareElements, int stride
 
 dBone* dModel::FindBone (int index) const
 {
-//	for (dSkeleton::dListNode* node = m_skeleton.GetFirst(); node; node = node->GetNext()) {
-	for (ModelComponentList<dList<dBone*> >::dListNode* list = m_skeleton.GetFirst(); list; list = list->GetNext()) {
-		for (dList<dBone*>::dListNode* node = list->GetInfo().m_data.GetFirst(); node; node = node->GetNext()) { 
-			for (dBone* bone = node->GetInfo()->GetFirst(); bone; bone = bone->GetNext()) {
-				if (bone->GetBoneID() == index) {
-					return bone;
-				}
+	for (dList<dBone*>::dListNode* node = m_skeleton.GetFirst(); node; node = node->GetNext()) {
+		for (dBone* bone = node->GetInfo()->GetFirst(); bone; bone = bone->GetNext()) {
+			if (bone->GetBoneID() == index) {
+				return bone;
 			}
 		}
 	}
@@ -323,32 +380,211 @@ dBone* dModel::FindBone (int index) const
 
 dBone* dModel::FindBone (const char* name) const
 {
-	for (ModelComponentList<dList<dBone*> >::dListNode* list = m_skeleton.GetFirst(); list; list = list->GetNext()) {
-		for (dList<dBone*>::dListNode* node = list->GetInfo().m_data.GetFirst(); node; node = node->GetNext()) { 
-			dBone* bone;
-			bone = node->GetInfo()->Find(name);
-			if (bone) {
-				return bone;
-			}
+	for (dList<dBone*>::dListNode* node = m_skeleton.GetFirst(); node; node = node->GetNext()) {
+		dBone* bone;
+		bone = node->GetInfo()->Find(name);
+		if (bone) {
+			return bone;
 		}
 	}
 	return NULL;
+}
+
+void dModel::GetBoneList (dList<dBone*>& bodeList) const
+{
+	for (dList<dBone*>::dListNode* node = m_skeleton.GetFirst(); node; node = node->GetNext()) {
+		dBone* rootbone = node->GetInfo();
+		for (dBone* bone = rootbone->GetFirst(); bone; bone = (dBone*) bone->GetNext()) {
+			bodeList.Append(bone);
+		}
+	}
 }
 
 dMesh* dModel::FindMesh (const char* name) const
 {
-	for (ModelComponentList<dList<dMesh*> >::dListNode* list = m_meshList.GetFirst(); list; list = list->GetNext()) {
-		for (dList<dMesh*>::dListNode* node = list->GetInfo().m_data.GetFirst(); node; node = node->GetNext()) { 
-			if (!strcmp (node->GetInfo()->m_name, name)) {
-				return node->GetInfo();
-			}
+	for (dList<dMeshInstance>::dListNode* node = m_meshList.GetFirst(); node; node = node->GetNext()) { 
+		if (!strcmp (node->GetInfo().m_mesh->m_name, name)) {
+			return node->GetInfo().m_mesh;
+		}
+	}
+	return NULL;
+}
+
+dMeshInstance* dModel::FindMeshInstance (int boneID) const
+{
+	for (dList<dMeshInstance>::dListNode* node = m_meshList.GetFirst(); node; node = node->GetNext()) { 
+		if (node->GetInfo().m_boneID == boneID) {
+			return &node->GetInfo();
+		}
+	}
+	return NULL;
+}
+
+dMeshInstance* dModel::FindMeshInstance (dMesh* mesh) const
+{
+	for (dList<dMeshInstance>::dListNode* node = m_meshList.GetFirst(); node; node = node->GetNext()) { 
+		if (node->GetInfo().m_mesh == mesh) {
+			return &node->GetInfo();
 		}
 	}
 	return NULL;
 }
 
 
-void dModel::Save (const char* modelName, bool exportSkeleton, bool exportMesh, bool exportAnimations)
+void dModel::ApplyGlobalScale (dFloat scale)
+{
+	_ASSERTE (0);
+/*
+	dMatrix scaleMatrix (GetIdentityMatrix());
+	scaleMatrix[0][0] = scale;
+	scaleMatrix[1][1] = scale;
+	scaleMatrix[2][2] = scale;
+	for (dList<dMeshInstance>::dListNode* node = m_meshList.GetFirst(); node; node = node->GetNext()) { 
+		dMesh* geom = node->GetInfo().m_mesh;
+		if (node->GetInfo().m_boneID == geom->m_boneID) {
+			scaleMatrix.TransformTriplex (geom->m_vertex, 3 * sizeof (dFloat), geom->m_vertex, 3 * sizeof (dFloat), geom->m_vertexCount);
+		}
+		if (node->GetInfo().GetModifier()) {
+			node->GetInfo().GetModifier()->ApplyGlobalScale(scale);
+		}
+	}
+
+
+	int stackIndex;
+	dBone* stack[1024];
+
+	stackIndex = 0;
+	for (dList<dBone*>::dListNode* node = m_skeleton.GetFirst(); node; node = node->GetNext()) {
+		for (dList<dBone*>::dListNode* node = list->GetInfo().m_data.GetFirst(); node; node = node->GetNext()) { 
+			stack[stackIndex] = node->GetInfo();
+			stackIndex ++;
+		}
+	}
+
+	dMatrix transformInv (scaleMatrix);
+	transformInv[0][0] = 1.0f/transformInv[0][0];
+	transformInv[1][1] = 1.0f/transformInv[1][1];
+	transformInv[2][2] = 1.0f/transformInv[2][2];
+
+	while (stackIndex) {
+		dBone* bone;
+		stackIndex --;
+		bone = stack[stackIndex];
+
+		dMatrix matrix (transformInv * bone->GetMatrix() * scaleMatrix);
+		bone->SetMatrix (matrix);
+
+		for (bone = bone->GetChild(); bone; bone = bone->GetSibling()) {
+			stack[stackIndex] = bone;
+			stackIndex ++;
+		}
+	}
+*/
+}
+
+
+
+
+
+void dModel::ApplyGlobalTransform (const dMatrix& transform)
+{
+	_ASSERTE (0);
+/*
+	dMatrix rotation (transform);
+	rotation.m_posit =dVector (0.0f, 0.0f, 0.0f, 1.0f);
+	for (dList<dMeshInstance>::dListNode* node = m_meshList.GetFirst(); node; node = node->GetNext()) { 
+		dMesh* geom = node->GetInfo().m_mesh;
+
+		if (node->GetInfo().m_boneID == geom->m_boneID) {
+			transform.TransformTriplex (geom->m_vertex, 3 * sizeof (dFloat), geom->m_vertex, 3 * sizeof (dFloat), geom->m_vertexCount);
+			rotation.TransformTriplex (geom->m_normal, 3 * sizeof (dFloat), geom->m_normal, 3 * sizeof (dFloat), geom->m_vertexCount);
+		}
+		if (node->GetInfo().GetModifier()) {
+			node->GetInfo().GetModifier()->ApplyGlobalTransform(transform);
+		}
+	}
+
+	int stackIndex;
+	dBone* stack[1024];
+
+	stackIndex = 0;
+	for (dList<dBone*>::dListNode* node = m_skeleton.GetFirst(); node; node = node->GetNext()) {
+		for (dList<dBone*>::dListNode* node = list->GetInfo().m_data.GetFirst(); node; node = node->GetNext()) { 
+			stack[stackIndex] = node->GetInfo();
+			stackIndex ++;
+		}
+	}
+
+	dMatrix transformInv (transform.Inverse());
+	while (stackIndex) {
+		dBone* bone;
+		stackIndex --;
+		bone = stack[stackIndex];
+
+		dMatrix matrix (transformInv * bone->GetMatrix() * transform);
+		bone->SetMatrix (matrix);
+
+		for (bone = bone->GetChild(); bone; bone = bone->GetSibling()) {
+			stack[stackIndex] = bone;
+			stackIndex ++;
+		}
+	}
+*/
+}
+
+
+#ifdef D_LOAD_SAVE_XML
+
+void dModel::IntsToString (char* string, const int* ints, int count)
+{
+	for (int i =0; i < (count - 1); i ++) {
+		sprintf (string, "%d ", ints[i]);
+		string += strlen (string);
+	}
+	sprintf (string, "%d", ints[count - 1]);
+
+}
+
+void dModel::FloatsToString (char* string, const dFloat* floats, int count)
+{
+	for (int i =0; i < (count - 1); i ++) {
+		sprintf (string, "%f ", floats[i]);
+		string += strlen (string);
+	}
+	sprintf (string, "%f", floats[count - 1]);
+}
+
+int dModel::StringToInts (const char* string, int* ints)
+{
+	int count;
+	count = 0;
+
+	do {
+		ints[count] = atoi (string);
+		count ++;
+		while (string[0] && !isspace(string[0])) string ++;
+		while (string[0] && isspace(string[0])) string ++;
+	} while (string[0]);
+
+	return count;
+}
+
+int dModel::StringToFloats (const char* string, dFloat* floats)
+{
+	int count;
+	count = 0;
+
+	do {
+		floats[count] = dFloat (atof (string));
+		count ++;
+		while (string[0] && !isspace(string[0])) string ++;
+		while (string[0] && isspace(string[0])) string ++;
+	} while (string[0]);
+
+	return count;
+}
+
+void dModel::SaveXML (const char* modelName, bool exportSkeleton, bool exportMesh, bool exportAnimations)
 {
 	TiXmlText* header;
 	TiXmlElement *root;
@@ -370,7 +606,7 @@ void dModel::Save (const char* modelName, bool exportSkeleton, bool exportMesh, 
 	root->LinkEndChild(header);
 
 
-	for (ModelComponentList<dList<dMesh*> >::dListNode* list = m_meshList.GetFirst(); list; list = list->GetNext()) {
+	for (ModelComponentList<dList<dMeshInstance> >::dListNode* list = m_meshList.GetFirst(); list; list = list->GetNext()) {
 		char name[256];
 		TiXmlElement *mesh;
 		strcpy (name, list->GetInfo().m_name);
@@ -382,7 +618,7 @@ void dModel::Save (const char* modelName, bool exportSkeleton, bool exportMesh, 
 		mesh->LinkEndChild(header);
 	}
 
-	for (ModelComponentList<dList<dBone*> >::dListNode* list = m_skeleton.GetFirst(); list; list = list->GetNext()) {
+	for (dList<dBone*>::dListNode* node = m_skeleton.GetFirst(); node; node = node->GetNext()) {
 		TiXmlElement *skeleton;
 		skeleton = new TiXmlElement( "skeleton" );
 		root->LinkEndChild(skeleton);
@@ -403,7 +639,7 @@ void dModel::Save (const char* modelName, bool exportSkeleton, bool exportMesh, 
 	if (exportSkeleton && m_skeleton.GetCount()) {
 		char pathName[256];
 		dModel::GetFilePath (modelName, pathName);
-		for (ModelComponentList<dList<dBone*> >::dListNode* list = m_skeleton.GetFirst(); list; list = list->GetNext()) {
+		for (dList<dBone*>::dListNode* node = m_skeleton.GetFirst(); node; node = node->GetNext()) {
 			char name[256];
 			strcpy (name, pathName);
 			strcat (name, list->GetInfo().m_name);
@@ -415,11 +651,11 @@ void dModel::Save (const char* modelName, bool exportSkeleton, bool exportMesh, 
 
 		char pathName[256];
 		dModel::GetFilePath (modelName, pathName);
-		for (ModelComponentList<dList<dMesh*> >::dListNode* list = m_meshList.GetFirst(); list; list = list->GetNext()) {
+		for (ModelComponentList<dList<dMeshInstance> >::dListNode* list = m_meshList.GetFirst(); list; list = list->GetNext()) {
 			char name[256];
 			strcpy (name, pathName);
 			strcat (name, list->GetInfo().m_name);
-			dMesh::Save (name, list->GetInfo().m_data);
+			dMesh::SaveXML (name, list->GetInfo().m_data);
 		}
 	}
 
@@ -431,19 +667,18 @@ void dModel::Save (const char* modelName, bool exportSkeleton, bool exportMesh, 
 			char name[256];
 			strcpy (name, pathName);
 			strcat (name, node->GetInfo().m_name);
-			node->GetInfo().m_data->Save (name);
+			node->GetInfo().m_data->SaveXML (name);
 		}
 
 	}
-
-
 	out.SaveFile (mdlName);
 }
 
 
-
-void dModel::Load (const char* name, dLoaderContext& context)
+void dModel::LoadXML (const char* name, dLoaderContext& context)
 {
+	_ASSERTE (0);
+
 	const TiXmlElement* root;
 	TiXmlDocument doc (name);
 	doc.LoadFile();
@@ -474,20 +709,21 @@ void dModel::Load (const char* name, dLoaderContext& context)
 
 	for (TiXmlElement* meshes = (TiXmlElement*)root->FirstChildElement ("mesh"); meshes; meshes = (TiXmlElement*)root->NextSibling ("mesh")) {
 		char pathName[256];
-		ModelComponent<dList<dMesh*> >& data = m_meshList.Append()->GetInfo();
+		ModelComponent<dList<dMeshInstance> >& data = m_meshList.Append()->GetInfo();
 
 		strncpy (data.m_name, meshes->GetText(), sizeof (data.m_name) - 1);
 		strcpy (pathName, path);
 		strcat (pathName, "/");
 		strcat (pathName, data.m_name);
-		dMesh::Load (pathName, data.m_data, context);
+		dMesh::LoadXML (pathName, data.m_data, context);
 	}
 
-	for (ModelComponentList<dList<dMesh*> >::dListNode* list = m_meshList.GetFirst(); list; list = list->GetNext()) {
-		for (dList<dMesh*>::dListNode* node = list->GetInfo().m_data.GetFirst(); node; node = node->GetNext()) { 
-			if (node->GetInfo()->GetType() == dMesh::D_SKIN_MESH) {
-				node->GetInfo()->m_weighList->SetBindingPose(node->GetInfo(), *this); 
-			}
+	for (ModelComponentList<dList<dMeshInstance> >::dListNode* list = m_meshList.GetFirst(); list; list = list->GetNext()) {
+		for (dList<dMeshInstance>::dListNode* node = list->GetInfo().m_data.GetFirst(); node; node = node->GetNext()) { 
+			_ASSERTE (0);
+//			if (node->GetInfo()->GetType() == dMesh::D_SKIN_MESH) {
+//				node->GetInfo()->m_weighList->SetBindingPose(node->GetInfo(), *this); 
+//			}
 		}
 	}
 
@@ -501,10 +737,11 @@ void dModel::Load (const char* name, dLoaderContext& context)
 		strcat (pathName, data.m_name);
 		
 		data.m_data = new dAnimationClip ();
-		data.m_data->Load (pathName);
+		data.m_data->LoadXML (pathName);
 	}
 
 	context.LoaderFixup (this);
 }
 
+#endif
 

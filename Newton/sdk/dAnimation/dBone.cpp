@@ -12,21 +12,47 @@
 #include "dAnimationStdAfx.h"
 #include "dBone.h"
 #include "dModel.h"
-#include "tinyxml.h"
+
+dInitRtti(dBone);
 
 dBone::dBone(dBone* parent)
-	:dHierarchy<dBone>(), m_localMatrix(GetIdentityMatrix())
+	:dClassInfo(), dHierarchy<dBone>(), m_localMatrix(GetIdentityMatrix())
 {
 	if (parent) {
 		Attach (parent);
 	}
 
 	m_boneID = -1;
+	SetType (m_sceneNode);
+}
+
+dBone::dBone(const dBone& initFrom, dBone* parent)
+	:dClassInfo(), dHierarchy<dBone>(), m_localMatrix(initFrom.m_localMatrix)
+{
+	if (parent) {
+		Attach (parent);
+	}
+
+	SetNameID(initFrom.GetName());
+	m_type = initFrom.m_type;
+	m_boneID = initFrom.m_boneID;
 }
 
 dBone::~dBone(void)
 {
 }
+
+
+void dBone::SetType (NodeType type)
+{
+	m_type = type;
+}
+
+dBone::NodeType dBone::GetType () const
+{
+	return NodeType (m_type);
+}
+
 
 int dBone::GetBoneID() const
 {
@@ -59,11 +85,71 @@ dMatrix dBone::CalcGlobalMatrix (const dBone* root) const
 }
 
 
+
+int dBone::GetBonesCount() const
+{
+	int count;
+	int stack;
+	const dBone* nodeArray[1024];
+
+	count = 0;
+	stack = 1;
+	nodeArray[0] = this;
+	while (stack) {
+		const dBone* bone;
+
+		count ++;
+		stack --;
+		bone = nodeArray[stack];
+		for (const dBone* node = bone->GetChild(); node; node = node->GetSibling()) {
+			nodeArray[stack] = node;
+			stack ++;
+		}
+	}
+	return count;
+}
+
+void dBone::UpdateMatrixPalette (const dMatrix& parentMatrix, dMatrix* const matrixOut, int maxCount) const
+{
+	int stack;
+	const dBone* nodeArray[1024];
+
+	_ASSERTE (m_boneID >= 0);
+	stack = 0;
+	matrixOut[m_boneID] = m_localMatrix * parentMatrix;
+	for (const dBone* node = GetChild(); node; node = node->GetSibling()) {
+		nodeArray[stack] = node;
+		stack ++;
+	}
+
+	while (stack) {
+		const dBone* bone;
+		const dBone* parent;
+
+		stack --;
+		bone = nodeArray[stack];
+
+		parent = bone->GetParent();
+		matrixOut[bone->m_boneID] = bone->m_localMatrix * matrixOut[parent->m_boneID];
+
+		maxCount --;
+		_ASSERTE (maxCount);
+		for (const dBone* node = bone->GetChild(); node; node = node->GetSibling()) {
+			nodeArray[stack] = node;
+			stack ++;
+		}
+	} 
+}
+
+
+
+
+#if 0
 void dBone::Save(const char* fileName, const dList<dBone*>& list)
 {
 	TiXmlText* header;
 	TiXmlElement *root;
-	
+
 	TiXmlDeclaration* decl;
 
 	TiXmlDocument out (fileName);
@@ -86,7 +172,7 @@ void dBone::Save(const char* fileName, const dList<dBone*>& list)
 		nodeArray[0] = node->GetInfo();
 		while (stack) {
 			const char* name;
-			
+
 			const dBone* node;
 			TiXmlElement* xmlNode;
 
@@ -162,60 +248,4 @@ void dBone::Load(const char* fileName, dList<dBone*>& list, dLoaderContext& cont
 		}
 	}
 }
-
-int dBone::GetBonesCount() const
-{
-	int count;
-	int stack;
-	const dBone* nodeArray[1024];
-
-	count = 0;
-	stack = 1;
-	nodeArray[0] = this;
-	while (stack) {
-		const dBone* bone;
-
-		count ++;
-		stack --;
-		bone = nodeArray[stack];
-		for (const dBone* node = bone->GetChild(); node; node = node->GetSibling()) {
-			nodeArray[stack] = node;
-			stack ++;
-		}
-	}
-	return count;
-}
-
-void dBone::UpdateMatrixPalette (const dMatrix& parentMatrix, dMatrix* const matrixOut, int maxCount) const
-{
-	int stack;
-	const dBone* nodeArray[1024];
-
-	_ASSERTE (m_boneID >= 0);
-	stack = 0;
-	matrixOut[m_boneID] = m_localMatrix * parentMatrix;
-	for (const dBone* node = GetChild(); node; node = node->GetSibling()) {
-		nodeArray[stack] = node;
-		stack ++;
-	}
-
-	while (stack) {
-		const dBone* bone;
-		const dBone* parent;
-
-		stack --;
-		bone = nodeArray[stack];
-
-		parent = bone->GetParent();
-		matrixOut[bone->m_boneID] = bone->m_localMatrix * matrixOut[parent->m_boneID];
-
-		maxCount --;
-		_ASSERTE (maxCount);
-		for (const dBone* node = bone->GetChild(); node; node = node->GetSibling()) {
-			nodeArray[stack] = node;
-			stack ++;
-		}
-	} 
-}
-
-
+#endif

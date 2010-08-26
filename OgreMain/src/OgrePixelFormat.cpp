@@ -4,26 +4,25 @@ This source file is part of OGRE
 (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -71,16 +70,16 @@ namespace Ogre {
     PixelFormatDescription _pixelFormats[PF_COUNT] = {
 	//-----------------------------------------------------------------------
         {"PF_UNKNOWN",
-            /* Bytes per element */
-            0,
-            /* Flags */
-            0,
-            /* Component type and count */
-            PCT_BYTE, 0,
-            /* rbits, gbits, bbits, abits */
-            0, 0, 0, 0,
-            /* Masks and shifts */
-            0, 0, 0, 0, 0, 0, 0, 0
+        /* Bytes per element */
+        0,
+        /* Flags */
+        0,
+        /* Component type and count */
+        PCT_BYTE, 0,
+        /* rbits, gbits, bbits, abits */
+        0, 0, 0, 0,
+        /* Masks and shifts */
+        0, 0, 0, 0, 0, 0, 0, 0
         },
 	//-----------------------------------------------------------------------
         {"PF_L8",
@@ -579,6 +578,59 @@ namespace Ogre {
         /* Masks and shifts */
 		0, 0, 0, 0, 0, 0, 0, 0
         },
+    //-----------------------------------------------------------------------
+		{"PF_PVRTC_RGB2",
+        /* Bytes per element */
+        0,
+        /* Flags */
+        PFF_COMPRESSED,
+        /* Component type and count */
+        PCT_BYTE, 3,
+        /* rbits, gbits, bbits, abits */
+        0, 0, 0, 0,
+        /* Masks and shifts */
+        0, 0, 0, 0, 0, 0, 0, 0
+        },
+    //-----------------------------------------------------------------------
+		{"PF_PVRTC_RGBA2",
+        /* Bytes per element */
+        0,
+        /* Flags */
+        PFF_COMPRESSED | PFF_HASALPHA,
+        /* Component type and count */
+        PCT_BYTE, 4,
+        /* rbits, gbits, bbits, abits */
+        0, 0, 0, 0,
+        /* Masks and shifts */
+        0, 0, 0, 0, 0, 0, 0, 0
+        },
+    //-----------------------------------------------------------------------
+		{"PF_PVRTC_RGB4",
+        /* Bytes per element */
+        0,
+        /* Flags */
+        PFF_COMPRESSED,
+        /* Component type and count */
+        PCT_BYTE, 3,
+        /* rbits, gbits, bbits, abits */
+        0, 0, 0, 0,
+        /* Masks and shifts */
+        0, 0, 0, 0, 0, 0, 0, 0
+        },
+    //-----------------------------------------------------------------------
+		{"PF_PVRTC_RGBA4",
+        /* Bytes per element */
+        0,
+        /* Flags */
+        PFF_COMPRESSED | PFF_HASALPHA,
+        /* Component type and count */
+        PCT_BYTE, 4,
+        /* rbits, gbits, bbits, abits */
+        0, 0, 0, 0,
+        /* Masks and shifts */
+        0, 0, 0, 0, 0, 0, 0, 0
+        },
+        
     };
     //-----------------------------------------------------------------------
 	size_t PixelBox::getConsecutiveSize() const
@@ -641,16 +693,26 @@ namespace Ogre {
 			switch(format)
 			{
 				// DXT formats work by dividing the image into 4x4 blocks, then encoding each
-				// 4x4 block with a certain number of bytes. DXT can only be used on 2D images.
+				// 4x4 block with a certain number of bytes. 
 				case PF_DXT1:
-					assert(depth == 1);
-					return ((width+3)/4)*((height+3)/4)*8;
+					return ((width+3)/4)*((height+3)/4)*8 * depth;
 				case PF_DXT2:
 				case PF_DXT3:
 				case PF_DXT4:
 				case PF_DXT5:
+					return ((width+3)/4)*((height+3)/4)*16 * depth;
+
+                // Size calculations from the PVRTC OpenGL extension spec
+                // http://www.khronos.org/registry/gles/extensions/IMG/IMG_texture_compression_pvrtc.txt
+                // Basically, 32 bytes is the minimum texture size.  Smaller textures are padded up to 32 bytes
+                case PF_PVRTC_RGB2:
+                case PF_PVRTC_RGBA2:
 					assert(depth == 1);
-					return ((width+3)/4)*((height+3)/4)*16;
+                    return (std::max((int)width, 16) * std::max((int)height, 8) * 2 + 7) / 8;
+                case PF_PVRTC_RGB4:
+                case PF_PVRTC_RGBA4:
+					assert(depth == 1);
+                    return (std::max((int)width, 8) * std::max((int)height, 8) * 4 + 7) / 8;
 				default:
 				OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Invalid compressed pixel format",
 					"PixelUtil::getMemorySize");
@@ -741,6 +803,15 @@ namespace Ogre {
         rgba[2] = des.bmask;
         rgba[3] = des.amask;
     }
+	//---------------------------------------------------------------------
+	void PixelUtil::getBitShifts(PixelFormat format, unsigned char rgba[4])
+	{
+		const PixelFormatDescription &des = getDescriptionFor(format);
+		rgba[0] = des.rshift;
+		rgba[1] = des.gshift;
+		rgba[2] = des.bshift;
+		rgba[3] = des.ashift;
+	}
     //-----------------------------------------------------------------------
     String PixelUtil::getFormatName(PixelFormat srcformat)
     {
@@ -792,7 +863,7 @@ namespace Ogre {
     {
         // Collect format names sorted by length, it's required by BNF compiler
         // that similar tokens need longer ones comes first.
-        typedef std::multimap<String::size_type, String> FormatNameMap;
+        typedef multimap<String::size_type, String>::type FormatNameMap;
         FormatNameMap formatNames;
         for (size_t i = 0; i < PF_COUNT; ++i)
         {
@@ -998,19 +1069,19 @@ namespace Ogre {
                 ((uint16*)dest)[3] = Bitwise::floatToHalf(a);
                 break;
             case PF_SHORT_RGB:
-				((uint16*)dest)[0] = Bitwise::floatToFixed(r, 16);
-                ((uint16*)dest)[1] = Bitwise::floatToFixed(g, 16);
-                ((uint16*)dest)[2] = Bitwise::floatToFixed(b, 16);
+				((uint16*)dest)[0] = (uint16)Bitwise::floatToFixed(r, 16);
+                ((uint16*)dest)[1] = (uint16)Bitwise::floatToFixed(g, 16);
+                ((uint16*)dest)[2] = (uint16)Bitwise::floatToFixed(b, 16);
                 break;
 			case PF_SHORT_RGBA:
-				((uint16*)dest)[0] = Bitwise::floatToFixed(r, 16);
-                ((uint16*)dest)[1] = Bitwise::floatToFixed(g, 16);
-                ((uint16*)dest)[2] = Bitwise::floatToFixed(b, 16);
-                ((uint16*)dest)[3] = Bitwise::floatToFixed(a, 16);
+				((uint16*)dest)[0] = (uint16)Bitwise::floatToFixed(r, 16);
+                ((uint16*)dest)[1] = (uint16)Bitwise::floatToFixed(g, 16);
+                ((uint16*)dest)[2] = (uint16)Bitwise::floatToFixed(b, 16);
+                ((uint16*)dest)[3] = (uint16)Bitwise::floatToFixed(a, 16);
 				break;
 			case PF_BYTE_LA:
-				((uint8*)dest)[0] = Bitwise::floatToFixed(r, 8);
-                ((uint8*)dest)[1] = Bitwise::floatToFixed(a, 8);
+				((uint8*)dest)[0] = (uint8)Bitwise::floatToFixed(r, 8);
+                ((uint8*)dest)[1] = (uint8)Bitwise::floatToFixed(a, 8);
 				break;
             default:
                 // Not yet supported
@@ -1037,18 +1108,18 @@ namespace Ogre {
             if(des.flags & PFF_LUMINANCE)
             {
                 // Luminance format -- only rbits used
-                *r = *g = *b = Bitwise::fixedToFixed(
+                *r = *g = *b = (uint8)Bitwise::fixedToFixed(
                     (value & des.rmask)>>des.rshift, des.rbits, 8);
             }
             else
             {
-                *r = Bitwise::fixedToFixed((value & des.rmask)>>des.rshift, des.rbits, 8);
-                *g = Bitwise::fixedToFixed((value & des.gmask)>>des.gshift, des.gbits, 8);
-                *b = Bitwise::fixedToFixed((value & des.bmask)>>des.bshift, des.bbits, 8);
+                *r = (uint8)Bitwise::fixedToFixed((value & des.rmask)>>des.rshift, des.rbits, 8);
+                *g = (uint8)Bitwise::fixedToFixed((value & des.gmask)>>des.gshift, des.gbits, 8);
+                *b = (uint8)Bitwise::fixedToFixed((value & des.bmask)>>des.bshift, des.bbits, 8);
             }
             if(des.flags & PFF_HASALPHA)
             {
-                *a = Bitwise::fixedToFixed((value & des.amask)>>des.ashift, des.abits, 8);
+                *a = (uint8)Bitwise::fixedToFixed((value & des.amask)>>des.ashift, des.abits, 8);
             }
             else
             {
@@ -1058,10 +1129,10 @@ namespace Ogre {
             // Do the operation with the more generic floating point
             float rr, gg, bb, aa;
             unpackColour(&rr,&gg,&bb,&aa, pf, src);
-            *r = Bitwise::floatToFixed(rr, 8);
-            *g = Bitwise::floatToFixed(gg, 8);
-            *b = Bitwise::floatToFixed(bb, 8);
-            *a = Bitwise::floatToFixed(aa, 8);
+            *r = (uint8)Bitwise::floatToFixed(rr, 8);
+            *g = (uint8)Bitwise::floatToFixed(gg, 8);
+            *b = (uint8)Bitwise::floatToFixed(bb, 8);
+            *a = (uint8)Bitwise::floatToFixed(aa, 8);
         }
     }
     //-----------------------------------------------------------------------
@@ -1274,6 +1345,9 @@ namespace Ogre {
             + (src.left + src.top * src.rowPitch + src.front * src.slicePitch) * srcPixelSize;
         uint8 *dstptr = static_cast<uint8*>(dst.data)
             + (dst.left + dst.top * dst.rowPitch + dst.front * dst.slicePitch) * dstPixelSize;
+		
+		// Old way, not taking into account box dimensions
+		//uint8 *srcptr = static_cast<uint8*>(src.data), *dstptr = static_cast<uint8*>(dst.data);
 
         // Calculate pitches+skips in bytes
         const size_t srcRowSkipBytes = src.getRowSkip()*srcPixelSize;

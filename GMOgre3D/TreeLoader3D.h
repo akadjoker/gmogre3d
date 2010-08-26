@@ -35,7 +35,7 @@ GMFN double CreateTreeLoader3D(double pg_ptr, double top, double left, double bo
    if (pg == NULL)
       return 0;
 
-   Forests::TreeLoader3D *tl = new Forests::TreeLoader3D(pg, Forests::TBounds(left, top, right, bottom));
+   Forests::TreeLoader3D *tl = OGRE_NEW Forests::TreeLoader3D(pg, Forests::TBounds(left, top, right, bottom));
 
    return ConvertToGMPointer(tl);
 }

@@ -111,6 +111,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
+				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories=".\;..\;..\dMath;..\customJoints;../tinyxml"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;JOINTLIBRARY_LIB"
 				RuntimeLibrary="2"
@@ -645,6 +646,14 @@
 		</File>
 		<File
 			RelativePath=".\CustomUpVector.h"
+			>
+		</File>
+		<File
+			RelativePath=".\CustomUserBlank.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\CustomUserBlank.h"
 			>
 		</File>
 		<File

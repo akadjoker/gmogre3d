@@ -33,7 +33,7 @@ GMFN double CreateViewport(double zorder, double left, double top, double width,
    Ogre::Viewport *view = NULL;
    
    TRY
-      view = mRenderWindow->addViewport(NULL, zorder, left / mWindowWidth, top / mWindowHeight, width / mWindowWidth, height / mWindowHeight);
+      view = mRenderWindow->addViewport(NULL, (int)zorder, (float)left / mWindowWidth, (float)top / mWindowHeight, (float)width / mWindowWidth, (float)height / mWindowHeight);
       view->setBackgroundColour(Ogre::ColourValue(0.0f, 0.0f, 0.0f));
    CATCH("CreateViewport")
 
@@ -140,6 +140,19 @@ GMFN double EnableViewportShadows(double viewport_ptr, double enabled)
 }
 
 
+GMFN double SetViewportVisibilityMask(double viewport_ptr, double mask)
+{
+   Ogre::Viewport *view = ConvertFromGMPointer<Ogre::Viewport*>(viewport_ptr);
+
+   if (view == NULL)
+      return FALSE;
+
+   view->setVisibilityMask((Ogre::uint)mask);
+
+   return TRUE;
+}
+
+
 GMFN double AddViewportTargetListener(double viewport_ptr, double obj, double pre_event, double post_event)
 {
    Ogre::Viewport *view = ConvertFromGMPointer<Ogre::Viewport*>(viewport_ptr);
@@ -147,7 +160,7 @@ GMFN double AddViewportTargetListener(double viewport_ptr, double obj, double pr
    if (view == NULL)
       return NULL;
 
-   GMRenderTargetListener *listener = new GMRenderTargetListener((unsigned int)obj, (unsigned int)pre_event, (unsigned int)post_event);
+   GMRenderTargetListener *listener = OGRE_NEW GMRenderTargetListener((unsigned int)obj, (unsigned int)pre_event, (unsigned int)post_event);
    view->getTarget()->addListener(listener);
 
    return ConvertToGMPointer(listener);

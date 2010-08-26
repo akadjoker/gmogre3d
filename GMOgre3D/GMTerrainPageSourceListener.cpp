@@ -38,7 +38,7 @@ public:
 
    Ogre::Vector3 v(int x, int z)
    {
-      return scale_ * Ogre::Vector3(pagex_ * pageSize_ + x, heightData_[pageSize_ * z + x], pagez_ * pageSize_ + z);
+      return scale_ * Ogre::Vector3((Ogre::Real)pagex_ * pageSize_ + x, heightData_[pageSize_ * z + x], (Ogre::Real)pagez_ * pageSize_ + z);
    }       
 };
 

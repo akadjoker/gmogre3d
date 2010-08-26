@@ -4,26 +4,25 @@ This source file is part of OGRE
     (Object-oriented Graphics Rendering Engine)
 For the latest info, see http://www.ogre3d.org/
 
-Copyright (c) 2000-2006 Torus Knot Software Ltd
-Also see acknowledgements in Readme.html
+Copyright (c) 2000-2009 Torus Knot Software Ltd
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA, or go to
-http://www.gnu.org/copyleft/lesser.txt.
-
-You may alternatively use this source under the terms of a specific version of
-the OGRE Unrestricted License provided you have obtained such a license from
-Torus Knot Software Ltd.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 #include "OgreStableHeaders.h"
@@ -40,7 +39,7 @@ namespace Ogre {
 
     //-----------------------------------------------------------------------
     ResourceManager::ResourceManager()
-		: mNextHandle(1), mMemoryUsage(0), mLoadOrder(0), mVerbose(true)
+		: mNextHandle(1), mMemoryUsage(0), mVerbose(true), mLoadOrder(0)
     {
         // Init memory limit & usage
         mMemoryBudget = std::numeric_limits<unsigned long>::max();
@@ -48,6 +47,7 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     ResourceManager::~ResourceManager()
     {
+		destroyAllResourcePools();
         removeAll();
     }
 	//-----------------------------------------------------------------------
@@ -76,7 +76,7 @@ namespace Ogre {
 		// Lock for the whole get / insert
 		OGRE_LOCK_AUTO_MUTEX
 
-		ResourcePtr res = getByName(name);
+		ResourcePtr res = getByName(name, group);
 		bool created = false;
 		if (res.isNull())
 		{
@@ -89,40 +89,66 @@ namespace Ogre {
     //-----------------------------------------------------------------------
     ResourcePtr ResourceManager::prepare(const String& name, 
         const String& group, bool isManual, ManualResourceLoader* loader, 
-        const NameValuePairList* loadParams)
+        const NameValuePairList* loadParams, bool backgroundThread)
     {
         ResourcePtr r = createOrRetrieve(name,group,isManual,loader,loadParams).first;
 		// ensure prepared
-        r->prepare();
+        r->prepare(backgroundThread);
         return r;
     }
     //-----------------------------------------------------------------------
     ResourcePtr ResourceManager::load(const String& name, 
         const String& group, bool isManual, ManualResourceLoader* loader, 
-        const NameValuePairList* loadParams)
+        const NameValuePairList* loadParams, bool backgroundThread)
     {
         ResourcePtr r = createOrRetrieve(name,group,isManual,loader,loadParams).first;
 		// ensure loaded
-        r->load();
+        r->load(backgroundThread);
         return r;
     }
     //-----------------------------------------------------------------------
-    void ResourceManager::addImpl( ResourcePtr& res )
-    {
+	void ResourceManager::addImpl( ResourcePtr& res )
+	{
 		OGRE_LOCK_AUTO_MUTEX
 
-        std::pair<ResourceMap::iterator, bool> result = 
-            mResources.insert( ResourceMap::value_type( res->getName(), res ) );
-        if (!result.second)
-        {
+			std::pair<ResourceMap::iterator, bool> result;
+		if(ResourceGroupManager::getSingleton().isResourceGroupInGlobalPool(res->getGroup()))
+		{
+			result = mResources.insert( ResourceMap::value_type( res->getName(), res ) );
+		}
+		else
+		{
+			ResourceWithGroupMap::iterator itGroup = mResourcesWithGroup.find(res->getGroup());
+
+			// we will create the group if it doesn't exists in our list
+			if( itGroup == mResourcesWithGroup.end())
+			{
+				ResourceMap dummy;
+				mResourcesWithGroup.insert( ResourceWithGroupMap::value_type( res->getGroup(), dummy ) );
+				itGroup = mResourcesWithGroup.find(res->getGroup());
+			}
+			result = itGroup->second.insert( ResourceMap::value_type( res->getName(), res ) );
+
+		}
+
+		if (!result.second)
+		{
 			// Attempt to resolve the collision
 			if(ResourceGroupManager::getSingleton().getLoadingListener())
 			{
 				if(ResourceGroupManager::getSingleton().getLoadingListener()->resourceCollision(res.get(), this))
 				{
 					// Try to do the addition again, no seconds attempts to resolve collisions are allowed
-					std::pair<ResourceMap::iterator, bool> result = 
-						mResources.insert( ResourceMap::value_type( res->getName(), res ) );
+					std::pair<ResourceMap::iterator, bool> result;
+					if(ResourceGroupManager::getSingleton().isResourceGroupInGlobalPool(res->getGroup()))
+					{
+						result = mResources.insert( ResourceMap::value_type( res->getName(), res ) );
+					}
+					else
+					{
+						ResourceWithGroupMap::iterator itGroup = mResourcesWithGroup.find(res->getGroup());
+						result = itGroup->second.insert( ResourceMap::value_type( res->getName(), res ) );
+					}
 					if (!result.second)
 					{
 						OGRE_EXCEPT(Exception::ERR_DUPLICATE_ITEM, "Resource with the name " + res->getName() + 
@@ -139,7 +165,7 @@ namespace Ogre {
 					}
 				}
 			}
-        }
+		}
 		else
 		{
 			// Insert the handle
@@ -152,16 +178,36 @@ namespace Ogre {
 					" already exists.", "ResourceManager::add");
 			}
 		}
-    }
+	}
 	//-----------------------------------------------------------------------
 	void ResourceManager::removeImpl( ResourcePtr& res )
 	{
 		OGRE_LOCK_AUTO_MUTEX
 
-		ResourceMap::iterator nameIt = mResources.find(res->getName());
-		if (nameIt != mResources.end())
+		if(ResourceGroupManager::getSingleton().isResourceGroupInGlobalPool(res->getGroup()))
 		{
-			mResources.erase(nameIt);
+			ResourceMap::iterator nameIt = mResources.find(res->getName());
+			if (nameIt != mResources.end())
+			{
+				mResources.erase(nameIt);
+			}
+		}
+		else
+		{
+			ResourceWithGroupMap::iterator groupIt = mResourcesWithGroup.find(res->getGroup());
+			if (groupIt != mResourcesWithGroup.end())
+			{
+				ResourceMap::iterator nameIt = groupIt->second.find(res->getName());
+				if (nameIt != groupIt->second.end())
+				{
+					groupIt->second.erase(nameIt);
+				}
+
+				if (groupIt->second.empty())
+				{
+					mResourcesWithGroup.erase(groupIt);
+				}
+			}
 		}
 
 		ResourceHandleMap::iterator handleIt = mResourcesByHandle.find(res->getHandle());
@@ -313,25 +359,91 @@ namespace Ogre {
 		OGRE_LOCK_AUTO_MUTEX
 
 		mResources.clear();
+		mResourcesWithGroup.clear();
 		mResourcesByHandle.clear();
 		// Notify resource group manager
 		ResourceGroupManager::getSingleton()._notifyAllResourcesRemoved(this);
 	}
     //-----------------------------------------------------------------------
-    ResourcePtr ResourceManager::getByName(const String& name)
+    void ResourceManager::removeUnreferencedResources(bool reloadableOnly)
     {
-		OGRE_LOCK_AUTO_MUTEX
+        OGRE_LOCK_AUTO_MUTEX
 
-        ResourceMap::iterator it = mResources.find(name);
-
-        if( it == mResources.end())
-		{
-            return ResourcePtr();
-		}
-        else
+        ResourceMap::iterator i, iend;
+        iend = mResources.end();
+        for (i = mResources.begin(); i != iend; )
         {
-            return it->second;
+            // A use count of 3 means that only RGM and RM have references
+            // RGM has one (this one) and RM has 2 (by name and by handle)
+            if (i->second.useCount() == ResourceGroupManager::RESOURCE_SYSTEM_NUM_REFERENCE_COUNTS)
+            {
+                Resource* res = (i++)->second.get();
+                if (!reloadableOnly || res->isReloadable())
+                {
+                    remove( res->getHandle() );
+                }
+            }
+            else
+            {
+                ++i;
+            }
         }
+    }
+    //-----------------------------------------------------------------------
+    ResourcePtr ResourceManager::getByName(const String& name, const String& groupName /* = ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME */)
+    {		
+		ResourcePtr res;
+
+		// if not in the global pool - get it from the grouped pool 
+		if(!ResourceGroupManager::getSingleton().isResourceGroupInGlobalPool(groupName))
+		{
+			OGRE_LOCK_AUTO_MUTEX
+			ResourceWithGroupMap::iterator itGroup = mResourcesWithGroup.find(groupName);
+
+			if( itGroup != mResourcesWithGroup.end())
+			{
+				ResourceMap::iterator it = itGroup->second.find(name);
+
+				if( it != itGroup->second.end())
+				{
+					res = it->second;
+				}
+			}
+		}
+
+		// if didn't find it the grouped pool - get it from the global pool 
+		if (res.isNull())
+		{
+			OGRE_LOCK_AUTO_MUTEX
+
+			ResourceMap::iterator it = mResources.find(name);
+
+			if( it != mResources.end())
+			{
+				res = it->second;
+			}
+			else
+			{
+				// this is the case when we need to search also in the grouped hash
+				if (groupName == ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME)
+				{
+					ResourceWithGroupMap::iterator iter = mResourcesWithGroup.begin();
+					ResourceWithGroupMap::iterator iterE = mResourcesWithGroup.end();
+					for ( ; iter != iterE ; iter++ )
+					{
+						ResourceMap::iterator it = iter->second.find(name);
+
+						if( it != iter->second.end())
+						{
+							res = it->second;
+							break;
+						}
+					}
+				}
+			}
+		}
+	
+		return res;
     }
     //-----------------------------------------------------------------------
     ResourcePtr ResourceManager::getByHandle(ResourceHandle handle)
@@ -379,9 +491,85 @@ namespace Ogre {
 
 		mMemoryUsage -= res->getSize();
 	}
-	//-----------------------------------------------------------------------
+	//---------------------------------------------------------------------
+	ResourceManager::ResourcePool* ResourceManager::getResourcePool(const String& name)
+	{
+		OGRE_LOCK_AUTO_MUTEX
 
+		ResourcePoolMap::iterator i = mResourcePoolMap.find(name);
+		if (i == mResourcePoolMap.end())
+		{
+			i = mResourcePoolMap.insert(ResourcePoolMap::value_type(name, 
+				OGRE_NEW ResourcePool(name))).first;
+		}
+		return i->second;
+
+	}
+	//---------------------------------------------------------------------
+	void ResourceManager::destroyResourcePool(ResourcePool* pool)
+	{
+		OGRE_LOCK_AUTO_MUTEX
+
+		ResourcePoolMap::iterator i = mResourcePoolMap.find(pool->getName());
+		if (i != mResourcePoolMap.end())
+			mResourcePoolMap.erase(i);
+
+		OGRE_DELETE pool;
+		
+	}
+	//---------------------------------------------------------------------
+	void ResourceManager::destroyResourcePool(const String& name)
+	{
+		OGRE_LOCK_AUTO_MUTEX
+
+		ResourcePoolMap::iterator i = mResourcePoolMap.find(name);
+		if (i != mResourcePoolMap.end())
+		{
+			OGRE_DELETE i->second;
+			mResourcePoolMap.erase(i);
+		}
+
+	}
+	//---------------------------------------------------------------------
+	void ResourceManager::destroyAllResourcePools()
+	{
+		OGRE_LOCK_AUTO_MUTEX
+
+		for (ResourcePoolMap::iterator i = mResourcePoolMap.begin(); 
+			i != mResourcePoolMap.end(); ++i)
+			OGRE_DELETE i->second;
+
+		mResourcePoolMap.clear();
+	}
+	//-----------------------------------------------------------------------
+	//---------------------------------------------------------------------
+	ResourceManager::ResourcePool::ResourcePool(const String& name)
+		: mName(name)
+	{
+
+	}
+	//---------------------------------------------------------------------
+	ResourceManager::ResourcePool::~ResourcePool()
+	{
+		clear();
+	}
+	//---------------------------------------------------------------------
+	const String& ResourceManager::ResourcePool::getName() const
+	{
+		return mName;
+	}
+	//---------------------------------------------------------------------
+	void ResourceManager::ResourcePool::clear()
+	{
+		OGRE_LOCK_AUTO_MUTEX
+		for (ItemList::iterator i = mItems.begin(); i != mItems.end(); ++i)
+		{
+			(*i)->getCreator()->remove((*i)->getHandle());
+		}
+		mItems.clear();
+	}
 }
+
 
 
 

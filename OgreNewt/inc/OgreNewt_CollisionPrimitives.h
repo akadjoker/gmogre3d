@@ -443,8 +443,27 @@ namespace OgreNewt
             ~Pyramid() {}
         };
 
+		//! HeightField Collision
+        /*!
+			Builds a HeightField collision from raw data or directly from a OgreTerrain page
 
+			more info: http://newtondynamics.com/wiki/index.php5?title=NewtonCreateHeightFieldCollision
+        */
+		/* Waiting for Ogre 1.7
+		class _OgreNewtExport HeightField : public OgreNewt::Collision 
+		{
+		public:
+			HeightField(const World* world): OgreNewt::Collision(world){}
+			HeightField(const World* world, int width, int height, int gridsDiagonals, unsigned short *elevationMap, char *attributeMap, Ogre::Real horizontalScale, Ogre::Real verticleScale, int shapeID);
+			HeightField(const World* world, Ogre::Terrain *terrain, int shapeID);
 
+		~HeightField(){}
+
+		private:
+			//!Used internally to create the newton Heightfield collision
+			void createHeightFieldCollision(const World *world,int width,int height,int gridsDiagonals,unsigned short *elevationMap,char *attributeMap,Ogre::Real horizontalScale,Ogre::Real verticleScale,int shapeID);
+		};
+	  */
     }   // end namespace CollisionPrimitives
 
 }// end namespace OgreNewt

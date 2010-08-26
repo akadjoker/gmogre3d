@@ -381,7 +381,7 @@ bool CollisionTools::raycast(const Ogre::Ray &ray, Ogre::Vector3 &result,Ogre::M
             delete[] vertices;
             delete[] indices;
 
-            // if we found a new closest raycast for this object, update the
+            // if we found a OGRE_NEW closest raycast for this object, update the
             // closest_result before moving on to the next object.
             if (new_closest_found)
             {
@@ -450,8 +450,8 @@ void CollisionTools::GetMeshInformation(const Ogre::MeshPtr mesh,
 
 
     // Allocate space for the vertices and indices
-    vertices = new Ogre::Vector3[vertex_count];
-    indices = new Ogre::uint32[index_count];
+    vertices = OGRE_NEW Ogre::Vector3[vertex_count];
+    indices = OGRE_NEW Ogre::uint32[index_count];
 
     added_shared = false;
 

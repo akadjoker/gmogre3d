@@ -44,12 +44,12 @@ GMFN double CreateText2(double x, double y, double color, double alpha)
    OgreText *text = NULL;
       
    TRY
-      text = new OgreText;
+      text = OGRE_NEW OgreText;
 
-      text->SetFont(text_font_name, GetFontSize(const_cast<char*>(text_font_name.c_str())));
+      text->SetFont(text_font_name, (Ogre::Real)GetFontSize(const_cast<char*>(text_font_name.c_str())));
       text->SetCaption(text_txt);
-      text->SetPosition(x, y);
-      text->SetColor(Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), alpha));
+      text->SetPosition((Ogre::Real)x, (Ogre::Real)y);
+      text->SetColor(Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), (float)alpha));
    CATCH("CreateText")
 
    return ConvertToGMPointer(text);
@@ -76,7 +76,7 @@ GMFN double SetTextFont(double text_ptr, char *font_name)
    if (text == NULL)
       return FALSE;
 
-   text->SetFont(font_name, GetFontSize(font_name));
+   text->SetFont(font_name, (Ogre::Real)GetFontSize(font_name));
 
    return TRUE;
 }
@@ -128,7 +128,7 @@ GMFN double SetTextColour(double text_ptr, double color, double alpha)
    if (text == NULL)
       return FALSE;
 
-   text->SetColor(Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), alpha));
+   text->SetColor(Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), (float)alpha));
 
    return TRUE;
 }

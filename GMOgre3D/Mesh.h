@@ -130,6 +130,26 @@ GMFN double BuildMeshTangentVectors2(double target_semantic, double source_coord
 }
 
 
+GMFN double SetMeshLODStrategy(char *name, double strategy)
+{
+   Ogre::MeshPtr mesh = Ogre::MeshManager::getSingleton().getByName(name);
+
+   if (mesh.isNull())
+      return FALSE;
+
+   Ogre::LodStrategy *lod_strategy;
+
+   if (strategy == 1)
+      lod_strategy = Ogre::LodStrategyManager::getSingleton().getStrategy("PixelCount");
+   else
+      lod_strategy = Ogre::LodStrategyManager::getSingleton().getStrategy("Distance");
+
+   mesh->setLodStrategy(lod_strategy);
+
+   return TRUE;
+}
+
+
 GMFN double GenerateMeshLODLevels1(char *mesh, double reduction_method, double reduction_value)
 {
    mesh_name = mesh;
@@ -140,34 +160,34 @@ GMFN double GenerateMeshLODLevels1(char *mesh, double reduction_method, double r
 }
 
 
-GMFN double GenerateMeshLODLevels2(double lod_distance1, double lod_distance2, double lod_distance3, double lod_distance4, double lod_distance5, double lod_distance6, double lod_distance7, double lod_distance8, double lod_distance9, double lod_distance10)
+GMFN double GenerateMeshLODLevels2(double lod_value1, double lod_value2, double lod_value3, double lod_value4, double lod_value5, double lod_value6, double lod_value7, double lod_value8, double lod_value9, double lod_value10)
 {
    Ogre::MeshPtr mesh = Ogre::MeshManager::getSingleton().getByName(mesh_name);
 
    if (mesh.isNull())
       return FALSE;
 
-   Ogre::Mesh::LodDistanceList lod_list;
-   if (lod_distance1 > 0.0)
-      lod_list.push_back(lod_distance1);
-   if (lod_distance2 > 0.0)
-      lod_list.push_back(lod_distance2);
-   if (lod_distance3 > 0.0)
-      lod_list.push_back(lod_distance3);
-   if (lod_distance4 > 0.0)
-      lod_list.push_back(lod_distance4);
-   if (lod_distance5 > 0.0)
-      lod_list.push_back(lod_distance5);
-   if (lod_distance6 > 0.0)
-      lod_list.push_back(lod_distance6);
-   if (lod_distance7 > 0.0)
-      lod_list.push_back(lod_distance7);
-   if (lod_distance8 > 0.0)
-      lod_list.push_back(lod_distance8);
-   if (lod_distance9 > 0.0)
-      lod_list.push_back(lod_distance9);
-   if (lod_distance10 > 0.0)
-      lod_list.push_back(lod_distance10);
+   Ogre::Mesh::LodValueList lod_list;
+   if (lod_value1 > 0.0)
+      lod_list.push_back(lod_value1);
+   if (lod_value2 > 0.0)
+      lod_list.push_back(lod_value2);
+   if (lod_value3 > 0.0)
+      lod_list.push_back(lod_value3);
+   if (lod_value4 > 0.0)
+      lod_list.push_back(lod_value4);
+   if (lod_value5 > 0.0)
+      lod_list.push_back(lod_value5);
+   if (lod_value6 > 0.0)
+      lod_list.push_back(lod_value6);
+   if (lod_value7 > 0.0)
+      lod_list.push_back(lod_value7);
+   if (lod_value8 > 0.0)
+      lod_list.push_back(lod_value8);
+   if (lod_value9 > 0.0)
+      lod_list.push_back(lod_value9);
+   if (lod_value10 > 0.0)
+      lod_list.push_back(lod_value10);
 
    mesh->generateLodLevels(lod_list, static_cast<Ogre::ProgressiveMesh::VertexReductionQuota>((int)mesh_reduction_method), mesh_reduction_value);
 
@@ -181,7 +201,7 @@ GMFN double CreateMeshManualLODLevel(char *mesh_name, double lod_distance, char 
 
    if (mesh.isNull())
       return FALSE;
-  
+
    mesh->createManualLodLevel(lod_distance, lod_mesh_name);
 
    return TRUE;

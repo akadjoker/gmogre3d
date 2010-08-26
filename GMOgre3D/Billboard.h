@@ -34,7 +34,7 @@ GMFN double SetBillboardRotation(double bb_ptr, double degrees)
    if (bb == NULL)
       return FALSE;
    
-   bb->setRotation(Ogre::Degree(degrees));
+   bb->setRotation(Ogre::Degree((Ogre::Real)degrees));
 
    return TRUE;
 }
@@ -60,7 +60,7 @@ GMFN double SetBillboardDimensions(double bb_ptr, double width, double height)
    if (bb == NULL)
       return FALSE;
    
-   bb->setDimensions(width, height);
+   bb->setDimensions((Ogre::Real)width, (Ogre::Real)height);
 
    return TRUE;
 }
@@ -95,7 +95,7 @@ GMFN double SetBillboardColor(double bb_ptr, double color, double alpha)
    if (bb == NULL)
       return 0;
 
-   bb->setColour(Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), alpha));
+   bb->setColour(Ogre::ColourValue(GetRedFromGMColor(color), GetGreenFromGMColor(color), GetBlueFromGMColor(color), (float)alpha));
 
    return TRUE;
 }
