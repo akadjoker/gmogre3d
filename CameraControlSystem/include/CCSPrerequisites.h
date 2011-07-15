@@ -28,7 +28,11 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define _CameraControlSystem_Prerequisites_H_
 
 /// Include external headers
-#include <Ogre.h>
+#ifdef CCS_OGRE_1_7
+     #include <OGRE/Ogre.h>
+#else
+     #include <Ogre.h>
+#endif
 #include <map>
 #include <vector>
 #include <limits>
@@ -55,16 +59,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /// Version defines
 #define CCS_VERSION_MAJOR 0
-#define CCS_VERSION_MINOR 2
-#define CCS_VERSION_PATCH 1
-
-namespace CCS
-{
-    class CameraControlSystem;
-    class CameraMode;
-    class CameraModeWithTightness;
-
-	class CollidableCamera;
-}
+#define CCS_VERSION_MINOR 4
+#define CCS_VERSION_PATCH 0
 
 #endif

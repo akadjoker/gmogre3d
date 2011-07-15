@@ -133,7 +133,7 @@ namespace CCS
             mCurrentCameraMode->init();
         }
 
-		if(mRecalculateOnTargetMoving)
+		if(mRecalculateOnTargetMoving && mTargetNode)
 		{
 			mTargetNodeListener = new NodeListener(this);
 			mTargetNode->setListener(mTargetNodeListener);
@@ -224,12 +224,15 @@ namespace CCS
 		Ogre::RaySceneQueryResult::iterator itr = result.begin();
 
 		bool intersect = false;
-		while (itr != result.end() && !intersect)
+        Ogre::Real minDistance = std::numeric_limits<Ogre::Real>::max();
+		while (itr != result.end() /*&& !intersect*/)
 		{
 			if(itr->distance < maxDistance
+                && itr->distance < minDistance // take the shorter
 				&& itr->movable->getParentSceneNode() != mCameraCS2->getCameraSceneNode()
 				&& itr->movable->getParentSceneNode() != mCameraCS2->getTargetSceneNode())
 			{
+                minDistance = itr->distance;
 				intersect = true;
 				if(itr->worldFragment)
 				{

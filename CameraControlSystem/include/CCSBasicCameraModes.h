@@ -31,6 +31,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "CCSCameraControlSystem.h"
 
+
 namespace CCS
 {
 	/**
@@ -402,9 +403,15 @@ namespace CCS
 		// Specific methods
 
         void setCharacterVisible(bool value)
-        {            
+        { 
             mCharacterVisible = value;
+            if(mCameraCS->getTargetSceneNode())
+            {
+                mCameraCS->getTargetSceneNode()->setVisible(mCharacterVisible);
+            }
         }
+
+        bool getCharacterVisible(){ return mCharacterVisible; }
 
 	protected:
 		bool mCharacterVisible;
@@ -523,6 +530,9 @@ namespace CCS
             mFocusPos = pos; 
             init();
         };
+
+        void setInverse(bool value){ mInverse = value; }
+        bool getInverse(){ return mInverse; }
 		
     protected:
         Ogre::Vector3 mFixedAxis;
@@ -642,6 +652,10 @@ namespace CCS
 
             Ogre::Vector3 diff = (cameraFinalPositionIfNoTightness - cameraCurrentPosition) * mTightness;
             mCameraPosition += diff;
+
+          
+            Ogre::String pos_str = Ogre::StringConverter::toString(mCameraPosition);
+            Ogre::LogManager::getSingleton().getDefaultLog()->logMessage(pos_str, Ogre::LML_CRITICAL);
         }
 
         virtual void instantUpdate()
@@ -668,6 +682,207 @@ namespace CCS
         Ogre::Vector3 mFixedAxis;
         Ogre::Real mDistance;
         Ogre::Vector3 mDirection;
+	};
+
+    //--------------------------------------------------------------------------------------------------------------------
+	/**
+	 * In this mode the camera is constrained to the limits of a plane. 
+	 * This is the typical camera you can found in any Real Time Strategy game.
+	 */
+    class DllExport RTSCameraMode : public CameraControlSystem::CameraMode 
+	{
+	public:
+
+        RTSCameraMode(CameraControlSystem* cam
+            , const Ogre::Vector3 &initialPosition = Ogre::Vector3::ZERO
+            , const Ogre::Vector3 &upAxis = Ogre::Vector3::NEGATIVE_UNIT_Z
+            , const Ogre::Vector3 &leftAxis = Ogre::Vector3::NEGATIVE_UNIT_X
+            , const Ogre::Radian cameraPitch = Ogre::Radian(Ogre::Degree(90))
+            , Ogre::Real minZoom = 0, Ogre::Real maxZoom = 0) 
+            : CameraControlSystem::CameraMode(cam)
+            , mUpAxis(upAxis.normalisedCopy())
+            , mLeftAxis(leftAxis.normalisedCopy())
+            , mMoveFactor(1)
+            , mCameraPitch(cameraPitch)
+            , mMinZoom(minZoom)
+            , mMaxZoom(maxZoom)
+            , mZoom(0)
+        {
+            mRotation = Ogre::Quaternion(cameraPitch,leftAxis);
+            mHeightAxis = -upAxis.crossProduct(leftAxis).normalisedCopy();
+            mCameraPosition = initialPosition;
+
+            mHeightDisplacement = 0;
+            mLateralDisplacement = 0;
+            mVerticalDisplacement = 0;
+        };
+
+        virtual ~RTSCameraMode(){};
+
+        virtual bool init()
+        {
+            mCameraCS->setFixedYawAxis(false);
+            mCameraCS->setAutoTrackingTarget(false);
+            
+            mCameraOrientation = mRotation;
+
+            instantUpdate();
+
+            return true;
+        }
+
+        virtual void update(const Ogre::Real &timeSinceLastFrame)
+        {
+            Ogre::Vector3 displacement = ((mUpAxis * mVerticalDisplacement)
+                + (mHeightAxis * mHeightDisplacement)
+                + (mLeftAxis * mLateralDisplacement)) * timeSinceLastFrame * mMoveFactor;
+
+            mCameraPosition += displacement;
+
+            mHeightDisplacement = 0;
+            mLateralDisplacement = 0;
+            mVerticalDisplacement = 0; 
+
+            mCameraOrientation = mRotation;
+        }
+
+        virtual void instantUpdate()
+        {
+            Ogre::Vector3 displacement = ((mUpAxis * mVerticalDisplacement)
+                + (mHeightAxis * mHeightDisplacement)
+                + (mLeftAxis * mLateralDisplacement));
+
+            mCameraPosition += displacement;
+
+            mHeightDisplacement = 0;
+            mLateralDisplacement = 0;
+            mVerticalDisplacement = 0; 
+
+            mCameraOrientation = mRotation;
+        }
+
+        // Specific methods
+
+        void setCameraPitch(Ogre::Radian cameraPitch)
+        {
+            mCameraPitch = cameraPitch;
+            mRotation = Ogre::Quaternion(mCameraPitch, mLeftAxis);
+        }
+
+        Ogre::Radian getCameraPitch(){ return mCameraPitch; };
+
+        /**
+		 * @brief Set the moving speed factor (increase the height)
+		 * 
+		 * @param unitsPerSecond the units the camera will be translated per second
+		 */
+        inline virtual void setMoveFactor(Ogre::Real unitsPerSecond){ mMoveFactor = unitsPerSecond; }
+
+        void setZoom(Ogre::Real zoom)
+        {
+            Ogre::Real desiredDisplacement = zoom - mZoom;
+
+            //Ogre::Real desiredZoom = mZoom + desiredDisplacement;
+
+            if(zoom <= mMaxZoom && zoom >= mMinZoom)
+            {
+                mHeightDisplacement = desiredDisplacement;
+                mZoom = zoom;
+            }
+            else if(zoom > mMaxZoom)
+            {
+                mHeightDisplacement = mMaxZoom - mZoom;
+                mZoom = mMaxZoom;
+            }
+            else if(zoom < mMinZoom)
+            {
+                mHeightDisplacement = mMinZoom - mZoom;
+                mZoom = mMinZoom;
+            }
+
+            instantUpdate();
+        }
+
+        Ogre::Real getZoom(){ return mZoom; };
+
+		/**
+		 * @brief Tell the camera to zoom in (reduce the height)
+		 * 
+		 * @param percentage the relative speed of the movement acording to the move factor (1: 100%, 0: 0%, -1: -100%)
+		 */
+        inline virtual void zoomIn(Ogre::Real percentage = 1)
+        { 
+            Ogre::Real desiredDisplacement = mMoveFactor * percentage;
+            Ogre::Real desiredZoom = mZoom + desiredDisplacement;
+
+            setZoom(desiredZoom);
+
+            /*if(desiredZoom <= mMaxZoom && desiredZoom >= mMinZoom)
+            {
+                mHeightDisplacement = desiredDisplacement;
+                mZoom = desiredZoom;
+            }
+            else if(desiredZoom > mMaxZoom)
+            {
+                mHeightDisplacement = mMaxZoom - mZoom;
+                mZoom = mMaxZoom;
+            }
+            else if(desiredZoom < mMinZoom)
+            {
+                mHeightDisplacement = mMinZoom - mZoom;
+                mZoom = mMinZoom;
+            }*/
+        }
+
+		/**
+		 * @brief Tell the camera to zoom out
+		 * 
+		 * @param percentage the relative speed of the movement acording to the move factor (1: 100%, 0: 0%, -1: -100%)
+		 */
+        inline virtual void zoomOut(Ogre::Real percentage = 1){ zoomIn(-percentage); }
+
+		/**
+		 * @brief Tell the camera to go right (along the leftAxis)
+		 * 
+		 * @param percentage the relative speed of the movement acording to the move factor (1: 100%, 0: 0%, -1: -100%)
+		 */
+        inline virtual void goRight(Ogre::Real percentage = 1){ mLateralDisplacement -= mMoveFactor * percentage; }
+
+		/**
+		 * @brief Tell the camera to go left (along the leftAxis)
+		 * 
+		 * @param percentage the relative speed of the movement acording to the move factor (1: 100%, 0: 0%, -1: -100%)
+		 */
+        inline virtual void goLeft(Ogre::Real percentage = 1){ goRight(-percentage); }
+
+		/**
+		 * @brief Tell the camera to go up (along the upAxis)
+		 * 
+		 * @param percentage the relative speed of the movement acording to the move factor (1: 100%, 0: 0%, -1: -100%)
+		 */
+        inline virtual void goUp(Ogre::Real percentage = 1){ mVerticalDisplacement += mMoveFactor * percentage; }
+
+		/**
+		 * @brief Tell the camera to go down (along the upAxis)
+		 * 
+		 * @param percentage the relative speed of the movement acording to the move factor (1: 100%, 0: 0%, -1: -100%)
+		 */
+        inline virtual void goDown(Ogre::Real percentage = 1){ goUp(-percentage); }
+		
+    protected:
+
+        Ogre::Quaternion mRotation;
+        Ogre::Radian mCameraPitch;
+        Ogre::Vector3 mUpAxis;
+        Ogre::Vector3 mLeftAxis;
+        Ogre::Vector3 mHeightAxis;
+        Ogre::Real mMoveFactor;
+        Ogre::Real mHeightDisplacement;
+        Ogre::Real mLateralDisplacement;
+        Ogre::Real mVerticalDisplacement;
+        Ogre::Real mZoom;
+        Ogre::Real mMinZoom;
+        Ogre::Real mMaxZoom;
 	};
 }
 

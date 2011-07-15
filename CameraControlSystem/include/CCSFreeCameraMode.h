@@ -37,15 +37,17 @@ namespace CCS
 	 * In this mode the camera is controlled by the user. 
      * The camera orientation is fixed by a yaw axis.
 	 */
-    class DllExport FreeCameraMode : public CameraControlSystem::CameraMode 
+    class DllExport FreeCameraMode : public CameraControlSystem::CameraMode, public CameraControlSystem::CollidableCamera
 	{
 	public:
 
         FreeCameraMode(CameraControlSystem* cam) 
             : CameraControlSystem::CameraMode(cam)
+            , CameraControlSystem::CollidableCamera(cam)
 			, mFixedAxis(Ogre::Vector3::UNIT_Y)
             , mMoveFactor(1)
             , mRotationFactor(0.13)
+            , mMargin(0) 
         { };
 
         virtual ~FreeCameraMode(){};
@@ -55,6 +57,11 @@ namespace CCS
         virtual void update(const Ogre::Real &timeSinceLastFrame);
 
         virtual void instantUpdate(){};
+
+        //// Overriden methods
+
+        //inline virtual void setCollisionsEnabled(bool value);
+        //inline virtual bool getCollisionsEnabled() { return mCollisionsEnabled; }
 
         // Specific methods
 
@@ -127,8 +134,32 @@ namespace CCS
 		 * @param val the amount of rotation (use negative values to look up)
 		 */
         inline virtual void pitch(Ogre::Real val){ mRotY += Ogre::Degree(-val * mRotationFactor); }
+
+        /**
+		 * @brief Margin value for the collision delegates
+		 * 
+		 * @param margin the distance 
+		 */
+        void setMargin(Ogre::Real margin){ mMargin = margin; }
+
+        Ogre::Real getMargin(){ return mMargin; }
+
+        /**
+		 * @brief Collision delegate that mantains the camera always above the ground. A margin can be stablished using the 'setMargin' method.
+		 */
+        Ogre::Vector3 AboveGroundCollisionDetectionFunction(Ogre::Vector3 cameraTargetPosition, Ogre::Vector3 cameraPosition);
+
+        /**
+		 * @brief Collision delegate that mantains a constant distance to the ground. The distance can be stablished using the 'setMargin' method.
+		 */
+        Ogre::Vector3 ConstantHeightCollisionDetectionFunction(Ogre::Vector3 cameraTargetPosition, Ogre::Vector3 cameraPosition);
+
+    protected:
+        
+        Ogre::Vector3 getFirstRealHit(Ogre::Vector3 origin, Ogre::Vector3 direction);
 		
     protected:
+
         Ogre::Vector3 mFixedAxis;
         Ogre::Real mMoveFactor;
         Ogre::Real mRotationFactor;
@@ -139,6 +170,7 @@ namespace CCS
         Ogre::Radian mRotX;
 	    Ogre::Radian mRotY;
         Ogre::Quaternion mStartingOrientation;
+        Ogre::Real mMargin;
 	};
 
 }

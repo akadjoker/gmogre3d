@@ -128,6 +128,7 @@ namespace CCS
             virtual ~CameraModeWithTightness() {};
 
             inline void setCameraTightness(Ogre::Real value) { mTightness = value; }
+            inline Ogre::Real getCameraTightness() { return mTightness; }
 
         protected:
             Ogre::Real mTightness;
@@ -154,7 +155,8 @@ namespace CCS
 			 */
             virtual ~CollidableCamera() {};
 
-            inline void setCollisionsEnabled(bool value) { mCollisionsEnabled = value; }
+            inline virtual void setCollisionsEnabled(bool value) { mCollisionsEnabled = value; }
+            inline virtual bool getCollisionsEnabled() { return mCollisionsEnabled; }
 
 			// A CollisionDelegate takes as params the position of the target and the camera, and returns the 
 			// the new camera position.

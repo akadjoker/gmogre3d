@@ -39,6 +39,9 @@ bool CCS::FreeCameraMode::init()
     mRotX = 0;
     mRotY = 0;
 
+    this->collisionDelegate = newCollisionDelegate(this
+				, &CollidableCamera::DefaultCollisionDetectionFunction);
+
     instantUpdate();
 
     return true;
@@ -56,6 +59,11 @@ void CCS::FreeCameraMode::update(const Ogre::Real &timeSinceLastFrame)
 
     mCameraPosition += displacement;
 
+    if(mCollisionsEnabled)
+    {
+        mCameraPosition = collisionDelegate(mCameraCS->getCameraTargetPosition(), mCameraPosition);
+    }
+
     Ogre::Quaternion offsetX(mRotY,Ogre::Vector3::UNIT_X);
     Ogre::Quaternion offsetY(mRotX,mFixedAxis);
 
@@ -64,4 +72,67 @@ void CCS::FreeCameraMode::update(const Ogre::Real &timeSinceLastFrame)
     mLongitudinalDisplacement = 0;
     mLateralDisplacement = 0;
     mVerticalDisplacement = 0;            
+}
+
+Ogre::Vector3 CCS::FreeCameraMode::AboveGroundCollisionDetectionFunction(Ogre::Vector3 cameraTargetPosition, Ogre::Vector3 cameraPosition)
+{
+	Ogre::Vector3 origin = cameraPosition + (mFixedAxis * 100000);	
+	Ogre::Vector3 direction = -mFixedAxis;
+	
+    Ogre::Vector3 projectedCameraPosition = getFirstRealHit(origin, direction);
+    projectedCameraPosition.y += mMargin;
+    if(projectedCameraPosition.y < cameraPosition.y)
+    {
+        return cameraPosition;
+    }
+    else
+    {
+        return projectedCameraPosition;
+    }
+}
+
+Ogre::Vector3 CCS::FreeCameraMode::ConstantHeightCollisionDetectionFunction(Ogre::Vector3 cameraTargetPosition, Ogre::Vector3 cameraPosition)
+{
+	Ogre::Vector3 origin = cameraPosition + (mFixedAxis * 100000);	
+	Ogre::Vector3 direction = -mFixedAxis;
+	
+    Ogre::Vector3 projectedCameraPosition = getFirstRealHit(origin, direction);
+
+    return projectedCameraPosition + (mFixedAxis * mMargin);
+}
+
+Ogre::Vector3 CCS::FreeCameraMode::getFirstRealHit(Ogre::Vector3 origin, Ogre::Vector3 direction)
+{
+    Ogre::Vector3 hit = origin;
+    Ogre::Real minDistance = std::numeric_limits<Ogre::Real>::max();
+
+    Ogre::RaySceneQuery *raySceneQuery = mCameraCS2->getSceneManager()->createRayQuery(Ogre::Ray(origin, direction));
+
+	Ogre::RaySceneQueryResult &result = raySceneQuery->execute();
+	Ogre::RaySceneQueryResult::iterator itr = result.begin();
+
+	bool intersect = false;
+	while (itr != result.end() /*&& !intersect*/) // ToDo: are the results ordered ??
+	{
+		if( itr->distance < minDistance // take the shorter
+            && itr->movable->getParentSceneNode() != mCameraCS2->getCameraSceneNode()
+			&& itr->movable->getParentSceneNode() != mCameraCS2->getTargetSceneNode())
+		{
+            minDistance = itr->distance;
+			intersect = true;
+			if(itr->worldFragment)
+			{
+				hit = itr->worldFragment->singleIntersection;
+			}
+			else //if(itr->movable)
+			{					
+				hit = origin + (direction * itr->distance);
+			}
+		}
+		itr++;
+	}
+
+	mCameraCS2->getSceneManager()->destroyQuery(raySceneQuery);
+
+    return hit;
 }
