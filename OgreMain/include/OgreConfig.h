@@ -137,6 +137,9 @@ OGRE_THREAD_SUPPORT = 2
 	while still allowing the major blocking aspects of resource management (I/O)
 	to be done in the background.
 */
+#define OGRE_THREAD_SUPPORT 2
+#define OGRE_THREAD_PROVIDER 1
+
 #ifndef OGRE_THREAD_SUPPORT
 #define OGRE_THREAD_SUPPORT 0
 #endif

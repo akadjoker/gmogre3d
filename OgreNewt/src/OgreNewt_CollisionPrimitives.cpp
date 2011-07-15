@@ -132,7 +132,8 @@ namespace OgreNewt
                        
             // get scale, if attached to node
             Ogre::Node * node = obj->getParentNode();
-            if (node) scale = node->getScale();
+            if (node) scale = node->_getDerivedScale();
+
             if (forceScale != Ogre::Vector3::ZERO) scale = forceScale;
 
             //find number of submeshes
@@ -271,7 +272,7 @@ namespace OgreNewt
 
                         // get scale, if attached to node
                         Ogre::Node * node = obj->getParentNode();
-                        if (node) scale = node->getScale();
+                        if (node) scale = node->_getDerivedScale();
 
             //find number of sub-meshes
             unsigned short sub = mesh->getNumSubMeshes();

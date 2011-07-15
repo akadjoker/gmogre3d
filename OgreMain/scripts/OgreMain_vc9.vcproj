@@ -321,7 +321,7 @@
 				OmitFramePointers="true"
 				EnableFiberSafeOptimizations="true"
 				AdditionalIncludeDirectories="..\include;..\..\Dependencies\include;..\src\nedmalloc"
-				PreprocessorDefinitions="WIN32;NDEBUG;_USRDLL;_MT;OGRE_NONCLIENT_BUILD;FREEIMAGE_LIB;OGRE_STATIC_LIB"
+				PreprocessorDefinitions="WIN32;NDEBUG;_USRDLL;_MT;OGRE_NONCLIENT_BUILD;FREEIMAGE_LIB;OGRE_STATIC_LIB;"
 				StringPooling="true"
 				MinimalRebuild="false"
 				ExceptionHandling="2"

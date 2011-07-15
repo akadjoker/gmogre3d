@@ -834,6 +834,21 @@ namespace Ogre {
         // Cache squared view depth for use by GeometryBucket
         mSquaredViewDepth = mParentNode->getSquaredViewDepth(cam->getLodCamera());
 
+        // Determine whether to still render
+        Real renderingDist = mParent->getRenderingDistance();
+        if (renderingDist > 0)
+        {
+            // Max distance to still render
+            Real maxDist = renderingDist + mBoundingRadius;
+            if (mSquaredViewDepth > Math::Sqr(maxDist))
+            {
+               mBeyondFarDistance = true;
+               return;
+            }
+        }
+
+        mBeyondFarDistance = false;
+
         // No lod strategy set yet, skip (this indicates that there are no submeshes)
         if (mLodStrategy == 0)
             return;

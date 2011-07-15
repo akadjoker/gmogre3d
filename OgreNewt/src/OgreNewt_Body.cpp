@@ -456,8 +456,13 @@ void Body::updateNode(Ogre::Real interpolatParam)
 		#ifndef WIN32
 			m_world->ogreCriticalSectionLock();
 		#endif
-		m_node->setPosition(m_nodePosit);
-		m_node->setOrientation(m_nodeRotation);
+		//m_node->setPosition(m_nodePosit);
+		//m_node->setOrientation(m_nodeRotation);
+
+      // Set position in global terms.
+      Ogre::Node* m_nodeParent = m_node->getParent();
+      m_node->setPosition((m_nodeParent->_getDerivedOrientation().Inverse() * (m_nodePosit - m_nodeParent->_getDerivedPosition()) / m_nodeParent->_getDerivedScale()));
+      m_node->setOrientation((m_nodeParent->_getDerivedOrientation().Inverse() * m_nodeRotation));
 
 		if (m_nodeupdatenotifycallback) {
 			m_nodeupdatenotifycallback (this);
