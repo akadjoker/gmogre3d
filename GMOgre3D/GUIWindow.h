@@ -25,7 +25,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define GMOGRE_GUI_WINDOW_H
 
 #include "GMOgre3D.h"
-#include <GMAPI.h>
+#include "GM_API.h"
 
 // CEGUI includes
 #include "CEGUIInputEvent.h"
@@ -652,11 +652,9 @@ bool PerformGUIWindowWindowEventCallback(const CEGUI::WindowEventArgs& args, CEG
       return false;
 
    // Call our GM script to handle this event
-   gm::CGMVariable gm_args[1];
-   gm_args[0].Set(static_cast<double>(reinterpret_cast<intptr_t>(args.window)));
-   gm::CGMVariable ret = gm::script_execute(iter->second, gm_args, 1);
+   GM_VALUE ret = GM_script_execute(iter->second, static_cast<double>(reinterpret_cast<intptr_t>(args.window)));
 
-   return (ret.real() != 0);
+   return (GetGMRealValue(ret) != 0);
 }
 
 
@@ -672,12 +670,9 @@ bool PerformGUIWindowActivationEventCallback(const CEGUI::ActivationEventArgs& a
       return false;
 
    // Call our GM script to handle this event
-   gm::CGMVariable gm_args[2];
-   gm_args[0].Set(static_cast<double>(reinterpret_cast<intptr_t>(args.window)));
-   gm_args[1].Set(static_cast<double>(reinterpret_cast<intptr_t>(args.otherWindow)));
-   gm::CGMVariable ret = gm::script_execute(iter->second, gm_args, 2);
+   GM_VALUE ret = GM_script_execute(iter->second, static_cast<double>(reinterpret_cast<intptr_t>(args.window)), static_cast<double>(reinterpret_cast<intptr_t>(args.otherWindow)));
 
-   return (ret.real() != 0);
+   return (GetGMRealValue(ret) != 0);
 }
 
 
@@ -693,12 +688,9 @@ bool PerformGUIWindowDragDropEventCallback(const CEGUI::DragDropEventArgs& args,
       return false;
 
    // Call our GM script to handle this event
-   gm::CGMVariable gm_args[2];
-   gm_args[0].Set(static_cast<double>(reinterpret_cast<intptr_t>(args.window)));
-   gm_args[1].Set(static_cast<double>(reinterpret_cast<intptr_t>(args.dragDropItem)));
-   gm::CGMVariable ret = gm::script_execute(iter->second, gm_args, 2);
+   GM_VALUE ret = GM_script_execute(iter->second, static_cast<double>(reinterpret_cast<intptr_t>(args.window)), static_cast<double>(reinterpret_cast<intptr_t>(args.dragDropItem)));
 
-   return (ret.real() != 0);
+   return (GetGMRealValue(ret) != 0);
 }
 
 
@@ -714,16 +706,9 @@ bool PerformGUIWindowMouseEventCallback(const CEGUI::MouseEventArgs& args, CEGUI
       return false;
 
    // Call our GM script to handle this event
-   gm::CGMVariable gm_args[6];
-   gm_args[0].Set(static_cast<double>(reinterpret_cast<intptr_t>(args.window)));
-   gm_args[1].Set(static_cast<double>(args.button));
-   gm_args[2].Set(static_cast<double>(args.clickCount));
-   gm_args[3].Set(static_cast<double>(args.position.d_x));
-   gm_args[4].Set(static_cast<double>(args.position.d_y));
-   gm_args[5].Set(static_cast<double>(args.wheelChange));
-   gm::CGMVariable ret = gm::script_execute(iter->second, gm_args, 6);
+   GM_VALUE ret = GM_script_execute(iter->second, static_cast<double>(reinterpret_cast<intptr_t>(args.window)), static_cast<double>(args.button), static_cast<double>(args.clickCount), static_cast<double>(args.position.d_x), static_cast<double>(args.position.d_y), static_cast<double>(args.wheelChange));
 
-   return (ret.real() != 0);
+   return (GetGMRealValue(ret) != 0);
 }
 
 
@@ -741,13 +726,9 @@ bool PerformGUIWindowKeyEventCallback(const CEGUI::KeyEventArgs& args, CEGUI::St
    SetupScanCodeConversion();
 
    // Call our GM script to handle this event
-   gm::CGMVariable gm_args[3];
-   gm_args[0].Set(static_cast<double>(reinterpret_cast<intptr_t>(args.window)));
-   gm_args[1].Set(static_cast<double>(mScanCodeConversion[args.scancode]));
-   gm_args[2].Set(static_cast<double>(args.codepoint));
-   gm::CGMVariable ret = gm::script_execute(iter->second, gm_args, 3);
+   GM_VALUE ret = GM_script_execute(iter->second, static_cast<double>(reinterpret_cast<intptr_t>(args.window)), static_cast<double>(mScanCodeConversion[args.scancode]), static_cast<double>(args.codepoint));
 
-   return (ret.real() != 0);
+   return (GetGMRealValue(ret) != 0);
 }
 
 

@@ -23,7 +23,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "stdafx.h"
 #include "GMSceneManagerListener.h"
-#include "GMAPI.h"
+#include "GM_API.h"
 
 
 template<typename T>
@@ -42,13 +42,8 @@ void GMSceneManagerListener::shadowTextureCasterPreViewProj(Ogre::Light *light, 
 {
    // Call our GM script to handle this callback
    if (mShadowTextureCasterPreViewProjCallback >= 0)
-   {
-      gm::CGMVariable args[3];
-      args[0].Set(ConvertToGMPointer3(light));
-      args[1].Set(ConvertToGMPointer3(cam));
-      args[2].Set(iterations);
-
-      gm::script_execute(mShadowTextureCasterPreViewProjCallback, args, 3);  
+   { 
+      GM_script_execute(mShadowTextureCasterPreViewProjCallback, ConvertToGMPointer3(light), ConvertToGMPointer3(cam), (double)iterations);
    }
 }
 

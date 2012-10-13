@@ -39,12 +39,12 @@ public:
 
    void preRenderTargetUpdate(const Ogre::RenderTargetEvent& evt)
    {
-      gm::event_perform_object(mTargetObject, gm::ev_other, mPreEventNum);
+      GM_event_perform_object(mTargetObject, gm::ev_other, mPreEventNum);
    }
 
    void postRenderTargetUpdate(const Ogre::RenderTargetEvent& evt)
    {
-      gm::event_perform_object(mTargetObject, gm::ev_other, mPostEventNum);
+      GM_event_perform_object(mTargetObject, gm::ev_other, mPostEventNum);
    }
 
 protected:

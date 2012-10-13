@@ -301,7 +301,7 @@ GMFN double AttachBillboardChainToEntityBone2(double x, double y, double z, doub
    if (entity == NULL)
       return FALSE;
 
-   entity->attachObjectToBone(bb_chain_entity_bone_name, bb_chain, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)), ConvertFromGMAxis(x, y, z));
+   entity->attachObjectToBone(bb_chain_entity_bone_name, bb_chain, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree(ConvertFromGMPitch(pitch)), Ogre::Degree(ConvertFromGMRoll(roll))), ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }

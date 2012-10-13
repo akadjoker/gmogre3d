@@ -91,7 +91,7 @@ public:
     // Get a vector pointing forwards.
     inline Ogre::Vector3 getForward() 
     {
-        return toQuaternion() * Ogre::Vector3::NEGATIVE_UNIT_Z;
+        return toQuaternion() * Ogre::Vector3::UNIT_Z;
     }
 
     // Get a vector pointing to the right.
@@ -112,7 +112,7 @@ public:
     {
         if(m_changed) 
         {
-            m_cachedQuaternion = Ogre::Quaternion(m_yaw, Ogre::Vector3::NEGATIVE_UNIT_Y) * Ogre::Quaternion(m_pitch, Ogre::Vector3::UNIT_X) * Ogre::Quaternion(m_roll, Ogre::Vector3::NEGATIVE_UNIT_Z); 
+            m_cachedQuaternion = Ogre::Quaternion(m_yaw, Ogre::Vector3::NEGATIVE_UNIT_Y) * Ogre::Quaternion(m_pitch, Ogre::Vector3::UNIT_X) * Ogre::Quaternion(m_roll, Ogre::Vector3::UNIT_Z); 
             m_changed = false;
         }
         return m_cachedQuaternion;

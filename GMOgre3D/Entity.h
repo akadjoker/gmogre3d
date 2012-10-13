@@ -27,6 +27,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "GMOgre3D.h"
 #include "Material.h"
 #include "NewtonBody.h"
+#include "OgreLightMap.h"
 
 
 static Ogre::String anim_names;
@@ -352,7 +353,7 @@ GMFN double AttachEntityToEntityBone2(double x, double y, double z, double yaw, 
    if (entity2 == NULL)
       return FALSE;
 
-   entity2->attachObjectToBone(entity_entity_bone_name, entity, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)), ConvertFromGMAxis(x, y, z));
+   entity2->attachObjectToBone(entity_entity_bone_name, entity, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree(ConvertFromGMPitch(pitch)), Ogre::Degree(ConvertFromGMRoll(roll))), ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }
@@ -495,6 +496,40 @@ GMFN double SetEntityVisibilityFlags(double ent_ptr, double flags)
       return FALSE;
 
    ent->setVisibilityFlags((Ogre::uint)flags);
+
+   return TRUE;
+}
+
+
+GMFN char *GetEntityMesh(double ent_ptr)
+{
+   Ogre::Entity *ent = ConvertFromGMPointer<Ogre::Entity*>(ent_ptr);
+
+   if (ent == NULL)
+      return FALSE;
+
+   Ogre::MeshPtr mesh_ptr = ent->getMesh();
+
+   if (mesh_ptr.isNull())
+      return FALSE;
+      
+   return const_cast<char*>(mesh_ptr->getName().c_str());
+}
+
+
+GMFN double SetEntityCollisionMesh(double ent_ptr, char *mesh_name)
+{
+   Ogre::Entity *ent = ConvertFromGMPointer<Ogre::Entity*>(ent_ptr);
+
+   if (ent == NULL)
+      return FALSE;
+
+   Ogre::MeshPtr mesh = Ogre::MeshManager::getSingleton().getByName(mesh_name);
+
+   if (mesh.isNull())
+      ent->getUserObjectBindings().setUserAny("GMCollisionMesh", Ogre::Any(Ogre::String()));
+   else
+      ent->getUserObjectBindings().setUserAny("GMCollisionMesh", Ogre::Any(Ogre::String(mesh_name)));
 
    return TRUE;
 }

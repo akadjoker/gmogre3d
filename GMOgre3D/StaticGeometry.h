@@ -109,7 +109,7 @@ GMFN double AddStaticGeometryEntity(double static_geo_ptr, double entity_ptr, do
    if (ent == NULL)
       return FALSE;
 
-   static_geo->addEntity(ent, ConvertFromGMAxis(posx, posy, posz), Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)), ConvertFromGMAxis(scalex, scaley, scalez));
+   static_geo->addEntity(ent, ConvertFromGMAxis(posx, posy, posz), Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(ConvertFromGMPitch(pitch)), Ogre::Degree(ConvertFromGMRoll(roll))), ConvertFromGMAxis(scalex, scaley, scalez));
 
    return TRUE;
 }

@@ -37,16 +37,8 @@ public:
    Ogre::Vector3 CustomCollisionDetectionFunction(Ogre::Vector3 cameraTargetPosition, Ogre::Vector3 cameraPosition)
    {
 		// Call our GM script to handle this leave world callback
-      gm::CGMVariable args[6];
-      args[0].Set(static_cast<double>(reinterpret_cast<intptr_t>(contact.m_body1)));
-      args[1].Set(static_cast<double>(reinterpret_cast<intptr_t>(contact.m_body1)));
-      args[2].Set(contact.m_speed);
-      args[3].Set(ConvertFromGMAxis2(contact.m_position.x, contact.m_position.z, contact.m_position.y).x);
-      args[4].Set(ConvertFromGMAxis2(contact.m_position.x, contact.m_position.z, contact.m_position.y).z);
-      args[5].Set(ConvertFromGMAxis2(contact.m_position.x, contact.m_position.z, contact.m_position.y).y);
-
       // Can't do this because we can't return a x/y/z pos!
-      gm::CGMVariable ret = gm::script_execute(contact.m_function, args, 6);  
+      GM_VALUE ret = GM_script_execute(iter->second, static_cast<double>(reinterpret_cast<intptr_t>(contact.m_body1)), static_cast<double>(reinterpret_cast<intptr_t>(contact.m_body1)), contact.m_speed, ConvertFromGMAxis2(contact.m_position.x, contact.m_position.z, contact.m_position.y).x, ConvertFromGMAxis2(contact.m_position.x, contact.m_position.z, contact.m_position.y).z,ConvertFromGMAxis2(contact.m_position.x, contact.m_position.z, contact.m_position.y).y);
 
 		return cameraPosition;
 	}

@@ -350,8 +350,19 @@ bool CollisionTools::raycast(const Ogre::Ray &ray, Ogre::Vector3 &result,Ogre::M
             Ogre::Vector3 *vertices;
             Ogre::uint32 *indices;
 
+            Ogre::MeshPtr mesh = ((Ogre::Entity*)pentity)->getMesh();
+
+            // use a user-specified collision mesh if set
+            Ogre::Any any = pentity->getUserObjectBindings().getUserAny("GMCollisionMesh");
+            if (!any.isEmpty())
+            {
+               Ogre::MeshPtr col_mesh = Ogre::MeshManager::getSingleton().getByName(Ogre::any_cast<Ogre::String>(any));
+               if (!col_mesh.isNull())
+                   mesh = col_mesh;
+            }
+            
             // get the mesh information
-			GetMeshInformation(((Ogre::Entity*)pentity)->getMesh(), vertex_count, vertices, index_count, indices,
+			GetMeshInformation(mesh, vertex_count, vertices, index_count, indices,
                               pentity->getParentNode()->_getDerivedPosition(),
                               pentity->getParentNode()->_getDerivedOrientation(),
                               pentity->getParentNode()->_getDerivedScale());

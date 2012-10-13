@@ -24,7 +24,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "stdafx.h"
 #include "GMTerrainPageSourceListener.h"
 #include "OgreTerrainSceneManager.h"
-#include "GMAPI.h"
+#include "GM_API.h"
 
 
 class TerrainVectorCalculator

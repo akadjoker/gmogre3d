@@ -70,8 +70,9 @@ GMFN double RotateVector(double x1, double z1, double y1, double yaw, double pit
 
 GMFN double CalcVectorCrossProduct(double x1, double z1, double y1, double x2, double z2, double y2)
 {
-   Ogre::Vector3 vec = ConvertFromGMAxis(x1, y1, z1);
-   vec.crossProduct(ConvertFromGMAxis(x2, y2, z2));
+   Ogre::Vector3 vec = ConvertFromGMAxis(x1, y1, z1).crossProduct(ConvertFromGMAxis(x2, y2, z2));
+   
+   SetGMVectorGlobals(vec);
 
    return TRUE;
 }
@@ -80,6 +81,12 @@ GMFN double CalcVectorCrossProduct(double x1, double z1, double y1, double x2, d
 GMFN double CalcVectorDotProduct(double x1, double y1, double z1, double x2, double y2, double z2)
 {
    return ConvertFromGMAxis(x1, y1, z1).dotProduct(ConvertFromGMAxis(x2, y2, z2));
+}
+
+
+GMFN double CalcVectorDistance(double x1, double y1, double z1, double x2, double y2, double z2)
+{
+   return ConvertFromGMAxis(x1, y1, z1).distance(ConvertFromGMAxis(x2, y2, z2));
 }
 
 
@@ -99,7 +106,7 @@ GMFN double NormalizeResultVector()
 {
    Ogre::Real len = 0.0;
 
-   Ogre::Vector3 vec = ConvertFromGMAxis(*mVectorX, *mVectorZ, *mVectorY);
+   Ogre::Vector3 vec = ConvertFromGMAxis(GetGMRealVariable(*mVectorX), GetGMRealVariable(*mVectorZ), GetGMRealVariable(*mVectorY));
    len = vec.normalise();
 
    SetGMVectorGlobals(vec);

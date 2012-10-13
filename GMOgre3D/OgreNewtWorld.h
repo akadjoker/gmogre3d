@@ -26,13 +26,14 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "OgreNewtBody.h"
 #include "OgreNewt_World.h"
+#include "OgreNewt_BasicFrameListener.h"
 #include "OgreNewtContact.h"
 
 
 class OgreNewtWorld
 {
 public:
-   OgreNewtWorld(Ogre::Real desiredFps = 100.0f, int maxUpdatesPerFrames = 2);
+   OgreNewtWorld(Ogre::Real desiredFps = 60.0f, int maxUpdatesPerFrames = 2, Ogre::RenderWindow* win = NULL, Ogre::Root *root = NULL);
    ~OgreNewtWorld();
 
    void update( Ogre::Real t_step );
@@ -72,6 +73,8 @@ protected:
    Ogre::Vector3 m_default_gravity;
    HANDLE m_mutex;
    std::vector<OgreNewtContact> m_contacts;
+   OgreNewt::BasicFrameListener *m_newton_listener;
+   Ogre::Root *m_root;
 };
 
 #endif

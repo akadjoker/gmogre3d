@@ -130,12 +130,12 @@ GMFN double GetZCollisionDistance(double scene_node_ptr, double check_terrain, d
    Ogre::SceneNode *scene_node = ConvertFromGMPointer<Ogre::SceneNode*>(scene_node_ptr);
 
    if (scene_node == NULL)
-      return 999999;
+      return -1;
 
    MOC::CollisionTools *ct = mSceneCollisionMap[mSceneMgr];
 
    if (ct == NULL)
-      return 999999;
+      return -1;
 
    return ct->calculateYDistance(scene_node, (check_terrain != 0), (float)space_width, (Ogre::uint32)mask);
 }
@@ -159,17 +159,43 @@ GMFN double DistanceToCollisionWithObject(double fromx, double fromz, double fro
    MOC::CollisionTools *ct = mSceneCollisionMap[mSceneMgr];
 
    if (ct == NULL)
-      return 999999;
+      return -1;
 
    if (ct->raycastFromPoint(fromPointAdj, normal, myResult, myObject, (float)distToColl, (Ogre::uint32)mask))
 	{
+      //distToColl = myResult.distance(fromPointAdj);
 		distToColl -= (float)collision_radius;
-		return (distToColl <= distToDest);
+		return distToColl;
 	}
 	else
 	{
-		return 999999;
+		return -1;
 	}
+}
+
+
+GMFN double CastRayFromPoint(double fromx, double fromz, double fromy, double dirx, double dirz, double diry, double mask = 0xFFFFFFFF)
+{
+   Ogre::Vector3 fromPointAdj = ConvertFromGMAxis(fromx, fromy, fromz);
+   Ogre::Vector3 dir = ConvertFromGMAxis(dirx, diry, dirz);
+
+	Ogre::Vector3 myResult(0, 0, 0);
+	Ogre::MovableObject* myObject = NULL;
+	float distToColl = 0.0f;
+
+   MOC::CollisionTools *ct = mSceneCollisionMap[mSceneMgr];
+
+   if (ct == NULL)
+      return -1;
+
+   if (ct->raycastFromPoint(fromPointAdj, dir, myResult, myObject, (float)distToColl, (Ogre::uint32)mask))
+   {
+      Ogre::Vector3 vec = myResult;
+      SetGMVectorGlobals(vec);
+		return distToColl;
+   }
+	else
+		return -1;
 }
 
 

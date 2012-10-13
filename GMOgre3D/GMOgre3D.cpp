@@ -78,7 +78,7 @@
 #include "CCS_ChaseCameraMode.h"
 #include "CCS_FixedCameraMode.h"
 #include "CCS_RTSCameraMode.h"
-#include "GMApi.h"
+#include "GM_API.h"
 #include "LockMutex.h"
 #include "RibbonTrail.h"
 #include "GUISystem.h"
@@ -104,6 +104,10 @@
 #include "PSSMShadowCameraSetup.h"
 #include "GPUProgramParameters.h"
 #include "Rectangle2D.h"
+#include "Lightmap.h"
+#include "DotSceneLoader.h"
+#include "TagPoint.h"
+#include "GUIScrollBar.h"
 #include <OgreDynLib.h>
 #include <algorithm>
 
@@ -120,7 +124,7 @@ void UpdateSceneNodeAttachments();
 #endif
 
 
-GMFN double Initialize(char *plugins_cfg, char *ogre_cfg, char *log_file)
+GMFN double Initialize(double function_address_ptr, char *plugins_cfg, char *ogre_cfg, char *log_file)
 {
    try
    {
@@ -129,8 +133,10 @@ GMFN double Initialize(char *plugins_cfg, char *ogre_cfg, char *log_file)
       mLogFile = log_file;
 
       unsigned long result = 0;
-      if (!mGMAPI)
-         mGMAPI = gm::CGMAPI::Create( &result );
+      if (!IsGMInitialized())
+      {
+         InitializeGM(function_address_ptr);
+      }
    }
    catch(Ogre::Exception& e)
    {
@@ -289,12 +295,16 @@ GMFN double StartEngine(double render_engine, double hwnd, double window_width, 
       //   mFrameListener = OGRE_NEW GMFrameListener;
       //mRoot->addFrameListener(mFrameListener);
 
-      if (mGMAPI)
+      if (IsGMInitialized())
       {
          // Setup the links to our GM vector/quaternion/euler result variables
          AcquireGMVectorGlobals();
          AcquireGMEulerGlobals();
       }
+
+      // Start our high performance timers
+      mPerfTimer.Start();
+      mLastFrameTime = mPerfTimer.Elapsedms();
    }
    catch(Ogre::Exception& e)
    {
@@ -401,6 +411,11 @@ GMFN double RenderFrame()
    if (mRenderWindow->isActive())
       mRoot->renderOneFrame();
 
+   // Calculate the last frame time
+   AcquireGMElapsedMSGlobal();
+   SetGMVariable(*mElapsedFrameMS, mPerfTimer.Elapsedms() - mLastFrameTime);
+   mLastFrameTime = mPerfTimer.Elapsedms();
+   
    return TRUE;
 }
 
@@ -605,13 +620,43 @@ GMFN double GetTriangleCount()
 }
 
 
+GMFN double GetElapsedMS()
+{
+   return mPerfTimer.Elapsedms();
+}
+
+
+GMFN double GetElapsedFrameMS()
+{
+   return mPerfTimer.Elapsedms() - mLastFrameTime;
+
+   // DO NOT REMOVE: This shows how you can access GM variables (and how hard it is to do so),
+   // to be used in future code to auto-update position/rotation, etc.
+/*
+   GM_VARIABLE &globalArrayTwo = *mArrayTwo;
+
+   DisplayError(Ogre::String(globalArrayTwo));
+
+   for (unsigned long i = 0; i < globalArrayTwo.GetFirstDimensionSize(); i++)
+   {
+      for (unsigned long j = 0; j < globalArrayTwo.GetSecondDimensionSize( i ); j++)
+      {
+         if (i != 0 && j != 0)
+            DisplayError(Ogre::String(globalArrayTwo[i][j]));
+      }
+   }
+
+   return TRUE;*/
+}
+
+
 void UpdateSceneNodeAttachments()
 {
    LockMutex lm(gMutex);
 
    try
    {
-      if (mGMAPI)
+      if (IsGMInitialized())
       {
          // Cycle through all scene nodes attached to GM instances, and update position/scale/orientation
          SceneNodeMap::iterator iter = mSceneNodeAttachments.begin();
@@ -624,7 +669,7 @@ void UpdateSceneNodeAttachments()
 
             if (gminst->GMInstanceAttached && gminst->mGMInstancePtr)
             {
-               gminst->mGMInstancePtr = mGMAPI->GetInstancePtr((int)gminst->mGMInstanceID);
+               gminst->mGMInstancePtr = GetGMInstance((int)gminst->mGMInstanceID);
                AcquireGMLocalVariablePointers(gminst);
 
                bool GMPosChanged = false;
@@ -632,11 +677,11 @@ void UpdateSceneNodeAttachments()
 
                // Update scene node position if GM position changed (either from the
                // user manually changing or from a previous Newton body changing them).
-               if (gminst->mGMInstancePtr->x != gminst->mLastX || gminst->mGMInstancePtr->y != gminst->mLastY || *gminst->pZ != gminst->mLastZ)
+               if (gminst->mGMInstancePtr->x != gminst->mLastX || gminst->mGMInstancePtr->y != gminst->mLastY || GetGMRealVariable(*gminst->pZ) != gminst->mLastZ)
                {
                   GMPosChanged = true;
                   //node->setPosition(ConvertFromGMAxis(gminst->mGMInstancePtr->x, *gminst->pZ, gminst->mGMInstancePtr->y));
-                  SetSceneNodePosition(ConvertToGMPointer(node), gminst->mGMInstancePtr->x, gminst->mGMInstancePtr->y, *gminst->pZ);
+                  SetSceneNodePosition(ConvertToGMPointer(node), gminst->mGMInstancePtr->x, gminst->mGMInstancePtr->y, GetGMRealVariable(*gminst->pZ));
 
                   if (gminst->BodyAttached && gminst->mBody)
                   {
@@ -648,25 +693,34 @@ void UpdateSceneNodeAttachments()
 
                // Update scene node rotation if GM rotation changed (either from the
                // user manually changing or from a previous Newton body changing them).
-               if (*gminst->pYaw != gminst->mLastYaw || *gminst->pPitch != gminst->mLastPitch || *gminst->pRoll != gminst->mLastRoll)
+               if (GetGMRealVariable(*gminst->pYaw) != gminst->mLastYaw)
                {
                   GMRotChanged = true;
-                  //node->setOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(*gminst->pYaw)), Ogre::Degree(*gminst->pPitch), Ogre::Degree(*gminst->pRoll)));
-                  SetSceneNodeOrientation(ConvertToGMPointer(node), *gminst->pYaw, *gminst->pPitch, *gminst->pRoll);
+                  SetSceneNodeYaw(ConvertToGMPointer(node), GetGMRealVariable(*gminst->pYaw) - gminst->mLastYaw);
+               }
+               if (GetGMRealVariable(*gminst->pPitch) != gminst->mLastPitch)
+               {
+                  GMRotChanged = true;
+                  SetSceneNodePitch(ConvertToGMPointer(node), GetGMRealVariable(*gminst->pPitch) - gminst->mLastPitch);
+               }
+               if (GetGMRealVariable(*gminst->pRoll) != gminst->mLastRoll)
+               {
+                  GMRotChanged = true;
+                  SetSceneNodeRoll(ConvertToGMPointer(node), GetGMRealVariable(*gminst->pRoll) - gminst->mLastRoll);
+               }
 
-                  if (gminst->BodyAttached && gminst->mBody)
-                  {
-                     Ogre::Quaternion quat = node->_getDerivedOrientation();
-                     SetNewtonBodyPosition(ConvertToGMPointer(gminst->mBody), ConvertToGMYaw(quat.getYaw().valueDegrees()), quat.getPitch().valueDegrees(), quat.getRoll().valueDegrees());
-                     //SetNewtonBodyOrientation(ConvertToGMPointer(gminst->mBody), *gminst->pYaw, *gminst->pPitch, *gminst->pRoll);
-                  }
+               if (GMRotChanged == true && gminst->BodyAttached && gminst->mBody)
+               {
+                  Ogre::Quaternion quat = node->_getDerivedOrientation();
+                  SetNewtonBodyPosition(ConvertToGMPointer(gminst->mBody), ConvertToGMYaw(quat.getYaw().valueDegrees()), ConvertToGMPitch(quat.getPitch().valueDegrees()), ConvertToGMRoll(quat.getRoll().valueDegrees()));
+                  //SetNewtonBodyOrientation(ConvertToGMPointer(gminst->mBody), *gminst->pYaw, *gminst->pPitch, *gminst->pRoll);
                }
 
                // Update scene node scale if GM scale changed.
-               if (*gminst->pScaleX != gminst->mLastScaleX || *gminst->pScaleY != gminst->mLastScaleY || *gminst->pScaleZ != gminst->mLastScaleZ)
+               if (GetGMRealVariable(*gminst->pScaleX) != gminst->mLastScaleX || GetGMRealVariable(*gminst->pScaleY) != gminst->mLastScaleY || GetGMRealVariable(*gminst->pScaleZ) != gminst->mLastScaleZ)
                {
                   //node->scale(ConvertFromGMAxis(*gminst->pScaleX, *gminst->pScaleZ, *gminst->pScaleY));
-                  SetSceneNodeScale(ConvertToGMPointer(node), *gminst->pScaleX, *gminst->pScaleY, *gminst->pScaleZ);
+                  SetSceneNodeScale(ConvertToGMPointer(node), GetGMRealVariable(*gminst->pScaleX), GetGMRealVariable(*gminst->pScaleY), GetGMRealVariable(*gminst->pScaleZ));
                }
 
                // Update GM vars if needed
@@ -675,36 +729,157 @@ void UpdateSceneNodeAttachments()
                   Ogre::Vector3 pos = ConvertToGMAxis(node->getPosition());
                   gminst->mGMInstancePtr->x = pos.x;
                   gminst->mGMInstancePtr->y = pos.y;
-                  *gminst->pZ = pos.z;
+                  SetGMVariable(*gminst->pZ, pos.z);
                }
                if (!GMRotChanged)
                {
                   Ogre::Quaternion orient = node->getOrientation();
-                  *gminst->pYaw = ConvertToGMYaw(orient.getYaw().valueDegrees());
-                  *gminst->pPitch = orient.getPitch().valueDegrees();
-                  *gminst->pRoll = orient.getRoll().valueDegrees();
+                  Euler euler = QuaternionToEuler(orient);
+
+                  SetGMVariable(*gminst->pYaw, ConvertToGMYaw(euler.getYaw().valueDegrees()));
+                  SetGMVariable(*gminst->pPitch, ConvertToGMPitch(euler.getPitch().valueDegrees()));
+                  SetGMVariable(*gminst->pRoll, ConvertToGMRoll(euler.getRoll().valueDegrees()));
                }
                {
                   Ogre::Vector3 scale = ConvertToGMAxis(node->getScale());
-                  *gminst->pScaleX = scale.x;
-                  *gminst->pScaleY = scale.y;
-                  *gminst->pScaleZ = scale.z;
+                  SetGMVariable(*gminst->pScaleX, scale.x);
+                  SetGMVariable(*gminst->pScaleY, scale.y);
+                  SetGMVariable(*gminst->pScaleZ, scale.z);
                }
             }
 
+            if ((gminst->GMPositionVariableAttached && gminst->pGlobalPosition) || (gminst->GMOrientationVariableAttached && gminst->pGlobalOrientation) || (gminst->GMScaleVariableAttached && gminst->pGlobalScale))
+            {
+               AcquireGMGlobalVariablePointer(gminst);
+
+               bool GMPosChanged = false;
+               bool GMRotChanged = false;
+               bool GMScaleChanged = false;
+
+               // Update scene node position if GM position changed (either from the
+               // user manually changing or from a previous Newton body changing them).
+               if (gminst->GMPositionVariableAttached && gminst->pGlobalPosition)
+               {
+                  Ogre::Vector3 vec = RetrieveGMGlobalArray(gminst->pGlobalPosition, gminst->iGlobalPositionIndex);
+
+                  if (vec.x != gminst->mLastX || vec.y != gminst->mLastY || vec.z != gminst->mLastZ)
+                  {
+                     GMPosChanged = true;
+
+                     SetGMGlobalArray(gminst->pGlobalPosition, gminst->iGlobalPositionIndex, vec);
+
+                     //node->setPosition(ConvertFromGMAxis(gminst->mGMInstancePtr->x, *gminst->pZ, gminst->mGMInstancePtr->y));
+                     SetSceneNodePosition(ConvertToGMPointer(node), vec.x, vec.y, vec.z);
+
+                     if (gminst->BodyAttached && gminst->mBody)
+                     {
+                        Ogre::Vector3 pos = node->_getDerivedPosition();
+                        SetNewtonBodyPosition(ConvertToGMPointer(gminst->mBody), pos.x, pos.z, pos.y);
+                        //SetNewtonBodyPosition(ConvertToGMPointer(gminst->mBody), gminst->mGMInstancePtr->x, gminst->mGMInstancePtr->y, *gminst->pZ);
+                     }
+                  }
+               }
+
+               // Update scene node rotation if GM rotation changed (either from the
+               // user manually changing or from a previous Newton body changing them).
+               if (gminst->GMOrientationVariableAttached && gminst->pGlobalOrientation)
+               {
+                  Ogre::Vector3 vec = RetrieveGMGlobalArray(gminst->pGlobalOrientation, gminst->iGlobalOrientationIndex);
+
+                  if (vec.x != gminst->mLastYaw)
+                  {
+                     GMRotChanged = true;
+                     SetSceneNodeYaw(ConvertToGMPointer(node), vec.x - gminst->mLastYaw);
+                  }
+                  if (vec.y != gminst->mLastPitch)
+                  {
+                     GMRotChanged = true;
+                     SetSceneNodePitch(ConvertToGMPointer(node), vec.y - gminst->mLastPitch);
+                  }
+                  if (vec.z != gminst->mLastRoll)
+                  {
+                     GMRotChanged = true;
+                     SetSceneNodeRoll(ConvertToGMPointer(node), vec.z - gminst->mLastRoll);
+                  }
+
+                  if (GMRotChanged = true && gminst->BodyAttached && gminst->mBody)
+                  {
+                     Ogre::Quaternion quat = node->_getDerivedOrientation();
+                     SetNewtonBodyPosition(ConvertToGMPointer(gminst->mBody), ConvertToGMYaw(quat.getYaw().valueDegrees()), ConvertToGMPitch(quat.getPitch().valueDegrees()), ConvertToGMRoll(quat.getRoll().valueDegrees()));
+                     //SetNewtonBodyOrientation(ConvertToGMPointer(gminst->mBody), *gminst->pYaw, *gminst->pPitch, *gminst->pRoll);
+                  }
+               }
+
+               // Update scene node scale if GM scale changed.
+               if (gminst->GMScaleVariableAttached && gminst->pGlobalScale)
+               {
+                  Ogre::Vector3 vec = RetrieveGMGlobalArray(gminst->pGlobalScale, gminst->iGlobalScaleIndex);
+
+                  if (vec.x != gminst->mLastScaleX || vec.y != gminst->mLastScaleY || vec.z != gminst->mLastScaleZ)
+                  {
+                     GMScaleChanged = true;
+
+                     //node->scale(ConvertFromGMAxis(*gminst->pScaleX, *gminst->pScaleZ, *gminst->pScaleY));
+                     SetSceneNodeScale(ConvertToGMPointer(node), vec.x, vec.y, vec.z);
+                  }
+               }
+
+               // Update GM vars if needed
+               if (!GMPosChanged && (gminst->GMPositionVariableAttached && gminst->pGlobalPosition))
+               {
+                  Ogre::Vector3 pos = ConvertToGMAxis(node->getPosition());
+                  SetGMGlobalArray(gminst->pGlobalPosition, gminst->iGlobalPositionIndex, pos);
+               }
+               if (!GMRotChanged && (gminst->GMOrientationVariableAttached && gminst->pGlobalOrientation))
+               {
+                  Ogre::Quaternion orient = node->getOrientation();
+                  Euler euler = QuaternionToEuler(orient);
+
+                  Ogre::Vector3 vec(ConvertToGMYaw(euler.getYaw().valueDegrees()), ConvertToGMPitch(euler.getPitch().valueDegrees()), ConvertToGMRoll(euler.getRoll().valueDegrees()));
+                  SetGMGlobalArray(gminst->pGlobalOrientation, gminst->iGlobalOrientationIndex, vec);
+               }
+               if (!GMScaleChanged && (gminst->GMScaleVariableAttached && gminst->pGlobalScale))
+               {
+                  Ogre::Vector3 scale = ConvertToGMAxis(node->getScale());
+                  SetGMGlobalArray(gminst->pGlobalScale, gminst->iGlobalScaleIndex, scale);
+               }
+            }
+
+            // Update our last known positions
             if (gminst->GMInstanceAttached && gminst->mGMInstancePtr)
             {
                gminst->mLastX = gminst->mGMInstancePtr->x;
                gminst->mLastY = gminst->mGMInstancePtr->y;
-               gminst->mLastZ = *gminst->pZ;
+               gminst->mLastZ = GetGMRealVariable(*gminst->pZ);
 
-               gminst->mLastYaw = *gminst->pYaw;
-               gminst->mLastPitch = *gminst->pPitch;
-               gminst->mLastRoll = *gminst->pRoll;
+               gminst->mLastYaw = GetGMRealVariable(*gminst->pYaw);
+               gminst->mLastPitch = GetGMRealVariable(*gminst->pPitch);
+               gminst->mLastRoll = GetGMRealVariable(*gminst->pRoll);
 
-               gminst->mLastScaleX = *gminst->pScaleX;
-               gminst->mLastScaleY = *gminst->pScaleY;
-               gminst->mLastScaleZ = *gminst->pScaleZ;
+               gminst->mLastScaleX = GetGMRealVariable(*gminst->pScaleX);
+               gminst->mLastScaleY = GetGMRealVariable(*gminst->pScaleY);
+               gminst->mLastScaleZ = GetGMRealVariable(*gminst->pScaleZ);
+            }
+            if (gminst->GMPositionVariableAttached && gminst->pGlobalPosition)
+            {
+               Ogre::Vector3 vec = RetrieveGMGlobalArray(gminst->pGlobalPosition, gminst->iGlobalPositionIndex);
+               gminst->mLastX = vec.x;
+               gminst->mLastY = vec.y;
+               gminst->mLastZ = vec.z;
+            }
+            if (gminst->GMOrientationVariableAttached && gminst->pGlobalOrientation)
+            {
+               Ogre::Vector3 vec = RetrieveGMGlobalArray(gminst->pGlobalOrientation, gminst->iGlobalOrientationIndex);
+               gminst->mLastYaw = vec.x;
+               gminst->mLastPitch = vec.y;
+               gminst->mLastRoll = vec.z;
+            }
+            if (gminst->GMScaleVariableAttached && gminst->pGlobalScale)
+            {
+               Ogre::Vector3 vec = RetrieveGMGlobalArray(gminst->pGlobalScale, gminst->iGlobalScaleIndex);
+               gminst->mLastScaleX = vec.x;
+               gminst->mLastScaleY = vec.y;
+               gminst->mLastScaleZ = vec.z;
             }
             ++iter;
          }

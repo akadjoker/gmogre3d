@@ -40,6 +40,21 @@ GMFN double SetTextureUnitStateTextureName(double tex_unit_ptr, char *tex_name)
 }
 
 
+GMFN char *GetTextureUnitStateTextureName(double tex_unit_ptr)
+{
+   static Ogre::String texture_name;
+
+   Ogre::TextureUnitState *tex_unit = ConvertFromGMPointer<Ogre::TextureUnitState *>(tex_unit_ptr);
+   
+   texture_name.clear();
+
+   if (tex_unit != NULL)
+      texture_name = tex_unit->getTextureName();
+
+   return const_cast<char*>(texture_name.c_str());
+}
+
+
 GMFN double SetTextureUnitStateCubicTextureNames1(char *tex_name1, char *tex_name2, char *tex_name3, char *tex_name4)
 {
    for (int x = 0; x < 6; x++)

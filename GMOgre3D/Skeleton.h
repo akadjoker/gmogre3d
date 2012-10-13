@@ -27,6 +27,25 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "GMOgre3D.h"
 
 
+GMFN double LoadSkeleton(char *name, char *group = const_cast<char*>(Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME.c_str()))
+{
+   Ogre::SkeletonPtr skel = Ogre::SkeletonManager::getSingleton().load(name, group);
+   
+   if (skel.isNull())
+      return FALSE;
+
+   return TRUE;
+}
+
+
+GMFN double UnloadSkeleton(char *name)
+{
+   Ogre::SkeletonManager::getSingleton().unload(name);
+
+   return TRUE;
+}
+
+
 GMFN double GetSkeletonBoneByName(double skel_ptr, char *name)
 {
    Ogre::SkeletonInstance *skel = ConvertFromGMPointer<Ogre::SkeletonInstance*>(skel_ptr);

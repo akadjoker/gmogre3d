@@ -25,7 +25,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "FrameListener.h"
 #include "OgreNewt_World.h"
 //#include "GMOgre3D.h"
-#include "GMAPI.h"
+#include "GM_API.h"
 
 
 GMFrameListener::GMFrameListener()
@@ -131,10 +131,7 @@ bool GMFrameListener::frameStarted(const Ogre::FrameEvent& evt)
    // Call our GM script to handle this callback
    if (mFrameStartedCallback >= 0)
    {
-      gm::CGMVariable args[1];
-      args[0].Set(evt.timeSinceLastFrame);
-
-      gm::script_execute(mFrameStartedCallback, args, 1);  
+      GM_script_execute(mFrameStartedCallback, evt.timeSinceLastFrame);
    }
 
    if (mNewtonWorld)
@@ -162,10 +159,7 @@ bool GMFrameListener::frameRenderingQueued(const Ogre::FrameEvent& evt)
    // Call our GM script to handle this callback
    if (mFrameQueuedCallback >= 0)
    {
-      gm::CGMVariable args[1];
-      args[0].Set(evt.timeSinceLastFrame);
-
-      gm::script_execute(mFrameQueuedCallback, args, 1);  
+      GM_script_execute(mFrameQueuedCallback, evt.timeSinceLastFrame);
    }
 
    return true;
@@ -180,10 +174,7 @@ bool GMFrameListener::frameEnded(const Ogre::FrameEvent& evt)
    // Call our GM script to handle this callback
    if (mFrameEndedCallback >= 0)
    {
-      gm::CGMVariable args[1];
-      args[0].Set(evt.timeSinceLastFrame);
-
-      gm::script_execute(mFrameEndedCallback, args, 1);  
+      GM_script_execute(mFrameEndedCallback, evt.timeSinceLastFrame);
    }
 
    return true;

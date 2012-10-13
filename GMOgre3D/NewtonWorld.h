@@ -28,12 +28,12 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include <map>
 
 
-GMFN double CreateNewtonWorld()
+GMFN double CreateNewtonWorld(double desired_fps, double max_updates_per_frame)
 {
    OgreNewtWorld *world = NULL;
 
    TRY
-      world = OGRE_NEW OgreNewtWorld();
+      world = OGRE_NEW OgreNewtWorld((Ogre::Real)desired_fps, (int)max_updates_per_frame, mRenderWindow, mRoot);
    CATCH("CreateNewtonWorld")
 
    return ConvertToGMPointer(world);

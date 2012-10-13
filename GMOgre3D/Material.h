@@ -81,6 +81,19 @@ GMFN double UnloadMaterial(char *name)
 }
 
 
+GMFN char *CopyMaterial(char *name, char *new_name)
+{
+   Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().getByName(name);
+   
+   if (mat.isNull())
+      return NULL;
+
+   mat->clone(new_name);
+
+   return new_name;
+}
+
+
 GMFN double EnableMaterialLighting(char *name, double enabled)
 {
    Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().getByName(name);

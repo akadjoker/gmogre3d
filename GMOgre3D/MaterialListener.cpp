@@ -24,7 +24,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #include "stdafx.h"
 #include "MaterialListener.h"
 //#include "GMOgre3D.h"
-#include "GMAPI.h"
+#include "GM_API.h"
 
 
 template<typename T>
@@ -52,18 +52,12 @@ Ogre::Technique* GMMaterialListener::handleSchemeNotFound(unsigned short schemeI
    // Call our GM script to handle this callback
    if (mHandleSchemeNotFoundCallback >= 0)
    {
-      gm::CGMVariable args[4];
-      args[0].Set(schemeIndex);
-      args[1].Set(schemeName);
-      args[2].Set(ConvertToGMPointer2(originalMaterial));
-      args[3].Set(lodIndex);
+      GM_VALUE &ret = GM_script_execute(mHandleSchemeNotFoundCallback, schemeIndex, schemeName, ConvertToGMPointer2(originalMaterial), lodIndex);
 
-      gm::CGMVariable &ret = gm::script_execute(mHandleSchemeNotFoundCallback, args, 4);  
-
-      if (ret.real() < 1.0f)
+      if (GetGMRealValue(ret) < 1.0f)
          return NULL;
 
-      return ConvertFromGMPointer2<Ogre::Technique*>(ret.real());
+      return ConvertFromGMPointer2<Ogre::Technique*>(GetGMRealValue(ret));
    }
 
    return NULL;

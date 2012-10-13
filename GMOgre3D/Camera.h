@@ -281,7 +281,7 @@ GMFN double SetCameraOrientation(double cam_ptr, double yaw, double pitch, doubl
    if (cam == NULL)
       return FALSE;
 
-   cam->setOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)));
+   cam->setOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(ConvertFromGMPitch(pitch)), Ogre::Degree(ConvertFromGMRoll(roll))));
 
    return TRUE;
 }
@@ -299,9 +299,11 @@ GMFN double GetCameraOrientation(double cam_ptr)
    AcquireGMEulerGlobals();
    if (mEulerYaw != NULL)
    {
-      *mEulerYaw = ConvertToGMYaw(quat.getYaw().valueDegrees());
-      *mEulerPitch = quat.getPitch().valueDegrees();
-      *mEulerRoll = quat.getRoll().valueDegrees();
+      Euler euler = QuaternionToEuler(quat);
+
+      SetGMVariable(*mEulerYaw, ConvertToGMYaw(euler.getYaw().valueDegrees()));
+      SetGMVariable(*mEulerPitch, ConvertToGMPitch(euler.getPitch().valueDegrees()));
+      SetGMVariable(*mEulerRoll, ConvertToGMRoll(euler.getRoll().valueDegrees()));
    }
 
    return TRUE;
@@ -320,9 +322,9 @@ GMFN double GetCameraDerivedOrientation(double cam_ptr)
    AcquireGMEulerGlobals();
    if (mEulerYaw != NULL)
    {
-      *mEulerYaw = ConvertToGMYaw(quat.getYaw().valueDegrees());
-      *mEulerPitch = quat.getPitch().valueDegrees();
-      *mEulerRoll = quat.getRoll().valueDegrees();
+      SetGMVariable(*mEulerYaw, ConvertToGMYaw(quat.getYaw().valueDegrees()));
+      SetGMVariable(*mEulerPitch, ConvertToGMPitch(quat.getPitch().valueDegrees()));
+      SetGMVariable(*mEulerRoll, ConvertToGMRoll(quat.getRoll().valueDegrees()));
    }
 
    return TRUE;
@@ -349,9 +351,10 @@ GMFN double GetCameraRoll(double camera_ptr)
    if (cam == NULL)
       return FALSE;
 
-   Ogre::Quaternion qt = cam->getOrientation();
+   Ogre::Quaternion quat = cam->getOrientation();
+   Euler euler = QuaternionToEuler(quat);
 
-   return qt.getRoll().valueDegrees();
+   return ConvertToGMRoll(euler.getRoll().valueDegrees());
 }
 
 
@@ -375,9 +378,10 @@ GMFN double GetCameraYaw(double camera_ptr)
    if (cam == NULL)
       return FALSE;
 
-   Ogre::Quaternion qt = cam->getOrientation();
+   Ogre::Quaternion quat = cam->getOrientation();
+   Euler euler = QuaternionToEuler(quat);
 
-   return ConvertToGMYaw(qt.getYaw().valueDegrees());
+   return ConvertToGMYaw(euler.getYaw().valueDegrees());
 }
 
 
@@ -401,17 +405,10 @@ GMFN double GetCameraPitch(double camera_ptr)
    if (cam == NULL)
       return FALSE;
 
-   Ogre::Quaternion qt = cam->getOrientation();
-   return qt.getPitch().valueDegrees();
-/*
-   // Retrieve proper pitch by removing camera yaw
-   Ogre::Quaternion old_qt = cam->getOrientation();
-   cam->yaw(old_qt.getYaw() * -1);
-   Ogre::Quaternion qt = cam->getOrientation();
-   cam->setOrientation(old_qt);
+   Ogre::Quaternion quat = cam->getOrientation();
+   Euler euler = QuaternionToEuler(quat);
 
-   return old_qt.getPitch().valueDegrees();
-*/
+   return ConvertToGMPitch(euler.getPitch().valueDegrees());
 }
 
 
@@ -565,22 +562,23 @@ GMFN double GetCameraProjectionMatrix(double cam_ptr)
    AcquireGMMatrixGlobals();
    if (mEulerYaw != NULL)
    {
-      *mMatrix00 = mat[0][0];
-      *mMatrix01 = mat[0][1];
-      *mMatrix02 = mat[0][2];
-      *mMatrix03 = mat[0][3];
-      *mMatrix10 = mat[1][0];
-      *mMatrix11 = mat[1][1];
-      *mMatrix12 = mat[1][2];
-      *mMatrix13 = mat[1][3];
-      *mMatrix20 = mat[2][0];
-      *mMatrix21 = mat[2][1];
-      *mMatrix22 = mat[2][2];
-      *mMatrix23 = mat[2][3];
-      *mMatrix30 = mat[3][0];
-      *mMatrix31 = mat[3][1];
-      *mMatrix32 = mat[3][2];
-      *mMatrix33 = mat[3][3];
+      SetGMVariable(*mMatrix00, mat[0][0]);
+      SetGMVariable(*mMatrix01, mat[0][1]);
+      SetGMVariable(*mMatrix02, mat[0][2]);
+      SetGMVariable(*mMatrix03, mat[0][3]);
+      SetGMVariable(*mMatrix10, mat[1][0]);
+      SetGMVariable(*mMatrix11, mat[1][1]);
+      SetGMVariable(*mMatrix12, mat[1][2]);
+      SetGMVariable(*mMatrix13, mat[1][3]);
+      SetGMVariable(*mMatrix20, mat[2][0]);
+      SetGMVariable(*mMatrix21, mat[2][1]);
+      SetGMVariable(*mMatrix22, mat[2][2]);
+      SetGMVariable(*mMatrix23, mat[2][3]);
+      SetGMVariable(*mMatrix30, mat[3][0]);
+      SetGMVariable(*mMatrix31, mat[3][1]);
+      SetGMVariable(*mMatrix32, mat[3][2]);
+      SetGMVariable(*mMatrix33, mat[3][3]);
+
    }
 
    return TRUE;
@@ -599,22 +597,22 @@ GMFN double GetCameraProjectionMatrixRS(double cam_ptr)
    AcquireGMMatrixGlobals();
    if (mEulerYaw != NULL)
    {
-      *mMatrix00 = mat[0][0];
-      *mMatrix01 = mat[0][1];
-      *mMatrix02 = mat[0][2];
-      *mMatrix03 = mat[0][3];
-      *mMatrix10 = mat[1][0];
-      *mMatrix11 = mat[1][1];
-      *mMatrix12 = mat[1][2];
-      *mMatrix13 = mat[1][3];
-      *mMatrix20 = mat[2][0];
-      *mMatrix21 = mat[2][1];
-      *mMatrix22 = mat[2][2];
-      *mMatrix23 = mat[2][3];
-      *mMatrix30 = mat[3][0];
-      *mMatrix31 = mat[3][1];
-      *mMatrix32 = mat[3][2];
-      *mMatrix33 = mat[3][3];
+      SetGMVariable(*mMatrix00, mat[0][0]);
+      SetGMVariable(*mMatrix01, mat[0][1]);
+      SetGMVariable(*mMatrix02, mat[0][2]);
+      SetGMVariable(*mMatrix03, mat[0][3]);
+      SetGMVariable(*mMatrix10, mat[1][0]);
+      SetGMVariable(*mMatrix11, mat[1][1]);
+      SetGMVariable(*mMatrix12, mat[1][2]);
+      SetGMVariable(*mMatrix13, mat[1][3]);
+      SetGMVariable(*mMatrix20, mat[2][0]);
+      SetGMVariable(*mMatrix21, mat[2][1]);
+      SetGMVariable(*mMatrix22, mat[2][2]);
+      SetGMVariable(*mMatrix23, mat[2][3]);
+      SetGMVariable(*mMatrix30, mat[3][0]);
+      SetGMVariable(*mMatrix31, mat[3][1]);
+      SetGMVariable(*mMatrix32, mat[3][2]);
+      SetGMVariable(*mMatrix33, mat[3][3]);
    }
 
    return TRUE;
@@ -633,22 +631,22 @@ GMFN double GetCameraProjectionMatrixWithRSDepth(double cam_ptr)
    AcquireGMMatrixGlobals();
    if (mEulerYaw != NULL)
    {
-      *mMatrix00 = mat[0][0];
-      *mMatrix01 = mat[0][1];
-      *mMatrix02 = mat[0][2];
-      *mMatrix03 = mat[0][3];
-      *mMatrix10 = mat[1][0];
-      *mMatrix11 = mat[1][1];
-      *mMatrix12 = mat[1][2];
-      *mMatrix13 = mat[1][3];
-      *mMatrix20 = mat[2][0];
-      *mMatrix21 = mat[2][1];
-      *mMatrix22 = mat[2][2];
-      *mMatrix23 = mat[2][3];
-      *mMatrix30 = mat[3][0];
-      *mMatrix31 = mat[3][1];
-      *mMatrix32 = mat[3][2];
-      *mMatrix33 = mat[3][3];
+      SetGMVariable(*mMatrix00, mat[0][0]);
+      SetGMVariable(*mMatrix01, mat[0][1]);
+      SetGMVariable(*mMatrix02, mat[0][2]);
+      SetGMVariable(*mMatrix03, mat[0][3]);
+      SetGMVariable(*mMatrix10, mat[1][0]);
+      SetGMVariable(*mMatrix11, mat[1][1]);
+      SetGMVariable(*mMatrix12, mat[1][2]);
+      SetGMVariable(*mMatrix13, mat[1][3]);
+      SetGMVariable(*mMatrix20, mat[2][0]);
+      SetGMVariable(*mMatrix21, mat[2][1]);
+      SetGMVariable(*mMatrix22, mat[2][2]);
+      SetGMVariable(*mMatrix23, mat[2][3]);
+      SetGMVariable(*mMatrix30, mat[3][0]);
+      SetGMVariable(*mMatrix31, mat[3][1]);
+      SetGMVariable(*mMatrix32, mat[3][2]);
+      SetGMVariable(*mMatrix33, mat[3][3]);
    }
 
    return TRUE;
@@ -713,7 +711,7 @@ GMFN double AttachCameraToEntityBone2(double x, double y, double z, double yaw, 
    if (entity == NULL)
       return FALSE;
 
-   entity->attachObjectToBone(camera_entity_bone_name, cam, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)), ConvertFromGMAxis(x, y, z));
+   entity->attachObjectToBone(camera_entity_bone_name, cam, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree(ConvertFromGMPitch(pitch)), Ogre::Degree(ConvertFromGMRoll(roll))), ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }

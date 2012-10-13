@@ -235,7 +235,7 @@ GMFN double AttachLightToEntityBone2(double x, double y, double z, double yaw, d
    if (entity == NULL)
       return FALSE;
 
-   entity->attachObjectToBone(light_entity_bone_name, light, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)), ConvertFromGMAxis(x, y, z));
+   entity->attachObjectToBone(light_entity_bone_name, light, Euler(Ogre::Degree(ConvertFromGMYaw(yaw + 90)), Ogre::Degree(ConvertFromGMPitch(pitch)), Ogre::Degree(ConvertFromGMRoll(roll))), ConvertFromGMAxis(x, y, z));
 
    return TRUE;
 }

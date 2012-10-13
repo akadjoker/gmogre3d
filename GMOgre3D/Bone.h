@@ -164,7 +164,7 @@ GMFN double SetBoneOrientation(double bone_ptr, double yaw, double pitch, double
    if (bone == NULL)
       return FALSE;
 
-   bone->setOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)));
+   bone->setOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(ConvertFromGMPitch(pitch)), Ogre::Degree(ConvertFromGMRoll(roll))));
 
    return TRUE;
 }
@@ -182,9 +182,9 @@ GMFN double GetBoneOrientation(double bone_ptr)
    AcquireGMEulerGlobals();
    if (mEulerYaw != NULL)
    {
-      *mEulerYaw = ConvertToGMYaw(quat.getYaw().valueDegrees());
-      *mEulerPitch = quat.getPitch().valueDegrees();
-      *mEulerRoll = quat.getRoll().valueDegrees();
+      SetGMVariable(*mEulerYaw, ConvertToGMYaw(quat.getYaw().valueDegrees()));
+      SetGMVariable(*mEulerPitch, ConvertToGMPitch(quat.getPitch().valueDegrees()));
+      SetGMVariable(*mEulerRoll, ConvertToGMRoll(quat.getRoll().valueDegrees()));
    }
 
    return TRUE;
@@ -211,9 +211,10 @@ GMFN double GetBoneRoll(double bone_ptr)
    if (bone == NULL)
       return FALSE;
 
-   Ogre::Quaternion qt = bone->getOrientation();
+   Ogre::Quaternion quat = bone->getOrientation();
+   Euler euler = QuaternionToEuler(quat);
 
-   return qt.getRoll().valueDegrees();
+   return ConvertToGMRoll(euler.getRoll().valueDegrees());
 }
 
 
@@ -263,16 +264,10 @@ GMFN double GetBonePitch(double bone_ptr)
    if (bone == NULL)
       return FALSE;
 
-   //Ogre::Quaternion qt = bone->getOrientation();
-   //return qt.getPitch().valueDegrees();
+   Ogre::Quaternion quat = bone->getOrientation();
+   Euler euler = QuaternionToEuler(quat);
 
-   // Retrieve proper pitch by removing bone yaw
-   Ogre::Quaternion old_qt = bone->getOrientation();
-   bone->yaw(old_qt.getYaw() * -1);
-   Ogre::Quaternion qt = bone->getOrientation();
-   bone->setOrientation(old_qt);
-
-   return old_qt.getPitch().valueDegrees();
+   return ConvertToGMRoll(euler.getPitch().valueDegrees());
 }
 
 

@@ -25,7 +25,11 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define GMOGRE_RESOURCE_H
 
 #include "GMOgre3D.h"
+#include "ResourceListener.h"
 
+
+static bool use_background_loading = false;
+static GMResourceListener resource_listener;
 
 GMFN double AddResourceLocation(char *name, char *type, char *group)
 {
@@ -48,6 +52,32 @@ GMFN double RemoveResourceLocation(char *name, char *group)
    TRY
       Ogre::ResourceGroupManager::getSingleton().removeResourceLocation(name, group);
    CATCH("RemoveResourceLocation")
+
+   return TRUE;
+}
+
+
+GMFN double EnableResourceBackgroundLoading(double enable, double func)
+{
+   use_background_loading = (enable != 0.0);
+   resource_listener.SetResourceOperationCompleted((int)func);
+
+   return TRUE;
+}
+
+
+GMFN double InitializeResourceGroup(char *group)
+{
+   if (mRoot == NULL)
+      return FALSE;
+
+   TRY
+      if (!use_background_loading)
+         Ogre::ResourceGroupManager::getSingleton().initialiseResourceGroup(group);
+      else
+         return Ogre::ResourceBackgroundQueue::getSingleton().initialiseResourceGroup(group, &resource_listener);
+
+   CATCH("InitializeResourceGroup")
 
    return TRUE;
 }
@@ -90,6 +120,20 @@ GMFN double UnloadResourceGroup(char *group)
    CATCH("UnloadResourceGroup")
 
    return TRUE;
+}
+
+
+GMFN double IsResourceBackgroundProcessComplete(double process_id)
+{
+   if (mRoot == NULL)
+      return FALSE;
+
+   TRY
+      if (use_background_loading)
+         return Ogre::ResourceBackgroundQueue::getSingleton().isProcessComplete((Ogre::BackgroundProcessTicket)process_id);
+   CATCH("IsResourceBackgroundProcessComplete")
+
+   return FALSE;
 }
 
 

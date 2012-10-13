@@ -23,7 +23,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 #include "stdafx.h"
 #include "GMCompositorListener.h"
-#include "GMAPI.h"
+#include "GM_API.h"
 
 
 GMCompositorListener::GMCompositorListener()
@@ -38,11 +38,7 @@ void GMCompositorListener::notifyMaterialSetup(Ogre::uint32 pass_id, Ogre::Mater
    // Call our GM script to handle this callback
    if (mNotifyMaterialSetupCallback >= 0)
    {
-      gm::CGMVariable args[2];
-      args[0].Set(pass_id);
-      args[1].Set(mat->getName());
-
-      gm::script_execute(mNotifyMaterialSetupCallback, args, 2);  
+      GM_script_execute(mNotifyMaterialSetupCallback, (double)pass_id, mat->getName());
    }
 }
 
@@ -52,11 +48,7 @@ void GMCompositorListener::notifyMaterialRender(Ogre::uint32 pass_id, Ogre::Mate
    // Call our GM script to handle this callback
    if (mNotifyMaterialRenderCallback >= 0)
    {
-      gm::CGMVariable args[2];
-      args[0].Set(pass_id);
-      args[1].Set(mat->getName());
-
-      gm::script_execute(mNotifyMaterialRenderCallback, args, 2);  
+      GM_script_execute(mNotifyMaterialRenderCallback, (double)pass_id, mat->getName());
    }
 }
 

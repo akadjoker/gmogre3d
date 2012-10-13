@@ -1,7 +1,8 @@
 #include "stdafx.h"
 #include "OgreNewtWorld.h"
 #include "LockMutex.h"
-#include <GMAPI.h>
+#include "NewtonFrameListener.h"
+#include "GM_API.h"
 
 
 Ogre::Vector3 ConvertFromGMAxis2(double x, double y, double z)
@@ -20,9 +21,16 @@ static void _CDECL LeaveWorldCallback(const NewtonBody* body, int threadIndex)
 }
 
 
-OgreNewtWorld::OgreNewtWorld(Ogre::Real desiredFps, int maxUpdatesPerFrames)
+OgreNewtWorld::OgreNewtWorld(Ogre::Real desiredFps, int maxUpdatesPerFrames, Ogre::RenderWindow* win, Ogre::Root *root)
 {
    m_world = OGRE_NEW OgreNewt::World(desiredFps, maxUpdatesPerFrames);
+
+   if (m_root != NULL && win != NULL && desiredFps > 0)
+   {
+      m_newton_listener = OGRE_NEW NewtonFrameListener(win, this, (int)desiredFps);
+      m_root = root;
+      m_root->addFrameListener(m_newton_listener);
+   }
 
    m_default_gravity = Ogre::Vector3(0, -9.81, 0); // Default to earth gravity
    m_world->setPlatformArchitecture(2);
@@ -36,12 +44,20 @@ OgreNewtWorld::OgreNewtWorld(Ogre::Real desiredFps, int maxUpdatesPerFrames)
 
 OgreNewtWorld::~OgreNewtWorld()
 {
+   if (m_root != NULL && m_newton_listener != NULL)
+   {
+      m_root->removeFrameListener(m_newton_listener);
+      OGRE_DELETE m_newton_listener;
+   }
+
    delete m_world;
 }
 
 
 void OgreNewtWorld::update( Ogre::Real t_step )
 {
+   m_world->update(t_step);
+
    // Execute Body Left World callbacks
    if (m_gm_leave_world_func != -1)
    {
@@ -52,9 +68,7 @@ void OgreNewtWorld::update( Ogre::Real t_step )
       while (body_iter != m_bodies_left_world.end())
       {
          // Call our GM script to handle this leave world callback
-         gm::CGMVariable args[1];
-         args[0].Set(static_cast<double>(reinterpret_cast<intptr_t>(*body_iter)));
-         gm::script_execute(m_gm_leave_world_func, args, 1);
+         GM_script_execute(m_gm_leave_world_func, static_cast<double>(reinterpret_cast<intptr_t>(*body_iter)));
 
          body_iter++;
       }
@@ -72,23 +86,13 @@ void OgreNewtWorld::update( Ogre::Real t_step )
          OgreNewtContact contact = *contact_iter;
 
          // Call our GM script to handle this leave world callback
-         gm::CGMVariable args[6];
-         args[0].Set(static_cast<double>(reinterpret_cast<intptr_t>(contact.m_body1)));
-         args[1].Set(static_cast<double>(reinterpret_cast<intptr_t>(contact.m_body2)));
-         args[2].Set(contact.m_speed);
-         args[3].Set(ConvertFromGMAxis2(contact.m_position.x, contact.m_position.z, contact.m_position.y).x);
-         args[4].Set(ConvertFromGMAxis2(contact.m_position.x, contact.m_position.z, contact.m_position.y).z);
-         args[5].Set(ConvertFromGMAxis2(contact.m_position.x, contact.m_position.z, contact.m_position.y).y);
-
-         gm::script_execute(contact.m_function, args, 6);
+         GM_script_execute(contact.m_function, static_cast<double>(reinterpret_cast<intptr_t>(contact.m_body1)), static_cast<double>(reinterpret_cast<intptr_t>(contact.m_body2)), contact.m_speed, ConvertFromGMAxis2(contact.m_position.x, contact.m_position.z, contact.m_position.y).x, ConvertFromGMAxis2(contact.m_position.x, contact.m_position.z, contact.m_position.y).z, ConvertFromGMAxis2(contact.m_position.x, contact.m_position.z, contact.m_position.y).y);
 
          contact_iter++;
       }
 
       m_contacts.clear();
    }
-
-   m_world->update(t_step);
 } 
 
 

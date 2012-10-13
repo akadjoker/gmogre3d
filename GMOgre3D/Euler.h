@@ -44,9 +44,9 @@ GMFN double GetRotationTo(double fromx, double fromz, double fromy, double tox, 
    AcquireGMEulerGlobals();
    if (mEulerYaw != NULL)
    {
-      *mEulerYaw = ConvertToGMYaw(orientation.getYaw().valueDegrees());
-      *mEulerPitch = orientation.getPitch().valueDegrees();
-      *mEulerRoll = orientation.getRoll().valueDegrees();
+      SetGMVariable(*mEulerYaw, ConvertToGMYaw(orientation.getYaw().valueDegrees()));
+      SetGMVariable(*mEulerPitch, ConvertToGMPitch(orientation.getPitch().valueDegrees()));
+      SetGMVariable(*mEulerRoll, ConvertToGMRoll(orientation.getRoll().valueDegrees()));
    }
 
    return TRUE;

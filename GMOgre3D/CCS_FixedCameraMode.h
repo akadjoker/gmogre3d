@@ -51,7 +51,7 @@ GMFN double SetFixedCameraModeOrientation(double camera_mode_ptr, double yaw, do
    if (cam_mode == NULL)
       return FALSE;
 
-   cam_mode->setCameraOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)));
+   cam_mode->setCameraOrientation(Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(ConvertFromGMPitch(pitch)), Ogre::Degree(ConvertFromGMRoll(roll))));
 
    return TRUE;
 }

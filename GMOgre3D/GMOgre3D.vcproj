@@ -120,7 +120,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\CEGUI\cegui\include;..\OgreMain\include;..\Direct3D9\include;..\GL\include;..\GL\src\GLSL\include;..\OctreeSceneManager\include;..\ParticleFX\include;..\CgProgramManager\include;..\SkyX;..\GMAPI\GMAPI;..\Dependencies\include;;..\GMNewton;..\GMNewton\common;..\Newton\sdk\dContainers;..\Newton\sdk\dMath;..\Newton\sdk\dCustomJoints;..\Newton\sdk\dAnimation;..\Newton\sdk\;..\OgreNewt\inc;..\CameraControlSystem\include;&quot;$(BOOST_HOME)&quot;;.\inc;..\CEGUI\dependencies\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GMOGRE3D_EXPORTS;OGRE_STATIC_LIB;OGRENEWT_NO_OGRE_ANY;CCS_LIB"
+				PreprocessorDefinitions="OLD_GMAPI;WIN32;_DEBUG;_WINDOWS;_USRDLL;GMOGRE3D_EXPORTS;OGRE_STATIC_LIB;OGRENEWT_NO_OGRE_ANY;CCS_LIB;GMAPI_STATIC"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -288,7 +288,7 @@
 				EnableFiberSafeOptimizations="true"
 				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories="..\CEGUI\cegui\include;..\OgreMain\include;..\Direct3D9\include;..\GL\include;..\GL\src\GLSL\include;..\OctreeSceneManager\include;..\ParticleFX\include;..\CgProgramManager\include;..\SkyX;..\GMAPI\GMAPI;..\Dependencies\include;;..\GMNewton;..\GMNewton\common;..\Newton\sdk\dContainers;..\Newton\sdk\dMath;..\Newton\sdk\dCustomJoints;..\Newton\sdk\dAnimation;..\Newton\sdk\;..\OgreNewt\inc;..\CameraControlSystem\include;&quot;$(BOOST_HOME)&quot;;.\inc;..\CEGUI\dependencies\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GMOGRE3D_EXPORTS;OGRE_STATIC_LIB;_NEWTON_USE_LIB;OGRENEWT_NO_OGRE_ANY;CCS_LIB;CEGUI_STATIC"
+				PreprocessorDefinitions="NEW_GMAPI;WIN32;NDEBUG;_WINDOWS;_USRDLL;GMOGRE3D_EXPORTS;OGRE_STATIC_LIB;_NEWTON_USE_LIB;OGRENEWT_NO_OGRE_ANY;CCS_LIB;CEGUI_STATIC;GMAPI_STATIC"
 				RuntimeLibrary="2"
 				BufferSecurityCheck="false"
 				EnableFunctionLevelLinking="true"
@@ -313,7 +313,7 @@
 				AdditionalDependencies="WINMM.LIB expat.lib pcre.lib devil.lib CEGUIBase_Static.lib CEGUIOgreRenderer_Static.lib Newton.lib dAnimation.lib dContainers.lib dMath.lib JointLibrary.lib OgreNewt.lib OgreMainStatic.lib"
 				OutputFile="$(OutDir)\$(ProjectName)Static.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\lib;..\Dependencies\lib\Release;..\CEGUI\dependencies\lib\static"
+				AdditionalLibraryDirectories="..\lib;..\Dependencies\lib\Release;..\CEGUI\dependencies\lib\static;..\boost_1_42\lib"
 				ModuleDefinitionFile=""
 				DelayLoadDLLs="d3dx9_41.dll cg.dll"
 				GenerateDebugInformation="false"
@@ -388,6 +388,18 @@
 				>
 			</File>
 			<File
+				RelativePath=".\GM_API.h"
+				>
+			</File>
+			<File
+				RelativePath=".\GM_API_NEW.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\GM_API_OLD.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\GMCompositorListener.cpp"
 				>
 			</File>
@@ -405,6 +417,18 @@
 			</File>
 			<File
 				RelativePath=".\MaterialListener.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\NewtonFrameListener.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\OgreDotSceneLoader.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\OgreLightMap.cpp"
 				>
 			</File>
 			<File
@@ -429,6 +453,14 @@
 			</File>
 			<File
 				RelativePath=".\OgreText.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PerfTimer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ResourceListener.cpp"
 				>
 			</File>
 			<File
@@ -578,6 +610,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DotSceneLoader.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Entity.h"
 				>
 			</File>
@@ -678,6 +714,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\GUIScrollBar.h"
+				>
+			</File>
+			<File
 				RelativePath=".\GUISlider.h"
 				>
 			</File>
@@ -703,6 +743,10 @@
 			</File>
 			<File
 				RelativePath=".\Light.h"
+				>
+			</File>
+			<File
+				RelativePath=".\LightMap.h"
 				>
 			</File>
 			<File
@@ -750,6 +794,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NewtonFrameListener.h"
+				>
+			</File>
+			<File
 				RelativePath=".\NewtonHingeJoint.h"
 				>
 			</File>
@@ -778,11 +826,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\OgreDotSceneLoader.h"
+				>
+			</File>
+			<File
 				RelativePath=".\OgreEuler.h"
 				>
 			</File>
 			<File
 				RelativePath=".\OgreInputManager.h"
+				>
+			</File>
+			<File
+				RelativePath=".\OgreLightMap.h"
 				>
 			</File>
 			<File
@@ -834,11 +890,31 @@
 				>
 			</File>
 			<File
+				RelativePath=".\PerfTimer.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Plane.h"
 				>
 			</File>
 			<File
 				RelativePath=".\PSSMShadowCameraSetup.h"
+				>
+			</File>
+			<File
+				RelativePath=".\rapidxml.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\rapidxml_iterators.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\rapidxml_print.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\rapidxml_utils.hpp"
 				>
 			</File>
 			<File
@@ -859,6 +935,10 @@
 			</File>
 			<File
 				RelativePath=".\Resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ResourceListener.h"
 				>
 			</File>
 			<File
@@ -899,6 +979,10 @@
 			</File>
 			<File
 				RelativePath=".\SubEntity.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TagPoint.h"
 				>
 			</File>
 			<File

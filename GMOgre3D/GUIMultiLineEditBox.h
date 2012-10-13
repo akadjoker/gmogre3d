@@ -25,7 +25,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define GMOGRE_GUI_MULTI_LINE_EDIT_BOX_H
 
 #include "GMOgre3D.h"
-#include <GMAPI.h>
+#include "GM_API.h"
 
 // CEGUI includes
 #include "CEGUIInputEvent.h"
@@ -100,11 +100,9 @@ bool PerformMultiLineEditBoxWindowEventCallback(const CEGUI::WindowEventArgs& ar
       return false;
 
    // Call our GM script to handle this event
-   gm::CGMVariable gm_args[1];
-   gm_args[0].Set(static_cast<double>(reinterpret_cast<intptr_t>(args.window)));
-   gm::CGMVariable ret = gm::script_execute(iter->second, gm_args, 1);
+   GM_VALUE ret = GM_script_execute(iter->second, static_cast<double>(reinterpret_cast<intptr_t>(args.window)));
 
-   return (ret.real() != 0);
+   return (GetGMRealValue(ret) != 0);
 }
 
 

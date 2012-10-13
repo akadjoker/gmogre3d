@@ -25,7 +25,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define GMOGRE_GUI_IMAGE_SET_H
 
 #include "GMOgre3D.h"
-#include <GMAPI.h>
+#include "GM_API.h"
 
 // CEGUI includes
 #include "CEGUIInputEvent.h"

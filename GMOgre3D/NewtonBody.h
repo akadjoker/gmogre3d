@@ -114,7 +114,7 @@ GMFN double SetNewtonBodyOrientation(double newton_body_ptr, double yaw, double 
    Ogre::Quaternion orient;
 
    newton_body->getPositionOrientation(pos, orient);
-   newton_body->setPositionOrientation(pos, Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree((Ogre::Real)pitch), Ogre::Degree((Ogre::Real)roll)));
+   newton_body->setPositionOrientation(pos, Euler(Ogre::Degree(ConvertFromGMYaw(yaw)), Ogre::Degree(ConvertFromGMPitch(pitch)), Ogre::Degree(ConvertFromGMPitch(roll))));
 
    return TRUE;
 }
@@ -135,9 +135,9 @@ GMFN double GetNewtonBodyOrientation(double newton_body_ptr)
    AcquireGMEulerGlobals();
    if (mEulerYaw != NULL)
    {
-      *mEulerYaw = ConvertToGMYaw(orient.getYaw().valueDegrees());
-      *mEulerPitch = orient.getPitch().valueDegrees();
-      *mEulerRoll = orient.getRoll().valueDegrees();
+      SetGMVariable(*mEulerYaw, ConvertToGMYaw(orient.getYaw().valueDegrees()));
+      SetGMVariable(*mEulerPitch, ConvertToGMPitch(orient.getPitch().valueDegrees()));
+      SetGMVariable(*mEulerRoll, ConvertToGMRoll(orient.getRoll().valueDegrees()));
    }
 
    return TRUE;
@@ -485,17 +485,36 @@ GMFN double AttachNewtonBodyToSceneNode(double newton_body_ptr, double scene_nod
    //mNewtonBodyAttachments[newton_body] = node;
 
    // We are already attached to our GM object, so update body position/orientation
-   if (mGMAPI && gminst.GMInstanceAttached)
+   if (IsGMInitialized() && (gminst.GMInstanceAttached || gminst.GMPositionVariableAttached || gminst.GMOrientationVariableAttached || gminst.GMScaleVariableAttached))
    {
-      gminst.mGMInstancePtr = mGMAPI->GetInstancePtr(gminst.mGMInstanceID);
-      AcquireGMLocalVariablePointers(&gminst);
+      if (gminst.GMInstanceAttached)
+      {
+         gminst.mGMInstancePtr = GetGMInstance(gminst.mGMInstanceID);
+         AcquireGMLocalVariablePointers(&gminst);
 
-      Ogre::Vector3 pos = node->_getDerivedPosition();
-      Ogre::Quaternion quat = node->_getDerivedOrientation();
+         Ogre::Vector3 pos = node->_getDerivedPosition();
+         Ogre::Quaternion quat = node->_getDerivedOrientation();
       
-      // Snap to current position/orientation
-      //newton_body->setPositionOrientation(Ogre::Vector3(gminst.mGMInstancePtr->x, gminst.mGMInstancePtr->y, *gminst.pZ), Euler(Ogre::Degree(ConvertFromGMYaw(*gminst.pYaw)), Ogre::Degree(*gminst.pPitch), Ogre::Degree(*gminst.pRoll)));
-      newton_body->setPositionOrientation(pos, quat);
+         // Snap to current position/orientation
+         //newton_body->setPositionOrientation(Ogre::Vector3(gminst.mGMInstancePtr->x, gminst.mGMInstancePtr->y, *gminst.pZ), Euler(Ogre::Degree(ConvertFromGMYaw(*gminst.pYaw)), Ogre::Degree(ConvertFromGMPitch(*gminst.pPitch)), Ogre::Degree(ConvertFromGMRoll(*gminst.pRoll))));
+         newton_body->setPositionOrientation(pos, quat);
+      }
+      if (gminst.GMPositionVariableAttached)
+      {
+         Ogre::Vector3 pos;
+         Ogre::Quaternion quat;
+         newton_body->getPositionOrientation(pos, quat);
+         pos = node->_getDerivedPosition();
+         newton_body->setPositionOrientation(pos, quat);
+      }
+      if (gminst.GMOrientationVariableAttached)
+      {
+         Ogre::Vector3 pos;
+         Ogre::Quaternion quat;
+         newton_body->getPositionOrientation(pos, quat);
+         quat = node->_getDerivedOrientation();
+         newton_body->setPositionOrientation(pos, quat);
+      }
    }
 
    newton_body->attachNode(node);

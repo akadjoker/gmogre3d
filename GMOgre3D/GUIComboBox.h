@@ -25,7 +25,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 #define GMOGRE_GUI_COMBO_BOX_H
 
 #include "GMOgre3D.h"
-#include <GMAPI.h>
+#include "GM_API.h"
 
 // CEGUI includes
 #include "CEGUIInputEvent.h"
@@ -162,13 +162,10 @@ bool PerformComboBoxWindowEventCallback(const CEGUI::WindowEventArgs& args, CEGU
       return false;
 
    // Call our GM script to handle this event
-   gm::CGMVariable gm_args[2];
-   gm_args[0].Set(static_cast<double>(reinterpret_cast<intptr_t>(args.window)));
    CEGUI::Combobox *combo_box = static_cast<CEGUI::Combobox*>(static_cast<const CEGUI::WindowEventArgs&>(args).window);
-   gm_args[1].Set(combo_box->getItemIndex(combo_box->getSelectedItem()));
-   gm::CGMVariable ret = gm::script_execute(iter->second, gm_args, 2);
+   GM_VALUE ret = GM_script_execute(iter->second, static_cast<double>(reinterpret_cast<intptr_t>(args.window)), static_cast<double>(combo_box->getItemIndex(combo_box->getSelectedItem())));
 
-   return (ret.real() != 0);
+   return (GetGMRealValue(ret) != 0);
 }
 
 

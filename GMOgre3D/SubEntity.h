@@ -41,6 +41,22 @@ GMFN double SetSubEntityMaterial(double sub_entity_ptr, char *mat_name)
 }
 
 
+GMFN char *GetSubEntityMaterial(double sub_entity_ptr)
+{
+   static Ogre::String material_name;
+
+   Ogre::SubEntity *sub_ent = ConvertFromGMPointer<Ogre::SubEntity*>(sub_entity_ptr);
+
+   material_name.clear();
+
+   if (sub_ent != NULL)
+      material_name = sub_ent->getMaterialName();
+
+   return const_cast<char*>(material_name.c_str());
+}
+
+
+
 GMFN double ShowSubEntity(double sub_entity_ptr)
 {
    Ogre::SubEntity *sub_ent = ConvertFromGMPointer<Ogre::SubEntity*>(sub_entity_ptr);

@@ -212,9 +212,11 @@ GMFN double GetCameraControlSystemCameraOrientation(double ccs_ptr)
    AcquireGMEulerGlobals();
    if (mEulerYaw != NULL)
    {
-      *mEulerYaw = ConvertToGMYaw(quat.getYaw().valueDegrees());
-      *mEulerPitch = quat.getPitch().valueDegrees();
-      *mEulerRoll = quat.getRoll().valueDegrees();
+      Euler euler = QuaternionToEuler(quat);
+
+      SetGMVariable(*mEulerYaw, ConvertToGMYaw(euler.getYaw().valueDegrees()));
+      SetGMVariable(*mEulerPitch, ConvertToGMPitch(euler.getPitch().valueDegrees()));
+      SetGMVariable(*mEulerRoll, ConvertToGMRoll(euler.getRoll().valueDegrees()));
    }
 
    return TRUE;
